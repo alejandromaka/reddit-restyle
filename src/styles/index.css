@@ -1,0 +1,8 @@
+/* Reddit Restyle's stylesheet, bundled by the build (nesting flattened for
+   iOS 16). Every rule sits under [data-restyle], which the script sets only
+   on pages it owns. Our markup uses rr- prefixed, Tailwind-named utilities;
+   class bundles live in components/ui.ts. */
+
+@import "./tokens.css";
+@import "./base.css";
+@import "./utilities.css";

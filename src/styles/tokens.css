@@ -1,0 +1,36 @@
+/* Design tokens: the look of reddit's iOS app (as old-reddit-new-reddit.css had it) */
+
+[data-restyle] {
+  /* Color, by role */
+  --ink: #0f1a1c;          /* text: titles, names */
+  --ink-2: #576f76;        /* muted text: when, who, counts */
+  --brand: #ff4500;        /* reddit's orange: the chosen sort */
+  --brand-tint: #ffe7dc;   /* behind the chosen sort */
+  --link: #0b74d4;         /* a link post's site */
+  --bg: #f6f7f8;           /* the page, between posts */
+  --surface: #fff;         /* posts, the bar */
+  --line: #e5e7eb;         /* dividers, outlines */
+  --track: #f2f3f5;        /* quiet fills: flair, an image while it loads */
+  --pinned: #0bb07b;       /* a pinned post's tag */
+  --nsfw: #d93a00;         /* an NSFW post's tag */
+
+  /* Type */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 18px; --text-xl: 20px;
+  --semibold: 600; --bold: 700;
+
+  /* Space and size (Tailwind's numbers: 1 = 4px) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s12: 48px;
+  --control-h: 52px;
+
+  /* Corners: buttons, an image inside a post, pills */
+  --radius-button: 12px;
+  --radius-inset: 10px;
+  --radius-full: 9999px;
+
+  /* Layers */
+  --z-bar: 10;
+
+  /* Pressed: what's tappable dims while touched */
+  --opacity-pressed: .6;
+}

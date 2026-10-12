@@ -1,0 +1,110 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": "t3_1q2c004",
+    "dist": 4,
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c001",
+          "title": "Welcome to r/pics: read the rules before posting",
+          "subreddit": "pics",
+          "author": "pics-mod",
+          "score": 1204,
+          "num_comments": 87,
+          "created_utc": 1791800000,
+          "permalink": "/r/pics/comments/1q2c001/welcome_to_rpics/",
+          "domain": "self.pics",
+          "url": "https://old.reddit.com/r/pics/comments/1q2c001/welcome_to_rpics/",
+          "is_self": true,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": true,
+          "link_flair_text": "Announcement"
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c002",
+          "title": "Sunrise over the Grand Canyon this morning",
+          "subreddit": "pics",
+          "author": "early_riser",
+          "score": 48213,
+          "num_comments": 1234,
+          "created_utc": 1791820000,
+          "permalink": "/r/pics/comments/1q2c002/sunrise_over_the_grand_canyon/",
+          "domain": "i.redd.it",
+          "url": "https://i.redd.it/abc123.jpeg",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "preview": {
+            "images": [
+              {
+                "source": { "url": "https://preview.redd.it/abc123.jpeg?width=3024&s=src", "width": 3024, "height": 4032 },
+                "resolutions": [
+                  { "url": "https://preview.redd.it/abc123.jpeg?width=108&s=a", "width": 108, "height": 144 },
+                  { "url": "https://preview.redd.it/abc123.jpeg?width=320&s=b", "width": 320, "height": 426 },
+                  { "url": "https://preview.redd.it/abc123.jpeg?width=640&s=c", "width": 640, "height": 853 },
+                  { "url": "https://preview.redd.it/abc123.jpeg?width=960&s=d", "width": 960, "height": 1280 }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c003",
+          "title": "Museum restores a 400-year-old painting",
+          "subreddit": "pics",
+          "author": "newsy",
+          "score": 512,
+          "num_comments": 40,
+          "created_utc": 1791700000,
+          "permalink": "/r/pics/comments/1q2c003/museum_restores_painting/",
+          "domain": "example.com",
+          "url": "https://example.com/museum-restores-painting",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": ""
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c004",
+          "title": "Marked NSFW: no preview shown",
+          "subreddit": "pics",
+          "author": "someone",
+          "score": 77,
+          "num_comments": 3,
+          "created_utc": 1791810000,
+          "permalink": "/r/pics/comments/1q2c004/marked_nsfw/",
+          "domain": "i.redd.it",
+          "url": "https://i.redd.it/nsfw.jpeg",
+          "is_self": false,
+          "over_18": true,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "preview": {
+            "images": [
+              {
+                "source": { "url": "https://preview.redd.it/nsfw.jpeg?s=src", "width": 1000, "height": 1000 },
+                "resolutions": [{ "url": "https://preview.redd.it/nsfw.jpeg?width=640&s=c", "width": 640, "height": 640 }]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
