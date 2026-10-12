@@ -5,7 +5,6 @@
 import { render } from 'preact';
 import { createStore, follow } from '../../core/store';
 import type { Shell } from '../../shell/blocker';
-import { bail } from '../../shell/gate';
 import { fetchListing } from './contract';
 import { startEffects } from './effects';
 import { initialState, listingReducer } from './reducer';
@@ -14,7 +13,6 @@ import { ListingPage } from './views/page';
 export function setUpListing(shell: Shell) {
   const { pathname, search } = location;
   const first = fetchListing(pathname, search);
-  first.catch(() => {});  // handled once drawn (below), not an unhandled rejection meanwhile
 
   shell.ready(() => {
     const store = createStore(listingReducer, initialState(pathname));
@@ -24,7 +22,7 @@ export function setUpListing(shell: Shell) {
     shell.reveal();
     first.then(
       (listing) => store.dispatch({ type: 'page/loaded', listing }),
-      (error) => bail(`listing: ${error}`),
+      (error) => store.dispatch({ type: 'page/failed', error: String(error) }),
     );
   });
 }

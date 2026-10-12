@@ -1,0 +1,4 @@
+[
+  { "action": { "type": "block" }, "condition": { "urlFilter": "||redditstatic.com/reddit", "resourceTypes": ["script", "stylesheet"] } },
+  { "action": { "type": "block" }, "condition": { "urlFilter": "||thumbs.redditmedia.com/", "resourceTypes": ["stylesheet"] } }
+]

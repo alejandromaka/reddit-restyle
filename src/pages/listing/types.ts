@@ -8,11 +8,13 @@ export interface ListingState {
   sort: Sort;
   posts: Post[];
   after: string | null;      // the next page's start; null: no more
-  status: 'loading' | 'idle' | 'more' | 'failed';  // loading: the first page; more: the next; failed: the next didn't come
+  status: 'loading' | 'failed' | 'idle' | 'more' | 'more-failed';  // loading, failed: the first page; more, more-failed: the next
+  error: string | null;      // why the first page didn't come
 }
 
 export type ListingAction =
   | { type: 'page/loaded'; listing: Listing }
+  | { type: 'page/failed'; error: string }
   | { type: 'more/requested' }
   | { type: 'more/loaded'; listing: Listing }
   | { type: 'more/failed' };

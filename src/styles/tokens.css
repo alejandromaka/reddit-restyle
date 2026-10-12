@@ -1,31 +1,41 @@
-/* Design tokens: the look of reddit's iOS app (as old-reddit-new-reddit.css had it) */
+/* Design tokens: www.reddit.com's own (light), under its own names where it
+   has one. All of reddit's: docs/reddit-vars.json (docs/reddit-vars.js
+   captures them again). */
 
 [data-restyle] {
-  /* Color, by role */
-  --ink: #0f1a1c;          /* text: titles, names */
-  --ink-2: #576f76;        /* muted text: when, who, counts */
-  --brand: #ff4500;        /* reddit's orange: the chosen sort */
-  --brand-tint: #ffe7dc;   /* behind the chosen sort */
-  --link: #0b74d4;         /* a link post's site */
-  --bg: #f6f7f8;           /* the page, between posts */
-  --surface: #fff;         /* posts, the bar */
-  --line: #e5e7eb;         /* dividers, outlines */
-  --track: #f2f3f5;        /* quiet fills: flair, an image while it loads */
-  --pinned: #0bb07b;       /* a pinned post's tag */
-  --nsfw: #d93a00;         /* an NSFW post's tag */
+  /* Color, by reddit's roles */
+  --color-global-brand-orangered: #ff4500;           /* the wordmark */
+  --color-neutral-background: #fff;                  /* the page, the bar */
+  --color-neutral-content-strong: #181c1f;           /* the page's text: titles, names */
+  --color-neutral-content: #333d42;                  /* a text post's opening */
+  --color-neutral-content-weak: #5c6c74;             /* when, who; sorts not chosen */
+  --color-neutral-border-weak: #00000019;            /* between posts, under the bar */
+  --color-secondary-background: #e5ebee;             /* buttons: score, comments, More posts */
+  --color-secondary-background-selected: #c9d7de;    /* the chosen sort */
+  --color-a-default: #115bca;                        /* a link post's site */
+  --color-tags-neutral-background: #eef1f3;          /* flair, Spoiler */
+  --color-tags-neutral-content: #333d42;
+  --color-tags-moderator-background: #ddf8d7;        /* Pinned (mods pin) */
+  --color-tags-moderator-content: #016e0b;
+  --color-tags-nsfw-background: #fcedf4;             /* NSFW */
+  --color-tags-nsfw-content: #b2007f;
+  --color-media-background: #00000099;               /* a pill on a picture */
+  --color-media-onBackground: #fff;
+  --loader-color: #000;                              /* the loader's ring */
 
-  /* Type */
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 18px; --text-xl: 20px;
+  /* Type: reddit's --font-sans, and its sizes with their line heights */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --text-xs: 12px; --leading-xs: 16px;   /* --font-caption-1, label-2: when, who, tags, small buttons */
+  --text-sm: 14px; --leading-sm: 20px;   /* --font-body-2, label-1: the page's text */
+  --text-lg: 18px; --leading-lg: 24px;   /* --font-title-3: post titles, the bar's name */
   --semibold: 600; --bold: 700;
 
-  /* Space and size (Tailwind's numbers: 1 = 4px) */
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s12: 48px;
-  --control-h: 52px;
+  /* Space and size (Tailwind's numbers: 1 = 4px; reddit's spacers and
+     button heights sit on the same grid: 32px small, 48px large) */
+  --s0_5: 2px; --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
 
-  /* Corners: buttons, an image inside a post, pills */
-  --radius-button: 12px;
-  --radius-inset: 10px;
+  /* Corners: an image (reddit's --radius-4); pills and buttons */
+  --radius-media: 16px;
   --radius-full: 9999px;
 
   /* Layers */

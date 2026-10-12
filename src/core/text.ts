@@ -18,3 +18,18 @@ export function ago(seconds: number, now = Date.now() / 1000) {
   if (days < 365) return `${Math.floor(days / 30)}mo`;
   return `${Math.floor(days / 365)}y`;
 }
+
+const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&nbsp;': ' ' };
+
+// reddit's markdown as plain text: its marks dropped, spoilers kept hidden
+export function plain(markdown: string) {
+  return markdown
+    .replace(/&(?:amp|lt|gt|nbsp|#x200B);/gi, (entity) => ENTITIES[entity] ?? '')
+    .replace(/>!.*?!</gs, '[spoiler]')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')     // links: their words
+    .replace(/^\s*([-*_])(?:\s*\1){2,}\s*$/gm, '')  // rules
+    .replace(/^\s*(?:#+|>+|[-*+]|\d+\.)\s+/gm, '')  // headings, quotes, list marks
+    .replace(/\*+|~~|`/g, '')                       // bold, italics, strikethrough, code
+    .replace(/\s+/g, ' ')
+    .trim();
+}

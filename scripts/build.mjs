@@ -1,8 +1,9 @@
-// Builds the userscript: src/main.ts bundled into Reddit Restyle.user.js,
+// Builds the userscripts: src/main.ts bundled into Reddit Restyle.user.js,
 // carrying src/styles/index.css (its @imports bundled, nesting flattened for
-// iOS 16), which the script adds to the page itself. Written to dist/ and to
-// the Userscripts app's iCloud folder (REDDIT_RESTYLE_OUT overrides it).
-// --watch rebuilds on every change.
+// iOS 16), which the script adds to the page itself; and src/blocker.json
+// into Reddit Blocker.user.js, network rules for the Userscripts app. Written
+// to dist/ and to the app's iCloud folder (REDDIT_RESTYLE_OUT overrides it).
+// --watch rebuilds the script on every change (the rules: on a restart).
 import { context, build } from 'esbuild';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -17,13 +18,24 @@ const JS_HEADER = `// ==UserScript==
 // @name         ${NAME}
 // @namespace    https://local/reddit-restyle
 // @version      ${version}
-// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON. Built from ~/Developer/reddit-restyle: edit there, not here.
+// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page goes to www.reddit.com. Built from ~/Developer/reddit-restyle: edit there, not here.
 // @author       you
 // @match        *://old.reddit.com/*
 // @run-at       document-start
 // @inject-into  page
 // @noframes
 // @grant        none
+// ==/UserScript==
+`;
+
+// Safari's declarativeNetRequest, through Userscripts' request scripts
+const BLOCKER_HEADER = `// ==UserScript==
+// @name         Reddit Blocker
+// @namespace    https://local/reddit-blocker
+// @version      ${version}
+// @description  Network rules for Reddit Restyle. The Userscripts app gets a page script's code asynchronously, so old reddit's head (its whole JS bundle, reddit-init.js, and its stylesheets) is parsed before Reddit Restyle starts, and runs. These keep them from loading at all: old reddit's own scripts and CSS (www.redditstatic.com/reddit…) and subreddit stylesheets (thumbs.redditmedia.com). Paths only old reddit uses: www.reddit.com is unaffected. Built from ~/Developer/reddit-restyle (src/blocker.json): edit there, not here.
+// @author       you
+// @run-at       request
 // ==/UserScript==
 `;
 
@@ -66,6 +78,9 @@ const writeJs = async (result) => {
   await write(`${NAME}.user.js`, JS_HEADER + result.outputFiles[0].text);
   console.log(`built js ${version} → ${OUT}`);
 };
+
+const rules = JSON.parse(await readFile('src/blocker.json', 'utf8'));
+await write('Reddit Blocker.user.js', `${BLOCKER_HEADER}\n${JSON.stringify(rules, null, 2)}\n`);
 
 options.define = await defines();
 

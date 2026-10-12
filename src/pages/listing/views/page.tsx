@@ -17,10 +17,16 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
         subreddit={state.subreddit}
         sort={state.sort}
       />
-      <main class="rr-grid rr-gap-2 rr-max-w-[40rem] rr-mx-auto rr-pt-2 rr-pb-8">
+      <main class="rr-max-w-[40rem] rr-mx-auto rr-pb-8">
         {state.status === 'loading' && <Loader />}
-        {state.status !== 'loading' && state.posts.length === 0 && (
-          <p class="rr-py-12 rr-text-center rr-text-ink-2">No posts here</p>
+        {state.status === 'failed' && (
+          <div class="rr-grid rr-gap-1 rr-px-4 rr-py-12 rr-text-center">
+            <p class="rr-font-semibold">Couldn’t load this page</p>
+            <p class="rr-text-xs rr-text-neutral-content-weak">{state.error}</p>
+          </div>
+        )}
+        {state.status === 'idle' && state.posts.length === 0 && (
+          <p class="rr-py-12 rr-text-center rr-text-neutral-content-weak">No posts here</p>
         )}
         {state.posts.map((post) => (
           <PostCard
@@ -29,13 +35,13 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
           />
         ))}
         {state.after && state.status !== 'loading' && (
-          <div class="rr-px-4 rr-pt-2">
+          <div class="rr-p-4">
             <BusyButton
               busy={state.status === 'more'}
-              class="rr-grid rr-place-items-center rr-w-full rr-min-h-control rr-rounded-button rr-border rr-border-line rr-bg-surface rr-font-bold"
+              class="rr-grid rr-place-items-center rr-w-full rr-h-12 rr-rounded-full rr-bg-secondary-background rr-font-semibold"
               onClick={() => dispatch({ type: 'more/requested' })}
             >
-              {state.status === 'failed' ? 'Couldn’t load more. Try again' : 'More posts'}
+              {state.status === 'more-failed' ? 'Couldn’t load more. Try again' : 'More posts'}
             </BusyButton>
           </div>
         )}

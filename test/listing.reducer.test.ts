@@ -4,7 +4,7 @@ import { initialState, listingReducer } from '../src/pages/listing/reducer';
 
 const post = (id: string): Post => ({
   id, title: id, subreddit: 'pics', author: 'a', score: 1, comments: 0, created: 0, permalink: `/r/pics/comments/${id}/`,
-  domain: 'self.pics', link: null, image: null, nsfw: false, spoiler: false, pinned: false, flair: null,
+  domain: 'self.pics', link: null, image: null, video: false, gallery: 0, text: null, nsfw: false, spoiler: false, pinned: false, flair: null,
 });
 const listing = (ids: string[], after: string | null): Listing => ({ posts: ids.map(post), after });
 
@@ -39,9 +39,15 @@ describe('listingReducer', () => {
     expect(listingReducer(last, { type: 'more/requested' })).toBe(last);
   });
 
+  it('the first page failed: why, and nothing to ask for', () => {
+    const failed = listingReducer(initialState('/'), { type: 'page/failed', error: 'Error: /.json?raw_json=1: 403' });
+    expect(failed).toMatchObject({ status: 'failed', error: 'Error: /.json?raw_json=1: 403', posts: [] });
+    expect(listingReducer(failed, { type: 'more/requested' })).toBe(failed);
+  });
+
   it('more failed: asked again', () => {
     const failed = listingReducer(listingReducer(loaded, { type: 'more/requested' }), { type: 'more/failed' });
-    expect(failed.status).toBe('failed');
+    expect(failed.status).toBe('more-failed');
     expect(listingReducer(failed, { type: 'more/requested' }).status).toBe('more');
   });
 });

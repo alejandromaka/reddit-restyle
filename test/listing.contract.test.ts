@@ -10,28 +10,41 @@ const answer = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/listing.json
 
 describe('readListing', () => {
   const { posts, after } = readListing(answer);
-  const [pinned, photo, link, nsfw] = posts;
+  const [pinned, photo, link, nsfw, video, gallery, crosspost] = posts;
 
   it('reads every post and where the next page starts', () => {
-    expect(posts.map(({ id }) => id)).toEqual(['t3_1q2c001', 't3_1q2c002', 't3_1q2c003', 't3_1q2c004']);
-    expect(after).toBe('t3_1q2c004');
+    expect(posts.map(({ id }) => id)).toEqual(['t3_1q2c001', 't3_1q2c002', 't3_1q2c003', 't3_1q2c004', 't3_1q2c005', 't3_1q2c006', 't3_1q2c007']);
+    expect(after).toBe('t3_1q2c007');
   });
 
-  it('a text post: no link, no image; pinned with its flair', () => {
+  it('a text post: its opening as plain text, spoilers hidden; pinned with its flair', () => {
     expect(pinned).toMatchObject({ link: null, image: null, pinned: true, flair: 'Announcement', subreddit: 'pics', comments: 87 });
+    expect(pinned!.text).toBe('Hi everyone! Please read the rules before posting. No screenshots & no memes. Be civil Credit the artist The last episode [spoiler] by the way.');
   });
 
-  it('a photo: the smallest preview at least 640 wide', () => {
-    expect(photo!.image).toEqual({ url: 'https://preview.redd.it/abc123.jpeg?width=640&s=c', width: 640, height: 853 });
-    expect(photo!.link).toBe('https://i.redd.it/abc123.jpeg');
+  it('a photo: the smallest preview at least 640 wide; reddit’s own, so no link', () => {
+    expect(photo).toMatchObject({ image: { url: 'https://preview.redd.it/abc123.jpeg?width=640&s=c', width: 640, height: 853 }, link: null, text: null });
   });
 
-  it('a link without a preview; an empty flair is none', () => {
-    expect(link).toMatchObject({ image: null, link: 'https://example.com/museum-restores-painting', domain: 'example.com', flair: null });
+  it('a link: its card and where it goes; an empty flair is none', () => {
+    expect(link).toMatchObject({ link: 'https://example.com/museum-restores-painting', domain: 'example.com', flair: null, video: false });
+    expect(link!.image!.url).toBe('https://external-preview.redd.it/museum.jpg?width=640&s=c');
   });
 
   it('NSFW: its preview stays hidden', () => {
-    expect(nsfw).toMatchObject({ nsfw: true, image: null });
+    expect(nsfw).toMatchObject({ nsfw: true, image: null, text: null });
+  });
+
+  it('a video: its poster, marked as one', () => {
+    expect(video).toMatchObject({ video: true, link: null, image: { url: 'https://external-preview.redd.it/vid005.png?width=640&s=c', width: 640, height: 360 } });
+  });
+
+  it('a gallery: its first picture in its own order, and how many there are (failed ones left out)', () => {
+    expect(gallery).toMatchObject({ gallery: 2, link: null, image: { url: 'https://preview.redd.it/g2.jpg?width=640&s=x', width: 640, height: 853 } });
+  });
+
+  it('a crosspost: the preview of the post it shares', () => {
+    expect(crosspost).toMatchObject({ subreddit: 'pics', link: null, domain: 'i.redd.it', image: { url: 'https://preview.redd.it/light.jpeg?width=640&s=c' } });
   });
 });
 

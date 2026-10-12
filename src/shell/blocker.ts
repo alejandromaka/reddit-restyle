@@ -1,9 +1,11 @@
 /* Takes over a page: removes reddit's CSS and every script of reddit's.
    While the HTML parses, an observer sees each element before its script
    runs, so reddit's scripts never run (ads and trackers included): ours draws
-   the whole page. */
+   the whole page. Userscripts injects us only once the head is parsed, too
+   late for what's there: old reddit's own bundle and stylesheets never load
+   at all (Reddit Blocker.user.js). */
 
-import { pageOf, type PageName } from './pages';
+import type { PageName } from './pages';
 
 export interface Shell {
   readonly page: PageName;
@@ -38,9 +40,7 @@ function fitViewport() {
   meta.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
 }
 
-export function takeOver(): Shell | undefined {
-  const page = pageOf(location.pathname);
-  if (!page) return undefined;
+export function takeOver(page: PageName): Shell {
   const html = document.documentElement;
   html.dataset.restyle = page;
 

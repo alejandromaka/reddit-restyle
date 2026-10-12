@@ -1,8 +1,8 @@
 {
   "kind": "Listing",
   "data": {
-    "after": "t3_1q2c004",
-    "dist": 4,
+    "after": "t3_1q2c007",
+    "dist": 7,
     "children": [
       {
         "kind": "t3",
@@ -21,7 +21,8 @@
           "over_18": false,
           "spoiler": false,
           "stickied": true,
-          "link_flair_text": "Announcement"
+          "link_flair_text": "Announcement",
+          "selftext": "Hi everyone! **Please read** the [rules](https://old.reddit.com/r/pics/wiki/rules) before posting.\n\n&#x200B;\n\n> No screenshots &amp; no memes.\n\n* Be civil\n* Credit the artist\n\n---\n\nThe last episode >!ends happily!< by the way."
         }
       },
       {
@@ -45,16 +46,37 @@
           "preview": {
             "images": [
               {
-                "source": { "url": "https://preview.redd.it/abc123.jpeg?width=3024&s=src", "width": 3024, "height": 4032 },
+                "source": {
+                  "url": "https://preview.redd.it/abc123.jpeg?width=3024&s=src",
+                  "width": 3024,
+                  "height": 4032
+                },
                 "resolutions": [
-                  { "url": "https://preview.redd.it/abc123.jpeg?width=108&s=a", "width": 108, "height": 144 },
-                  { "url": "https://preview.redd.it/abc123.jpeg?width=320&s=b", "width": 320, "height": 426 },
-                  { "url": "https://preview.redd.it/abc123.jpeg?width=640&s=c", "width": 640, "height": 853 },
-                  { "url": "https://preview.redd.it/abc123.jpeg?width=960&s=d", "width": 960, "height": 1280 }
+                  {
+                    "url": "https://preview.redd.it/abc123.jpeg?width=108&s=a",
+                    "width": 108,
+                    "height": 144
+                  },
+                  {
+                    "url": "https://preview.redd.it/abc123.jpeg?width=320&s=b",
+                    "width": 320,
+                    "height": 426
+                  },
+                  {
+                    "url": "https://preview.redd.it/abc123.jpeg?width=640&s=c",
+                    "width": 640,
+                    "height": 853
+                  },
+                  {
+                    "url": "https://preview.redd.it/abc123.jpeg?width=960&s=d",
+                    "width": 960,
+                    "height": 1280
+                  }
                 ]
               }
             ]
-          }
+          },
+          "selftext": ""
         }
       },
       {
@@ -74,7 +96,27 @@
           "over_18": false,
           "spoiler": false,
           "stickied": false,
-          "link_flair_text": ""
+          "link_flair_text": "",
+          "selftext": "",
+          "post_hint": "link",
+          "preview": {
+            "images": [
+              {
+                "source": {
+                  "url": "https://external-preview.redd.it/museum.jpg?s=src",
+                  "width": 1200,
+                  "height": 630
+                },
+                "resolutions": [
+                  {
+                    "url": "https://external-preview.redd.it/museum.jpg?width=640&s=c",
+                    "width": 640,
+                    "height": 336
+                  }
+                ]
+              }
+            ]
+          }
         }
       },
       {
@@ -98,11 +140,213 @@
           "preview": {
             "images": [
               {
-                "source": { "url": "https://preview.redd.it/nsfw.jpeg?s=src", "width": 1000, "height": 1000 },
-                "resolutions": [{ "url": "https://preview.redd.it/nsfw.jpeg?width=640&s=c", "width": 640, "height": 640 }]
+                "source": {
+                  "url": "https://preview.redd.it/nsfw.jpeg?s=src",
+                  "width": 1000,
+                  "height": 1000
+                },
+                "resolutions": [
+                  {
+                    "url": "https://preview.redd.it/nsfw.jpeg?width=640&s=c",
+                    "width": 640,
+                    "height": 640
+                  }
+                ]
+              }
+            ]
+          },
+          "selftext": ""
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c005",
+          "title": "Timelapse of the storm rolling in",
+          "subreddit": "pics",
+          "author": "someone",
+          "score": 500,
+          "num_comments": 5,
+          "created_utc": 1791815005,
+          "permalink": "/r/pics/comments/1q2c005/post/",
+          "selftext": "",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "domain": "v.redd.it",
+          "url": "https://v.redd.it/vid005",
+          "is_video": true,
+          "post_hint": "hosted:video",
+          "preview": {
+            "images": [
+              {
+                "source": {
+                  "url": "https://external-preview.redd.it/vid005.png?s=src",
+                  "width": 1920,
+                  "height": 1080
+                },
+                "resolutions": [
+                  {
+                    "url": "https://external-preview.redd.it/vid005.png?width=640&s=c",
+                    "width": 640,
+                    "height": 360
+                  }
+                ]
               }
             ]
           }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c006",
+          "title": "Three days in Lisbon",
+          "subreddit": "pics",
+          "author": "someone",
+          "score": 600,
+          "num_comments": 6,
+          "created_utc": 1791815006,
+          "permalink": "/r/pics/comments/1q2c006/post/",
+          "selftext": "",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "domain": "reddit.com",
+          "url": "https://www.reddit.com/gallery/1q2c006",
+          "is_gallery": true,
+          "gallery_data": {
+            "items": [
+              {
+                "media_id": "g2",
+                "id": 2
+              },
+              {
+                "media_id": "g1",
+                "id": 1
+              },
+              {
+                "media_id": "g3",
+                "id": 3
+              }
+            ]
+          },
+          "media_metadata": {
+            "g1": {
+              "status": "valid",
+              "e": "Image",
+              "m": "image/jpg",
+              "p": [
+                {
+                  "u": "https://preview.redd.it/g1.jpg?width=108&s=x",
+                  "x": 108,
+                  "y": 81
+                },
+                {
+                  "u": "https://preview.redd.it/g1.jpg?width=640&s=x",
+                  "x": 640,
+                  "y": 480
+                }
+              ],
+              "s": {
+                "u": "https://preview.redd.it/g1.jpg?width=4000&s=x",
+                "x": 4000,
+                "y": 3000
+              },
+              "id": "g1"
+            },
+            "g2": {
+              "status": "valid",
+              "e": "Image",
+              "m": "image/jpg",
+              "p": [
+                {
+                  "u": "https://preview.redd.it/g2.jpg?width=108&s=x",
+                  "x": 108,
+                  "y": 144
+                },
+                {
+                  "u": "https://preview.redd.it/g2.jpg?width=640&s=x",
+                  "x": 640,
+                  "y": 853
+                }
+              ],
+              "s": {
+                "u": "https://preview.redd.it/g2.jpg?width=3000&s=x",
+                "x": 3000,
+                "y": 4000
+              },
+              "id": "g2"
+            },
+            "g3": {
+              "status": "failed",
+              "id": "g3"
+            }
+          }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c007",
+          "title": "A lighthouse at night (from r/EarthPorn)",
+          "subreddit": "pics",
+          "author": "someone",
+          "score": 700,
+          "num_comments": 7,
+          "created_utc": 1791815007,
+          "permalink": "/r/pics/comments/1q2c007/post/",
+          "selftext": "",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "domain": "reddit.com",
+          "url": "/r/EarthPorn/comments/1q2b000/lighthouse/",
+          "crosspost_parent_list": [
+            {
+              "name": "t3_1q2b000",
+              "title": "A lighthouse at night",
+              "subreddit": "EarthPorn",
+              "author": "someone",
+              "score": 0,
+              "num_comments": 0,
+              "created_utc": 1791815000,
+              "permalink": "/r/EarthPorn/comments/1q2b000/lighthouse/",
+              "selftext": "",
+              "is_self": false,
+              "over_18": false,
+              "spoiler": false,
+              "stickied": false,
+              "link_flair_text": null,
+              "domain": "i.redd.it",
+              "url": "https://i.redd.it/light.jpeg",
+              "post_hint": "image",
+              "preview": {
+                "images": [
+                  {
+                    "source": {
+                      "url": "https://preview.redd.it/light.jpeg?s=src",
+                      "width": 2000,
+                      "height": 3000
+                    },
+                    "resolutions": [
+                      {
+                        "url": "https://preview.redd.it/light.jpeg?width=640&s=c",
+                        "width": 640,
+                        "height": 960
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     ]

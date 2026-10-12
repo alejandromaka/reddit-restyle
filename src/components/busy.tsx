@@ -1,4 +1,4 @@
-/* Our one loader: a spinning brand ring (still with reduced motion). In a
+/* Our one loader: a spinning ring in reddit's loader color (still with reduced motion). In a
    button, a small one in place of its label. */
 
 import type { ComponentChildren } from 'preact';
