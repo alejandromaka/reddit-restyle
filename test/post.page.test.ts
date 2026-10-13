@@ -33,9 +33,10 @@ const shell: Shell = {
 };
 
 const main = () => document.querySelector('main')!;
-const authors = () => [...main().querySelectorAll('#comments article > header a')].map((a) => a.textContent);
+const authors = () => [...main().querySelectorAll('#comments article > header > a')].map((name) => name.textContent);
 const button = (text: string, within: ParentNode = main()) => [...within.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === text || b.getAttribute('aria-label') === text)!;
-const comment = (author: string) => [...main().querySelectorAll<HTMLElement>('#comments article')].find((a) => a.querySelector('header a')?.textContent === author)!;
+const comment = (author: string) => [...main().querySelectorAll<HTMLElement>('#comments article')].find((a) => a.querySelector('header > a')?.textContent === author)!;
+const row = (author: string) => comment(author).querySelector<HTMLElement>('header')!;  // who and when: a tap folds
 const type = (field: HTMLInputElement | HTMLTextAreaElement, text: string) => {
   field.value = text;
   field.dispatchEvent(new Event('input', { bubbles: true }));
@@ -72,11 +73,41 @@ describe('a post’s page', () => {
     expect(main().querySelector('a[href="/r/pics/comments/1q2c001/welcome_to_rpics/c2/"]')!.textContent).toBe('Continue this thread →');
   });
 
-  it('folding a thread: its words and replies go, until opened again', async () => {
+  it('folding: a tap on who and when folds the comment and its replies away; again, brings them all back', async () => {
+    row('early_riser').click();
+    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'automod']));
+    expect(comment('early_riser').textContent).not.toContain('First!');
+    row('early_riser').click();
+    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'automod']));
+    expect(comment('early_riser').textContent).toContain('First!');
+  });
+
+  it('the thread’s line: a tap folds the comment it comes down from; again (its row), opens it', async () => {
+    comment('early_riser').querySelector<HTMLButtonElement>(':scope > .rr-relative > button')!.click();
+    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'automod']));
+    row('early_riser').click();
+    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'automod']));
+  });
+
+  it('the thread’s line runs beside its replies but the last, into the last one’s curve', () => {
+    const line = comment('early_riser').querySelector<HTMLButtonElement>(':scope > .rr-relative > button')!;
+    expect(line.parentElement!.contains(comment('pics-mod'))).toBe(true);
+    expect(line.parentElement!.contains(button('3 more replies'))).toBe(false);
+  });
+
+  it('the name: their profile, not a fold', () => {
+    const name = row('early_riser').querySelector('a')!;
+    expect(name.getAttribute('href')).toBe('/user/early_riser/');
+    name.addEventListener('click', (event) => event.preventDefault());  // jsdom: no going there
+    name.click();
+    expect(comment('early_riser').textContent).toContain('First!');
+  });
+
+  it('folding with ⊖, and reddit’s folded one opened with a tap on its row', async () => {
     button('Fold the thread', comment('early_riser')).click();
     await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'automod']));
-    button('Open the thread', comment('early_riser')).click();
-    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'automod']));
+    row('automod').click();
+    await vi.waitFor(() => expect(comment('automod').textContent).toContain('Reminder: be civil'));
   });
 
   it('a reply: its box under the comment; sent with your modhash; first among its replies', async () => {

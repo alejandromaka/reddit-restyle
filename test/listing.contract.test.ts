@@ -4,17 +4,19 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { pageOf, pageUrl } from '../src/core/paging';
 import { aboutUrl, listingUrl, readAbout, readListing } from '../src/pages/listing/contract';
 
 const answer = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/listing.json'), 'utf8'));
 
 describe('readListing', () => {
-  const { posts, after } = readListing(answer);
+  const { posts, after, before } = readListing(answer);
   const [pinned, photo, link, nsfw, video, gallery, crosspost] = posts;
 
   it('reads every post and where the next page starts', () => {
     expect(posts.map(({ id }) => id)).toEqual(['t3_1q2c001', 't3_1q2c002', 't3_1q2c003', 't3_1q2c004', 't3_1q2c005', 't3_1q2c006', 't3_1q2c007']);
     expect(after).toBe('t3_1q2c007');
+    expect(before).toBeNull();  // the first page
   });
 
   it('a text post: its opening as plain text, spoilers hidden; pinned with its flair', () => {
@@ -54,7 +56,7 @@ describe('readListing', () => {
   });
 
   it('a gif: its mp4, looped', () => {
-    const gif = readListing({ kind: 'Listing', data: { after: null, children: [{ kind: 't3', data: { ...answer.data.children[1].data, preview: { images: [{
+    const gif = readListing({ kind: 'Listing', data: { after: null, before: null, children: [{ kind: 't3', data: { ...answer.data.children[1].data, preview: { images: [{
       source: { url: 'https://preview.redd.it/g.gif?s=src', width: 400, height: 300 },
       resolutions: [],
       variants: { mp4: { source: { url: 'https://preview.redd.it/g.gif?format=mp4&s=m', width: 400, height: 300 }, resolutions: [] } },
@@ -76,10 +78,26 @@ describe('readListing', () => {
 });
 
 describe('listingUrl', () => {
-  it('adds .json to the page, keeps its query, asks for unescaped URLs', () => {
-    expect(listingUrl('/', '')).toBe('/.json?raw_json=1&sr_detail=1');
-    expect(listingUrl('/r/pics/top/', '?t=week')).toBe('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1');
-    expect(listingUrl('/r/pics', '', 't3_x')).toBe('/r/pics/.json?raw_json=1&sr_detail=1&after=t3_x');
+  it('adds .json to the page, keeps its query (where it starts), asks for unescaped URLs, a page of 25', () => {
+    expect(listingUrl('/', '')).toBe('/.json?raw_json=1&sr_detail=1&limit=25');
+    expect(listingUrl('/r/pics/top/', '?t=week')).toBe('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1&limit=25');
+    expect(listingUrl('/r/pics', '?count=25&after=t3_x&limit=100')).toBe('/r/pics/.json?count=25&after=t3_x&limit=25&raw_json=1&sr_detail=1');
+  });
+});
+
+describe('pages, as old reddit’s', () => {
+  it('which page an address is: after=, the posts before it; before=, the first post of the page after it', () => {
+    expect(['', '?t=week', '?count=25&after=t3_x', '?count=50&after=t3_x', '?count=26&before=t3_x', '?count=51&before=t3_x', '?after=t3_x'].map(pageOf))
+      .toEqual([1, 1, 2, 3, 1, 2, 1]);
+  });
+
+  it('a page’s address: the listing’s (its span kept, where it started dropped), then where the page starts', () => {
+    expect(pageUrl('/r/pics/top/', '?t=week&count=25&after=t3_a', 1)).toBe('/r/pics/top/?t=week');
+    expect(pageUrl('/r/pics/', '', 2, { after: 't3_b' })).toBe('/r/pics/?count=25&after=t3_b');
+    expect(pageUrl('/r/pics/', '?count=50&after=t3_a', 2, { before: 't3_c' })).toBe('/r/pics/?count=51&before=t3_c');
+    for (const [page, start] of [[2, { after: 'x' }], [5, { after: 'x' }], [2, { before: 'x' }], [5, { before: 'x' }]] as const) {
+      expect(pageOf(pageUrl('/', '', page, start).slice(1))).toBe(page);  // each address is the page it says
+    }
   });
 });
 

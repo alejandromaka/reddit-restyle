@@ -21,9 +21,13 @@
   .rr-flex-1 { flex: 1 1 0%; }
   .rr-items-center { align-items: center; }
   .rr-justify-end { justify-content: flex-end; }  /* a switch, on */
+  .rr-justify-center { justify-content: center; }  /* the pages */
   .rr-self-center { align-self: center; }
   .rr-place-items-center { place-items: center; }
   .rr-justify-items-start { justify-items: start; }
+  .rr-justify-self-start { justify-self: start; }  /* someone's avatar: its own width */
+  .rr-justify-between { justify-content: space-between; }
+  .rr-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }  /* someone's numbers, in About */
   .rr-gap-1 { gap: var(--s1); }
   .rr-gap-2 { gap: var(--s2); }
   .rr-gap-3 { gap: var(--s3); }
@@ -39,12 +43,15 @@
   .rr-inset-y-0 { top: 0; bottom: 0; }
   .rr-inset-x-0 { left: 0; right: 0; }
   .rr-bottom-0 { bottom: 0; }
+  .-rr-bottom-4 { bottom: calc(var(--s4) * -1); }  /* a thread's line: on into its last reply, to where its curve bends */
   .rr-left-0 { left: 0; }
   .rr-top-0 { top: 0; }
   .rr-top-14 { top: var(--s14); }  /* under the bar */
   .rr-top-full { top: 100%; }        /* a dropdown, under what opened it */
   .rr-top-4 { top: var(--s4); }
   .rr-right-4 { right: var(--s4); }
+  .rr-left-1 { left: var(--s1); }  /* a thread's line: its tap area, centered under the avatar */
+  .-rr-left-4 { left: calc(var(--s4) * -1); }  /* a reply's curve, from its parent's line */
   .rr-top-2 { top: var(--s2); }
   .rr-right-2 { right: var(--s2); }
   .rr-z-bar { z-index: var(--z-bar); }
@@ -53,6 +60,7 @@
   /* --- Size --- */
   .rr-w-full { width: 100%; }
   .rr-min-w-0 { min-width: 0; }  /* lets a flex item shrink, so its text can truncate */
+  .rr-min-w-8 { min-width: var(--s8); }  /* a page's number: round, wider for more digits */
   .rr-w-4 { width: var(--s4); }
   .rr-w-5 { width: var(--s5); }
   .rr-w-6 { width: var(--s6); }
@@ -61,6 +69,7 @@
   .rr-w-12 { width: var(--s12); }
   .rr-h-auto { height: auto; }
   .rr-h-full { height: 100%; }
+  .rr-h-3 { height: var(--s3); }    /* a reply's curve */
   .rr-h-4 { height: var(--s4); }
   .rr-h-5 { height: var(--s5); }
   .rr-h-6 { height: var(--s6); }
@@ -69,6 +78,9 @@
   .rr-h-12 { height: var(--s12); }  /* reddit's large button */
   .rr-h-14 { height: var(--s14); }  /* reddit's header */
   .rr-h-16 { height: var(--s16); }  /* a subreddit's banner */
+  .rr-h-20 { height: var(--s20); }  /* someone's banner */
+  .rr-w-22 { width: var(--s22); }   /* someone's avatar */
+  .rr-h-22 { height: var(--s22); }
   .rr-min-h-24 { min-height: var(--s24); }  /* a comment box */
   .rr-max-h-\[75vh\] { max-height: 75vh; }  /* a post's video */
   .rr-w-64 { width: var(--s64); }             /* a dropdown */
@@ -83,12 +95,14 @@
   /* --- Space --- */
   .rr-m-auto { margin: auto; }
   .rr-mx-auto { margin-inline: auto; }
-  .rr-ml-3 { margin-left: var(--s3); }  /* replies, under their comment's avatar */
   .rr-mx-4 { margin-inline: var(--s4); }
   .rr-my-2 { margin-block: var(--s2); }
   .rr-ml-auto { margin-left: auto; }
+  .rr-ml-3 { margin-left: var(--s3); }  /* a thread's line, in the middle of its tap area */
+  .rr-mr-1 { margin-right: var(--s1); }
   .rr-mr-2 { margin-right: var(--s2); }
   .rr-mt-2 { margin-top: var(--s2); }
+  .-rr-mt-6 { margin-top: calc(var(--s6) * -1); }  /* someone's avatar, over their banner's edge */
   .rr-p-0\.5 { padding: var(--s0_5); }
   .rr-p-2 { padding: var(--s2); }
   .rr-p-3 { padding: var(--s3); }
@@ -110,7 +124,8 @@
   .rr-pb-4 { padding-bottom: var(--s4); }
   .rr-pl-3 { padding-left: var(--s3); }
   .rr-pl-6 { padding-left: var(--s6); }   /* a list's markers */
-  .rr-pl-8 { padding-left: var(--s8); }   /* a comment, past its avatar */
+  .rr-pl-8 { padding-left: var(--s8); }   /* replies, past their thread's line */
+  .rr-pl-10 { padding-left: var(--s10); } /* a comment, past its avatar */
   .rr-pb-8 { padding-bottom: var(--s8); }
 
   /* --- Type (a size brings its line height, as in Tailwind) --- */
@@ -118,6 +133,7 @@
   .rr-text-base { font-size: var(--text-base); line-height: var(--leading-base); }
   .rr-text-lg { font-size: var(--text-lg); line-height: var(--leading-lg); }
   .rr-text-xl { font-size: var(--text-xl); line-height: var(--leading-xl); }
+  .rr-text-3xl { font-size: var(--text-3xl); line-height: var(--leading-3xl); }  /* someone's initial, in their avatar */
   .rr-font-mono { font-family: var(--font-mono); }
   .rr-font-semibold { font-weight: var(--semibold); }
   .rr-font-bold { font-weight: var(--bold); }
@@ -173,10 +189,13 @@
   .rr-border-l-4 { border-left: 4px solid; }  /* a quote */
   .rr-border-neutral-border-weak { border-color: var(--color-neutral-border-weak); }
   .rr-border-neutral-border-medium { border-color: var(--color-neutral-border-medium); }
+  .rr-border-\(--line\) { border-color: var(--line); }  /* a thread's line, its replies' curves */
+  .rr-\[--line\:var\(--color-neutral-border-weak\)\] { --line: var(--color-neutral-border-weak); }  /* a comment: its line's color */
   .rr-border-spinner { border: 3px solid var(--color-neutral-border-weak); border-top-color: var(--loader-color); }  /* the loader's ring */
   .rr-rounded-media { border-radius: var(--radius-media); }
   .rr-rounded-sm { border-radius: var(--radius-sm); }
   .rr-rounded-full { border-radius: var(--radius-full); }
+  .rr-rounded-bl-xl { border-bottom-left-radius: var(--radius-xl); }  /* a reply's curve */
   .rr-shadow-md { box-shadow: var(--elevation-md); }  /* a dropdown; a switch's knob */
   .rr-rounded-t-media { border-radius: var(--radius-media) var(--radius-media) 0 0; }  /* a sheet from the bottom */
   .rr-object-cover { object-fit: cover; }
@@ -193,12 +212,14 @@
   .rr-touch-pan-x { touch-action: pan-x pinch-zoom; }       /* pictures opened big: swiped through, zoomed; the page behind stays */
   .rr-outline-none { outline: none; }                       /* a sheet's panel (focused for screen readers); a field inside its own rounded border */
   .rr-pointer-events-none { pointer-events: none; }
+  .rr-cursor-pointer { cursor: pointer; }  /* a comment's row: a tap folds it */
   .rr-transition-transform { transition: transform var(--duration) var(--ease-out); }
   .rr-transition-opacity { transition: opacity var(--duration) var(--ease-out); }
   .-rr-translate-x-full { transform: translateX(-100%); }  /* the menu, closed */
   .rr-translate-y-full { transform: translateY(100%); }    /* a sheet from the bottom, closed */
   .rr-opacity-0 { opacity: 0; }                              /* the menu's scrim, closed; a dropdown's control */
   .rr-animate-spin { animation: rr-spin 1s linear infinite; }
+  .rr-group[open] .group-open\:rr-rotate-180 { transform: rotate(180deg); }  /* About's chevron, open (rr-group: the <details>) */
   /* --- Wider than a phone (Tailwind's sm): a subreddit's header, as reddit.com's on a computer --- */
   @media (min-width: 640px) {
     .sm\:rr-flex { display: flex; }
@@ -230,6 +251,11 @@
   @media (min-width: 1280px) {
     .xl\:rr-hidden { display: none; }
     .xl\:rr-block { display: block; }
+  }
+
+  /* --- A mouse on it (Tailwind's hover: only where there's a mouse, so a tap doesn't stick) --- */
+  @media (hover: hover) {
+    .has-\[\>div\>button\:hover\]\:rr-\[--line\:var\(--color-neutral-content-weak\)\]:has(> div > button:hover) { --line: var(--color-neutral-content-weak); }  /* a comment, a mouse on its line */
   }
 
   @media (prefers-reduced-motion: reduce) {

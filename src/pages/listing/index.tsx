@@ -24,7 +24,7 @@ export function setUpListing(shell: Shell) {
     const store = createStore(listingReducer, initial);
     const root = shell.mount();
     follow(store, (state) => render(<ListingPage state={state} dispatch={store.dispatch} />, root));
-    startEffects(store, { more: (after) => fetchListing(pathname, search, after), vote, subscribe });
+    startEffects(store, { vote, subscribe });
     chrome(store);
     shell.reveal();
     first.then(

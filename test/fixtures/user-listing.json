@@ -1,0 +1,118 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": "t1_u1c002",
+    "before": null,
+    "dist": 3,
+    "children": [
+      {
+        "kind": "t1",
+        "data": {
+          "name": "t1_u1c001",
+          "id": "u1c001",
+          "author": "someone",
+          "body": "",
+          "body_html": "<div class=\"md\"><p>That light is <strong>unreal</strong>.</p>\n</div>",
+          "score": 41,
+          "score_hidden": false,
+          "likes": true,
+          "created_utc": 1760300000.0,
+          "subreddit": "pics",
+          "subreddit_name_prefixed": "r/pics",
+          "link_id": "t3_1q2c002",
+          "link_title": "Sunrise over the Grand Canyon this morning",
+          "link_author": "pics-mod",
+          "link_permalink": "https://www.reddit.com/r/pics/comments/1q2c002/sunrise_over_the_grand_canyon/",
+          "permalink": "/r/pics/comments/1q2c002/sunrise_over_the_grand_canyon/u1c001/",
+          "sr_detail": {
+            "community_icon": "",
+            "icon_img": "https://styles.redditmedia.com/t5_2qh0u/styles/communityIcon_pics.png?width=256&s=d"
+          }
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "name": "t3_1q2c007",
+          "title": "A lighthouse at night (from r/EarthPorn)",
+          "subreddit": "pics",
+          "author": "someone",
+          "score": 700,
+          "num_comments": 7,
+          "created_utc": 1791815007,
+          "permalink": "/r/pics/comments/1q2c007/post/",
+          "selftext": "",
+          "is_self": false,
+          "over_18": false,
+          "spoiler": false,
+          "stickied": false,
+          "link_flair_text": null,
+          "domain": "reddit.com",
+          "url": "/r/EarthPorn/comments/1q2b000/lighthouse/",
+          "crosspost_parent_list": [
+            {
+              "name": "t3_1q2b000",
+              "title": "A lighthouse at night",
+              "subreddit": "EarthPorn",
+              "author": "someone",
+              "score": 0,
+              "num_comments": 0,
+              "created_utc": 1791815000,
+              "permalink": "/r/EarthPorn/comments/1q2b000/lighthouse/",
+              "selftext": "",
+              "is_self": false,
+              "over_18": false,
+              "spoiler": false,
+              "stickied": false,
+              "link_flair_text": null,
+              "domain": "i.redd.it",
+              "url": "https://i.redd.it/light.jpeg",
+              "post_hint": "image",
+              "preview": {
+                "images": [
+                  {
+                    "source": {
+                      "url": "https://preview.redd.it/light.jpeg?s=src",
+                      "width": 2000,
+                      "height": 3000
+                    },
+                    "resolutions": [
+                      {
+                        "url": "https://preview.redd.it/light.jpeg?width=640&s=c",
+                        "width": 640,
+                        "height": 960
+                      }
+                    ]
+                  }
+                ]
+              },
+              "likes": null
+            }
+          ],
+          "likes": null
+        }
+      },
+      {
+        "kind": "t1",
+        "data": {
+          "name": "t1_u1c002",
+          "id": "u1c002",
+          "author": "someone",
+          "body": "",
+          "body_html": "<div class=\"md\"><p>Check the <a href=\"https://example.com/tides\">tide tables</a> first.</p>\n</div>",
+          "score": 3,
+          "score_hidden": true,
+          "likes": null,
+          "created_utc": 1760000000.0,
+          "subreddit": "travel",
+          "subreddit_name_prefixed": "r/travel",
+          "link_id": "t3_1q9t001",
+          "link_title": "Best time to visit Peggy’s Cove?",
+          "link_author": "pics-mod",
+          "link_permalink": "https://www.reddit.com/r/travel/comments/1q9t001/best_time_to_visit_peggys_cove/",
+          "permalink": "/r/travel/comments/1q9t001/best_time_to_visit_peggys_cove/u1c002/"
+        }
+      }
+    ]
+  }
+}

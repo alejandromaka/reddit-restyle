@@ -49,10 +49,11 @@
 
   /* Space and size (Tailwind's numbers: 1 = 4px; reddit's spacers and
      button heights sit on the same grid: 32px small, 48px large; its header, 56px) */
-  --s0_5: 2px; --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s14: 56px; --s16: 64px; --s22: 88px; --s24: 96px; --s32: 128px; --s64: 256px;
+  --s0_5: 2px; --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s7: 28px; --s8: 32px; --s10: 40px; --s12: 48px; --s14: 56px; --s16: 64px; --s20: 80px; --s22: 88px; --s24: 96px; --s32: 128px; --s64: 256px;
 
-  /* Corners: an image (reddit's --radius-4); code, a spoiler (--radius-sm); pills and buttons */
+  /* Corners: an image (reddit's --radius-4); a reply's curve; code, a spoiler (--radius-sm); pills and buttons */
   --radius-media: 16px;
+  --radius-xl: 12px;
   --radius-sm: 4px;
   --radius-full: 9999px;
 

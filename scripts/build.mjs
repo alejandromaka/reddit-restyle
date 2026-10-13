@@ -5,7 +5,7 @@
 // to dist/ and to the app's iCloud folder (REDDIT_RESTYLE_OUT overrides it).
 // --watch rebuilds the script on every change (the rules: on a restart).
 import { context, build } from 'esbuild';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { watch } from 'node:fs';
 
@@ -39,10 +39,17 @@ const BLOCKER_HEADER = `// ==UserScript==
 // ==/UserScript==
 `;
 
+// Into dist/ and the scripts folder: only when it changed, and whole (written
+// beside it, then renamed over it). The Userscripts app reads the folder
+// whenever a Safari window gets focus, Reddit Blocker's rules cleared first:
+// a file it finds half written leaves them cleared, and old reddit's code runs.
 async function write(name, text) {
   await mkdir('dist', { recursive: true });
-  await writeFile(`dist/${name}`, text);
-  await writeFile(`${OUT}/${name}`, text);
+  for (const path of [`dist/${name}`, `${OUT}/${name}`]) {
+    if (await readFile(path, 'utf8').catch(() => null) === text) continue;
+    await writeFile(`${path}.tmp`, text);
+    await rename(`${path}.tmp`, path);
+  }
 }
 
 // The page's stylesheet, for the script to add

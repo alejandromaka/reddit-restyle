@@ -1,5 +1,6 @@
 import type { Vote } from '../../account/contract';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
+import { pageOf } from '../../core/paging';
 import type { Post } from './contract';
 import { TIMES, type Kind, type ListingAction, type ListingState, type Sort, type Time } from './types';
 
@@ -20,7 +21,8 @@ export function initialState(path: string, search = ''): ListingState {
   const kind = kindOf(subreddit);
   return {
     subreddit, kind, sort: sort as Sort, time: sort === 'top' || sort === 'controversial' ? timeOf(search) : null,
-    posts: [], after: null, status: 'loading', error: null,
+    path, search, page: pageOf(search),
+    posts: [], after: null, before: null, status: 'loading', error: null,
     about: kind === 'subreddit' ? { status: 'loading' } : null,
     ...initialChrome(),
   };
@@ -40,19 +42,9 @@ function joined(state: ListingState, join: boolean): ListingState {
 export function listingReducer(state: ListingState, action: ListingAction): ListingState {
   switch (action.type) {
     case 'page/loaded':
-      return { ...state, posts: action.listing.posts, after: action.listing.after, status: 'idle' };
+      return { ...state, ...action.listing, status: 'idle' };
     case 'page/failed':
       return { ...state, status: 'failed', error: action.error };
-    case 'more/requested':
-      return state.after && state.status !== 'more' ? { ...state, status: 'more' } : state;
-    case 'more/loaded': {
-      // A post that moved up while we read shows once
-      const seen = new Set(state.posts.map(({ id }) => id));
-      const posts = [...state.posts, ...action.listing.posts.filter(({ id }) => !seen.has(id))];
-      return { ...state, posts, after: action.listing.after, status: 'idle' };
-    }
-    case 'more/failed':
-      return { ...state, status: 'more-failed' };
     case 'vote/requested':
     case 'vote/failed':
       return { ...state, posts: voted(state.posts, action.id, action.vote) };

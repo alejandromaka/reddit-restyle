@@ -1,6 +1,7 @@
 /* A round picture: a community's icon or your avatar, else its initial.
    sm 24px (lists), md 32px (the bar), lg 40px (you, in your account), hero
-   40px on a phone and 88px wider (a subreddit's header, as reddit.com's) */
+   40px on a phone and 88px wider (a subreddit's header, as reddit.com's), xl
+   88px (someone's profile) */
 
 import { cx } from './ui';
 
@@ -9,6 +10,7 @@ const SIZES = {
   md: ['rr-w-8 rr-h-8 rr-text-xs', 32],
   lg: ['rr-w-10 rr-h-10 rr-text-lg', 40],
   hero: ['rr-w-10 rr-h-10 sm:rr-w-22 sm:rr-h-22 rr-text-lg sm:rr-text-3xl', 88],
+  xl: ['rr-w-22 rr-h-22 rr-text-3xl', 88],
 } as const;
 
 interface AvatarProps {

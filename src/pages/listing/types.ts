@@ -16,19 +16,20 @@ export interface ListingState extends ChromeState {
   kind: Kind;
   sort: Sort;
   time: Time | null;         // top's span (day unless the address says); null: a sort without one
+  path: string;              // its address (its pages' links: the same, starting elsewhere)
+  search: string;
+  page: number;              // which page, from 1 (old reddit's count=)
   posts: Post[];
-  after: string | null;      // the next page's start; null: no more
-  status: 'loading' | 'failed' | 'idle' | 'more' | 'more-failed';  // loading, failed: the first page; more, more-failed: the next
-  error: string | null;      // why the first page didn't come
+  after: string | null;      // the next page's start; null: the last page
+  before: string | null;     // the page before's end; null: the first
+  status: 'loading' | 'failed' | 'idle';
+  error: string | null;      // why the page didn't come
   about: Load<About> | null;  // one subreddit's; null: not one subreddit
 }
 
 export type ListingAction =
   | { type: 'page/loaded'; listing: Listing }
   | { type: 'page/failed'; error: string }
-  | { type: 'more/requested' }
-  | { type: 'more/loaded'; listing: Listing }
-  | { type: 'more/failed' }
   | { type: 'vote/requested'; id: string; vote: Vote }
   | { type: 'vote/failed'; id: string; vote: Vote }     // back to the vote before
   | { type: 'join/requested'; joined: boolean }

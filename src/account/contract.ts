@@ -18,6 +18,9 @@ export interface Me {
 
 export type Vote = 1 | 0 | -1;  // up, none, down
 
+// Your vote on a post or comment, from reddit's likes: true up, false down, null none
+export const voteOf = (likes: boolean | null | undefined): Vote => (likes === null || likes === undefined ? 0 : likes ? 1 : -1);
+
 let me: Promise<NonNullable<RedditMe['data']>> | null = null;
 
 function myData() {

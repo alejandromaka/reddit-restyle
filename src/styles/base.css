@@ -19,6 +19,8 @@
   :is(input, textarea) { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; -webkit-appearance: none; appearance: none; }
   textarea { resize: vertical; }
   input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }  /* ours: Clear search */
+  summary { list-style: none; -webkit-tap-highlight-color: transparent; }  /* ours: a chevron */
+  summary::-webkit-details-marker { display: none; }
   /* Pressed: the tap highlight is off, so everything tappable dims while touched
      (the script turns :active on for iOS) */
   :is(a, button):active { opacity: var(--opacity-pressed); }

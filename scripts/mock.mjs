@@ -8,11 +8,11 @@
 // test browser answer a synchronous request, so the script can't fetch it at
 // document start). Nothing reaches reddit: every old.reddit.com page is a bare
 // old reddit page (its own scripts and CSS refused, as Reddit Blocker does),
-// every listing is test/fixtures/listing.json (More posts: the same posts
-// under new ids, then no more), every post's page test/fixtures/thread.json
+// every listing is test/fixtures/listing.json (its next page, after=: the
+// same posts under new ids, the last page), every post's page test/fixtures/thread.json
 // (more comments: morechildren.json; your comment: posted.json, with your
-// words), every subreddit's about test/fixtures/about.json
-// (under its own name), your communities test/fixtures/subscriptions.json,
+// words), every profile test/fixtures/user.json and user-listing.json,
+// every subreddit's about test/fixtures/about.json (under its own name), your communities test/fixtures/subscriptions.json,
 // what you do (vote, join, leave, log out) is taken and printed, and every image is a
 // placeholder. A page we don't draw stays the bare old reddit page, as on the
 // phone.
@@ -21,6 +21,7 @@
 // MOCK_TAP="Menu > r/soccer": with MOCK_SHOT, what to tap first (a label or text)
 // MOCK_FULL=1: with MOCK_SHOT, the whole page, not just the screen
 // MOCK_WIDTH=1280: a window that wide (a computer's), not the iPhone mini's 375
+// MOCK_HOVER=selector: with MOCK_SHOT, the mouse on it after the taps (a :hover look)
 // MOCK_EVAL: with MOCK_SHOT, an expression evaluated on the page after the taps, printed (a measurement, a check)
 
 import { existsSync, watch } from 'node:fs';
@@ -66,6 +67,7 @@ async function nextPage() {
   const listing = JSON.parse(await fixture('listing'));
   listing.data.children = listing.data.children.map(({ kind, data }) => ({ kind, data: { ...data, name: `${data.name}_2` } }));
   listing.data.after = null;
+  listing.data.before = listing.data.children[0].data.name;
   return JSON.stringify(listing);
 }
 
@@ -103,6 +105,8 @@ async function answer(route) {
     if (url.pathname === '/subreddits/mine/subscriber.json') return json(await fixture('subscriptions'));
     const subreddit = url.pathname.match(/^\/r\/([^/]+)\/about\.json$/)?.[1];
     if (subreddit) return json(await about(subreddit));
+    if (/^\/user\/[^/]+\/about\.json$/.test(url.pathname)) return json(await fixture('user'));
+    if (url.pathname.startsWith('/user/') && url.pathname.endsWith('.json')) return json(await fixture('user-listing'));
     if (url.pathname.includes('/comments/') && url.pathname.endsWith('.json')) return json(await fixture('thread'));
     if (url.pathname.endsWith('.json')) return json(url.searchParams.has('after') ? await nextPage() : await fixture('listing'));
   }
@@ -121,6 +125,7 @@ if (SHOT) {
     await page.getByLabel(tap, { exact: true }).or(page.getByText(tap, { exact: true })).first().click();
     await page.waitForTimeout(1000);
   }
+  if (process.env.MOCK_HOVER) await page.hover(process.env.MOCK_HOVER);
   if (process.env.MOCK_EVAL) console.log(JSON.stringify(await page.evaluate(process.env.MOCK_EVAL), null, 1));
   await page.screenshot({ path: SHOT, fullPage: Boolean(process.env.MOCK_FULL) });
   await browser.close();

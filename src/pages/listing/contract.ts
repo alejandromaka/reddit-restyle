@@ -1,11 +1,13 @@
 /* reddit's listing: the page's own address with .json added (raw_json=1:
-   URLs not HTML-escaped; sr_detail=1: each post's subreddit's icon). A
-   Listing of t3 things (posts); `after` names the last one, for the next
-   page. And a subreddit's about.json: its name, icon and members. Read into
-   our types, only what we draw. */
+   URLs not HTML-escaped; sr_detail=1: each post's subreddit's icon; limit:
+   a page, core/paging.ts). A Listing of t3 things (posts); `after` names the
+   last one, for the next page, `before` the first, for the one before. And a
+   subreddit's about.json: its name, icon and members. Read into our types,
+   only what we draw. */
 
-import type { Vote } from '../../account/contract';
+import { voteOf, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
+import { PAGE_SIZE } from '../../core/paging';
 import { plain } from '../../core/text';
 import { iconOf } from '../../nav/contract';
 
@@ -51,7 +53,7 @@ export interface RedditPost {
 }
 interface RedditListing {
   kind: 'Listing';
-  data: { after: string | null; children: { kind: string; data: RedditPost }[] };
+  data: { after: string | null; before: string | null; children: { kind: string; data: RedditPost }[] };
 }
 
 export interface Image { url: string; width: number; height: number }
@@ -88,7 +90,8 @@ export interface Post {
 
 export interface Listing {
   posts: Post[];
-  after: string | null;
+  after: string | null;   // the next page's start; null: the last page
+  before: string | null;  // the page before's end; null: the first page
 }
 
 // A phone's width at 2x: the smallest size at least this wide (else the largest)
@@ -145,7 +148,7 @@ export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
     subredditIcon: post.sr_detail ? iconOf(post.sr_detail) : null,
     author: post.author,
     score: post.score,
-    vote: post.likes === null || post.likes === undefined ? 0 : post.likes ? 1 : -1,
+    vote: voteOf(post.likes),
     comments: post.num_comments,
     created: post.created_utc,
     permalink: post.permalink,
@@ -164,20 +167,22 @@ export function readListing(answer: RedditListing): Listing {
   return {
     posts: answer.data.children.filter(({ kind }) => kind === 't3').map(({ data }) => readPost(data)),
     after: answer.data.after,
+    before: answer.data.before,
   };
 }
 
-// The listing's JSON address: the page's path and query, plus .json (and, for more, after=)
-export function listingUrl(path: string, search: string, after?: string) {
+// The listing's JSON address: the page's path and query (where it starts: count, after or before), plus .json, a page's worth
+export function listingUrl(path: string, search: string) {
   const query = new URLSearchParams(search);
   query.set('raw_json', '1');
   query.set('sr_detail', '1');
-  if (after) query.set('after', after);
+  query.set('limit', String(PAGE_SIZE));
   return `${path.replace(/\/$/, '')}/.json?${query}`;
 }
 
-export const fetchListing = async (path: string, search: string, after?: string) =>
-  readListing(await fetchJson<RedditListing>(listingUrl(path, search, after)));
+export const fetchListing = async (path: string, search: string) =>
+  readListing(await fetchJson<RedditListing>(listingUrl(path, search)));
+
 
 // A subreddit's about.json: a t5 thing
 interface RedditAbout {

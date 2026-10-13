@@ -14,8 +14,14 @@ describe('pageOf', () => {
     }
   });
 
+  it('someone’s profile, by tab', () => {
+    for (const path of ['/user/someone/', '/user/someone', '/user/some-one_2/comments/', '/user/someone/submitted', '/user/someone/saved/', '/user/someone/downvoted/']) {
+      expect(pageOf(path), path).toBe('profile');
+    }
+  });
+
   it('everything else stays reddit’s', () => {
-    for (const path of ['/user/someone/', '/message/inbox/', '/prefs/', '/r/pics/wiki/', '/r/pics/about/', '/submit']) {
+    for (const path of ['/user/someone/gilded/', '/user/someone/m/multi/', '/message/inbox/', '/prefs/', '/r/pics/wiki/', '/r/pics/about/', '/submit']) {
       expect(pageOf(path), path).toBeUndefined();
     }
   });

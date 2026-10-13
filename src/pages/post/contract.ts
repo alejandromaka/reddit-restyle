@@ -5,7 +5,7 @@
    /api/morechildren.json, a hundred at a time, flat (each names its parent).
    Read into our types, only what we draw. */
 
-import type { Vote } from '../../account/contract';
+import { voteOf, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
 import { clean } from '../../core/html';
 import { plain } from '../../core/text';
@@ -91,7 +91,6 @@ export interface Thread {
   comments: Reply[];
 }
 
-const voteOf = (likes: boolean | null | undefined): Vote => (likes === null || likes === undefined ? 0 : likes ? 1 : -1);
 
 export function readComment(data: RedditComment): Comment {
   return {

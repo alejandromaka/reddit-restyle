@@ -1,26 +1,17 @@
-/* Network → actions: the next page of posts when asked for; your votes and
-   joins, sent (each already on screen; one reddit refuses goes back, and the
-   console says why) */
+/* Network → actions: your votes and joins, sent (each already on screen; one
+   reddit refuses goes back, and the console says why) */
 
 import type { Vote } from '../../account/contract';
 import type { Store } from '../../core/store';
-import type { Listing } from './contract';
 import type { ListingAction, ListingState } from './types';
 
 interface ListingApi {
-  more: (after: string) => Promise<Listing>;
   vote: (id: string, dir: Vote) => Promise<void>;
   subscribe: (name: string, join: boolean) => Promise<void>;
 }
 
 export function startEffects(store: Store<ListingState, ListingAction>, api: ListingApi) {
   store.subscribe((state, previous, action) => {
-    if (state.status === 'more' && previous.status !== 'more' && state.after) {
-      api.more(state.after).then(
-        (listing) => store.dispatch({ type: 'more/loaded', listing }),
-        () => store.dispatch({ type: 'more/failed' }),
-      );
-    }
     if (action.type === 'vote/requested') {
       const before = previous.posts.find(({ id }) => id === action.id)?.vote ?? 0;
       api.vote(action.id, action.vote).catch((error: unknown) => {

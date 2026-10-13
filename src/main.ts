@@ -14,12 +14,14 @@
 import { startTheme } from './core/theme';
 import { setUpListing } from './pages/listing';
 import { setUpPost } from './pages/post';
+import { setUpProfile } from './pages/profile';
 import { takeOver, type Shell } from './shell/blocker';
 import { pageOf, type PageName } from './shell/pages';
 
 const SET_UP: Record<PageName, (shell: Shell) => unknown> = {
   listing: setUpListing,
   post: setUpPost,
+  profile: setUpProfile,
 };
 
 function start(page: PageName) {

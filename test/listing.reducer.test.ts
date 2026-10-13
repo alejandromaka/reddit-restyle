@@ -6,7 +6,7 @@ const post = (id: string): Post => ({
   id, title: id, subreddit: 'pics', subredditIcon: null, author: 'a', score: 1, vote: 0, comments: 0, created: 0, permalink: `/r/pics/comments/${id}/`,
   domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, flair: null,
 });
-const listing = (ids: string[], after: string | null): Listing => ({ posts: ids.map(post), after });
+const listing = (ids: string[], after: string | null, before: string | null = null): Listing => ({ posts: ids.map(post), after, before });
 
 describe('initialState', () => {
   it('reads the subreddit and sort from the path', () => {
@@ -19,6 +19,11 @@ describe('initialState', () => {
     expect(initialState('/r/pics')).toMatchObject({ subreddit: 'pics', sort: 'hot' });
     expect(initialState('/r/pics+funny/top/')).toMatchObject({ subreddit: 'pics+funny', sort: 'top' });
   });
+
+  it('which page, from the address (old reddit’s count=); the address, for the pages’ links', () => {
+    expect(initialState('/r/pics/')).toMatchObject({ page: 1, path: '/r/pics/', search: '' });
+    expect(initialState('/r/pics/top/', '?t=week&count=50&after=t3_x')).toMatchObject({ page: 3, search: '?t=week&count=50&after=t3_x' });
+  });
 });
 
 describe('kindOf', () => {
@@ -30,29 +35,15 @@ describe('kindOf', () => {
 describe('listingReducer', () => {
   const loaded = listingReducer(initialState('/'), { type: 'page/loaded', listing: listing(['a', 'b'], 'b') });
 
-  it('the first page', () => {
-    expect(loaded).toMatchObject({ status: 'idle', after: 'b' });
+  it('the page: its posts, where the next starts, where the one before ends', () => {
+    expect(loaded).toMatchObject({ status: 'idle', after: 'b', before: null });
     expect(loaded.posts.map(({ id }) => id)).toEqual(['a', 'b']);
+    expect(listingReducer(initialState('/'), { type: 'page/loaded', listing: listing(['c'], null, 'c') })).toMatchObject({ after: null, before: 'c' });
   });
 
-  it('more: asked once, appended without repeats', () => {
-    const asked = listingReducer(loaded, { type: 'more/requested' });
-    expect(asked.status).toBe('more');
-    expect(listingReducer(asked, { type: 'more/requested' })).toBe(asked);
-    const more = listingReducer(asked, { type: 'more/loaded', listing: listing(['b', 'c'], null) });
-    expect(more.posts.map(({ id }) => id)).toEqual(['a', 'b', 'c']);
-    expect(more).toMatchObject({ status: 'idle', after: null });
-  });
-
-  it('no next page: nothing to ask for', () => {
-    const last = listingReducer(initialState('/'), { type: 'page/loaded', listing: listing(['a'], null) });
-    expect(listingReducer(last, { type: 'more/requested' })).toBe(last);
-  });
-
-  it('the first page failed: why, and nothing to ask for', () => {
+  it('the page failed: why', () => {
     const failed = listingReducer(initialState('/'), { type: 'page/failed', error: 'Error: /.json?raw_json=1: 403' });
     expect(failed).toMatchObject({ status: 'failed', error: 'Error: /.json?raw_json=1: 403', posts: [] });
-    expect(listingReducer(failed, { type: 'more/requested' })).toBe(failed);
   });
 
   it('the menu’s communities, or why they didn’t come', () => {
@@ -82,11 +73,5 @@ describe('listingReducer', () => {
     const joined = listingReducer(pics, { type: 'join/requested', joined: true });
     expect(joined.about).toMatchObject({ data: { joined: true, members: 11 } });
     expect(listingReducer(joined, { type: 'join/failed', joined: false }).about).toMatchObject({ data: { joined: false, members: 10 } });
-  });
-
-  it('more failed: asked again', () => {
-    const failed = listingReducer(listingReducer(loaded, { type: 'more/requested' }), { type: 'more/failed' });
-    expect(failed.status).toBe('more-failed');
-    expect(listingReducer(failed, { type: 'more/requested' }).status).toBe('more');
   });
 });

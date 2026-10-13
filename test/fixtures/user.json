@@ -1,0 +1,23 @@
+{
+  "kind": "t2",
+  "data": {
+    "name": "someone",
+    "icon_img": "https://styles.redditmedia.com/t5_7x1yz2/styles/profileIcon_someone.png?width=256&height=256&crop=256:256,smart&s=a1",
+    "snoovatar_img": "",
+    "total_karma": 1234,
+    "link_karma": 1000,
+    "comment_karma": 234,
+    "created_utc": 1700000000.0,
+    "is_suspended": false,
+    "is_gold": false,
+    "subreddit": {
+      "display_name": "u_someone",
+      "display_name_prefixed": "u/someone",
+      "title": "Some One",
+      "public_description": "Lighthouses, mostly.",
+      "banner_img": "https://styles.redditmedia.com/t5_7x1yz2/styles/profileBanner_someone.png?width=1280&s=b2",
+      "subscribers": 12,
+      "over_18": false
+    }
+  }
+}

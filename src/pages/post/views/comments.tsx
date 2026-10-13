@@ -1,5 +1,9 @@
-/* The comments, as reddit.com's: who and when, what they wrote, ⊖ (fold the
-   thread; folded: ⊕), ↑ score ↓ and Reply, then its replies along a line.
+/* The comments, as reddit.com's: who and when (a tap on the row folds the
+   comment and its replies away, again brings them back; on the name: their
+   profile), what they wrote, ⊖ (folds it too), ↑ score ↓ and Reply, then its
+   replies. A comment with replies has a line down from its avatar, past what
+   it wrote (⊖ on it), curving into each reply and ending in the last one's
+   curve; a tap on the line folds it too, a mouse on it darkens it.
    "N more replies" loads the rest; a thread too deep for here continues on its
    own page. Searching: the loaded comments that match, on their own. */
 
@@ -21,36 +25,57 @@ export interface Talk {
   dispatch: (action: PostAction) => void;
 }
 
-export function Comments({ replies, talk }: { replies: Reply[]; talk: Talk }) {
+interface CommentsProps {
+  replies: Reply[];
+  talk: Talk;
+  curved?: boolean;  // replies to a comment: each curves out of its line (at the top: none)
+}
+
+export function Comments({ replies, talk, curved = false }: CommentsProps) {
   return (
     <div class="rr-grid">
-      {replies.map((reply) => (reply.kind === 'comment' ? (
-        <CommentItem
+      {replies.map((reply) => (
+        <div
           key={reply.id}
-          comment={reply}
-          talk={talk}
-        />
-      ) : (
-        <MoreItem
-          key={reply.id}
-          more={reply}
-          talk={talk}
-        />
-      )))}
+          class="rr-relative"
+        >
+          {curved && <Curve />}
+          {reply.kind === 'comment' ? (
+            <CommentItem
+              comment={reply}
+              talk={talk}
+            />
+          ) : (
+            <MoreItem
+              more={reply}
+              talk={talk}
+            />
+          )}
+        </div>
+      ))}
     </div>
   );
 }
 
+// A reply's curve out of its parent's line (16px to its left) into its first
+// row's middle (28px down: its avatar's, or ⊕'s). The line runs down to where it bends.
+function Curve() {
+  return <span class="rr-absolute rr-top-4 -rr-left-4 rr-w-4 rr-h-3 rr-border-l rr-border-b rr-rounded-bl-xl rr-border-(--line) rr-pointer-events-none" />;
+}
+
+// Who and when: their avatar (32px), name (their profile), OP or MOD, how long ago
 function Who({ comment }: { comment: Comment }) {
   return (
     <>
       <Avatar
         name={comment.author}
         icon={null}
+        size="md"
       />
       <a
         class="rr-min-w-0 rr-truncate rr-font-semibold rr-text-neutral-content-strong"
         href={`/user/${comment.author}/`}
+        onClick={(event) => event.stopPropagation()}  // their profile, not a fold
       >
         {comment.author}
       </a>
@@ -66,9 +91,16 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
   const folded = state.folded[comment.id] ?? comment.folded;
   const fold = () => dispatch({ type: 'fold/toggled', id: comment.id, folded: !folded });
   const replying = state.replyingTo === comment.id;
+  const earlier = comment.replies.slice(0, -1);
+  const last = comment.replies.slice(-1);
   return (
-    <article class="rr-grid rr-pt-3">
-      <header class="rr-flex rr-items-center rr-gap-2 rr-text-xs rr-text-neutral-content-weak">
+    // --line: its line's color, for the line and its replies' curves (theirs set their own); a mouse on the line darkens it
+    <article class="rr-grid rr-pt-3 rr-[--line:var(--color-neutral-border-weak)] has-[>div>button:hover]:rr-[--line:var(--color-neutral-content-weak)]">
+      {/* A tap on the row: fold or open it (keys: ⊖, ⊕) */}
+      <header
+        class="rr-flex rr-items-center rr-gap-2 rr-text-xs rr-text-neutral-content-weak rr-cursor-pointer"
+        onClick={fold}
+      >
         <Who comment={comment} />
         {folded && (
           <button
@@ -76,7 +108,10 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
             class={cx(ui.icon, 'rr-ml-auto')}
             aria-label="Open the thread"
             aria-expanded="false"
-            onClick={fold}
+            onClick={(event) => {
+              event.stopPropagation();  // the row would open it too
+              fold();
+            }}
           >
             <Icon name="unfold" />
           </button>
@@ -84,20 +119,36 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
       </header>
       {!folded && (
         <>
-          <div class="rr-grid rr-pl-8">
-            <Markdown
-              html={comment.html}
-              class="rr-pt-1"
-            />
-            <div class="rr-flex rr-items-center rr-gap-1 rr-text-neutral-content-weak">
+          {/* Beside the line: what it wrote, its actions, its replies but the last (the line runs into its curve) */}
+          <div class="rr-relative rr-grid">
+            {last.length > 0 && (
+              // A tap folds the comment (wider than it looks)
               <button
                 type="button"
-                class={ui.icon}
+                class="rr-absolute rr-top-0 -rr-bottom-4 rr-left-1 rr-w-6 rr-cursor-pointer"
                 aria-label="Fold the thread"
                 aria-expanded="true"
                 onClick={fold}
               >
-                <Icon name="fold" />
+                <span class="rr-block rr-ml-3 rr-h-full rr-border-l rr-border-(--line)" />
+              </button>
+            )}
+            <Markdown
+              html={comment.html}
+              class="rr-pt-1 rr-pl-10"
+            />
+            <div class="rr-flex rr-items-center rr-gap-1 rr-text-neutral-content-weak">
+              {/* ⊖ on the line, under the avatar: the line breaks around it */}
+              <button
+                type="button"
+                class={cx(ui.icon, 'rr-relative rr-mr-1')}
+                aria-label="Fold the thread"
+                aria-expanded="true"
+                onClick={fold}
+              >
+                <span class="rr-rounded-full rr-bg-neutral-background">
+                  <Icon name="fold" />
+                </span>
               </button>
               <Votes
                 vote={comment.vote}
@@ -118,21 +169,33 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
               )}
             </div>
             {replying && (
-              <Composer
-                placeholder={`Reply to u/${comment.author}`}
-                open
-                sending={state.sending === comment.id}
-                error={state.sendError?.parent === comment.id ? state.sendError.error : null}
-                onSend={(text) => dispatch({ type: 'comment/requested', parent: comment.id, text })}
-                onCancel={() => dispatch({ type: 'reply/toggled', parent: null })}
-              />
+              <div class="rr-pl-10">
+                <Composer
+                  placeholder={`Reply to u/${comment.author}`}
+                  open
+                  sending={state.sending === comment.id}
+                  error={state.sendError?.parent === comment.id ? state.sendError.error : null}
+                  onSend={(text) => dispatch({ type: 'comment/requested', parent: comment.id, text })}
+                  onCancel={() => dispatch({ type: 'reply/toggled', parent: null })}
+                />
+              </div>
+            )}
+            {earlier.length > 0 && (
+              <div class="rr-pl-8">
+                <Comments
+                  replies={earlier}
+                  talk={talk}
+                  curved
+                />
+              </div>
             )}
           </div>
-          {comment.replies.length > 0 && (
-            <div class="rr-ml-3 rr-pl-3 rr-border-l rr-border-neutral-border-weak">
+          {last.length > 0 && (
+            <div class="rr-pl-8">
               <Comments
-                replies={comment.replies}
+                replies={last}
                 talk={talk}
+                curved
               />
             </div>
           )}
@@ -142,26 +205,38 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
   );
 }
 
+// More: a row as a comment's first, ⊕ where its avatar would be
+const MORE = 'rr-flex rr-items-center rr-gap-2 rr-h-8 rr-text-xs rr-font-semibold rr-text-neutral-content-weak';
+
 function MoreItem({ more, talk }: { more: More; talk: Talk }) {
+  const plus = (
+    <span class="rr-grid rr-place-items-center rr-w-8">
+      <Icon name="unfold" />
+    </span>
+  );
   if (more.continueAt) {
     return (
-      <a
-        class="rr-py-2 rr-text-xs rr-font-semibold rr-text-a-default"
-        href={more.continueAt}
-      >
-        Continue this thread →
-      </a>
+      <div class="rr-grid rr-justify-items-start rr-pt-3">
+        <a
+          class={MORE}
+          href={more.continueAt}
+        >
+          {plus}
+          Continue this thread →
+        </a>
+      </div>
     );
   }
   const status = talk.state.loading[more.id];  // undefined: not asked; '': on its way; else: why it didn't come
   const what = more.depth === 0 ? `View ${more.count} more comments` : `${more.count} more ${more.count === 1 ? 'reply' : 'replies'}`;
   return (
-    <div class="rr-grid rr-justify-items-start rr-py-2">
+    <div class="rr-grid rr-justify-items-start rr-pt-3">
       <BusyButton
         busy={status === ''}
-        class="rr-h-8 rr-text-xs rr-font-semibold rr-text-a-default"
+        class={MORE}
         onClick={() => talk.dispatch({ type: 'more/requested', id: more.id })}
       >
+        {plus}
         {what}
       </BusyButton>
       {status && <p class="rr-text-xs rr-text-danger-content">{status}</p>}
@@ -188,10 +263,10 @@ export function SearchResults({ comments, query }: { comments: Comment[]; query:
           </header>
           <Markdown
             html={comment.html}
-            class="rr-pl-8"
+            class="rr-pl-10"
           />
           <a
-            class="rr-pl-8 rr-text-xs rr-font-semibold rr-text-a-default"
+            class="rr-pl-10 rr-text-xs rr-font-semibold rr-text-a-default"
             href={comment.permalink}
           >
             Go to thread

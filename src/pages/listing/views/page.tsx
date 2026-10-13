@@ -1,6 +1,7 @@
-/* A listing, in the frame: where you are and its sorts, its posts, more on request */
+/* A listing, in the frame: where you are and its sorts, a page of its posts, the pages around it */
 
-import { BusyButton, Loader } from '../../../components/busy';
+import { Loader } from '../../../components/busy';
+import { Pager } from '../../../components/pager';
 import { Frame } from '../../../nav/frame';
 import type { ListingAction, ListingState } from '../types';
 import { Heading } from './heading';
@@ -53,16 +54,14 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
           onVote={(vote) => dispatch({ type: 'vote/requested', id: post.id, vote })}
         />
       ))}
-      {state.after && state.status !== 'loading' && (
-        <div class="rr-p-4">
-          <BusyButton
-            busy={state.status === 'more'}
-            class="rr-grid rr-place-items-center rr-w-full rr-h-12 rr-rounded-full rr-bg-secondary-background rr-font-semibold"
-            onClick={() => dispatch({ type: 'more/requested' })}
-          >
-            {state.status === 'more-failed' ? 'Couldn’t load more. Try again' : 'More posts'}
-          </BusyButton>
-        </div>
+      {state.status === 'idle' && (
+        <Pager
+          path={state.path}
+          search={state.search}
+          page={state.page}
+          after={state.after}
+          before={state.before}
+        />
       )}
     </Frame>
   );

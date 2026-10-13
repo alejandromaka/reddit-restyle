@@ -9,6 +9,8 @@ const PAGES = {
   listing: new RegExp(`^/(r/[\\w+]+/?)?((${SORTS})/?)?$`),
   // A post and its comments (or one comment's thread: …/comments/abc/its_title/def/)
   post: /^\/(r\/[\w+]+\/)?comments\/\w+(\/[^/]*(\/\w+)?)?\/?$/,
+  // Someone's profile, by tab (the overview: none)
+  profile: /^\/user\/[\w-]+\/?((submitted|comments|saved|hidden|upvoted|downvoted)\/?)?$/,
 } as const;
 
 export type PageName = keyof typeof PAGES;

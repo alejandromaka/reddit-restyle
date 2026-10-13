@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/* A listing drawn from reddit's JSON (the fixture), and More posts */
+/* A listing drawn from reddit's JSON (the fixture), and its pages */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -19,7 +19,7 @@ const answer = (url: string) => new Response(
 );
 const posted = (fetchMock: ReturnType<typeof vi.fn>, url: string) =>
   fetchMock.mock.calls.filter(([to, init]) => to === url && init?.method === 'POST').map(([, init]) => Object.fromEntries(init.body as URLSearchParams));
-const second = JSON.stringify({ kind: 'Listing', data: { after: null, children: [
+const second = JSON.stringify({ kind: 'Listing', data: { after: null, before: 't3_next', children: [
   { kind: 't3', data: { ...JSON.parse(fixture).data.children[2].data, name: 't3_next', title: 'From the next page' } },
 ] } });
 
@@ -35,7 +35,7 @@ const shell: Shell = {
 };
 
 const titles = () => [...document.querySelectorAll('article > a:first-of-type')].map((a) => a.textContent);
-const moreButton = () => [...document.querySelectorAll('button')].find((b) => b.textContent === 'More posts');
+const pages = () => [...document.querySelectorAll('nav[aria-label="Pages"] > *')].map((page) => [page.textContent, page.getAttribute('href')]);
 
 describe('listing page', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -48,7 +48,7 @@ describe('listing page', () => {
   });
 
   it('asks for the page’s JSON and draws its posts under where you are', async () => {
-    expect(fetchMock.mock.calls[0]![0]).toBe('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1');
+    expect(fetchMock.mock.calls[0]![0]).toBe('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1&limit=25');
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     expect(document.querySelector('h1')!.textContent).toBe('r/pics');
     await vi.waitFor(() => expect(document.querySelector('h1 + p')!.textContent).toBe('32m members'));
@@ -73,13 +73,19 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(viewer()).toBeNull());
   });
 
-  it('More posts: the next page, appended', async () => {
-    await vi.waitFor(() => expect(moreButton()).toBeTruthy());
-    moreButton()!.click();
-    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1&after=t3_1q2c007');
-    await vi.waitFor(() => expect(titles()).toHaveLength(8));
-    expect(titles()[7]).toBe('From the next page');
-    expect(moreButton()).toBeUndefined();  // no page after it
+  it('pages, as old reddit’s: this one, 1; the next, its own address (count, after)', async () => {
+    const next = '/r/pics/top/?t=week&count=25&after=t3_1q2c007';
+    await vi.waitFor(() => expect(pages()).toEqual([['1', null], ['2', next], ['Next ›', next]]));
+    expect(document.querySelector('[aria-current="page"]')!.textContent).toBe('1');
+  });
+
+  it('a later page: asked for where it starts; 1, the one before (count, before), this one; no next', async () => {
+    history.replaceState(null, '', '/r/pics/top/?t=week&count=50&after=t3_x');
+    setUpListing(shell);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/top/.json?t=week&count=50&after=t3_x&raw_json=1&sr_detail=1&limit=25');
+    await vi.waitFor(() => expect(titles()).toEqual(['From the next page']));
+    const before = '/r/pics/top/?t=week&count=51&before=t3_next';
+    expect(pages()).toEqual([['‹ Prev', before], ['1', '/r/pics/top/?t=week'], ['2', before], ['3', null]]);
   });
 
   it('top: its span, a dropdown on the week as the address says, each option an address', async () => {
@@ -218,7 +224,7 @@ describe('listing page, when reddit says no', () => {
 
   it('says so, and why, in place of the posts', async () => {
     await vi.waitFor(() => expect(document.querySelector('main')!.textContent).toContain('Couldn’t load this page'));
-    expect(document.querySelector('main')!.textContent).toContain('/r/pics/.json?raw_json=1&sr_detail=1: 403');
+    expect(document.querySelector('main')!.textContent).toContain('/r/pics/.json?raw_json=1&sr_detail=1&limit=25: 403');
     expect(document.querySelectorAll('article')).toHaveLength(0);
   });
 });
