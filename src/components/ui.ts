@@ -2,11 +2,15 @@
    styles/utilities.css, named), and cx to join them. */
 
 const tag = 'rr-inline-block rr-px-2 rr-py-0.5 rr-rounded-full rr-text-xs rr-font-semibold';
+const pill = 'rr-flex rr-items-center rr-h-8 rr-rounded-full rr-text-xs rr-font-semibold';  // reddit's small button
 
 export const ui = {
   tag,  // a pill: flair, NSFW, Pinned
   badge: `${tag} rr-absolute rr-top-2 rr-right-2 rr-bg-media-background rr-text-media-onBackground`,  // a pill on a picture: a video, a gallery's count
-  action: 'rr-flex rr-items-center rr-gap-1 rr-h-8 rr-px-3 rr-rounded-full rr-bg-secondary-background rr-text-xs rr-font-semibold',  // reddit's small button: score, comments
+  pill,  // the vote pill (its color: the vote)
+  action: `${pill} rr-gap-1 rr-px-3 rr-bg-secondary-background`,  // comments, Share
+  plain: `${pill} rr-gap-1 rr-px-3`,  // Reply: an action without its pill
+  icon: 'rr-grid rr-place-items-center rr-flex-none rr-w-8 rr-h-8 rr-rounded-full',  // a round button with an icon in it
 };
 
 export const cx = (...parts: (string | false | null | undefined)[]) => [...new Set(parts.filter(Boolean).join(' ').split(' ').filter(Boolean))].join(' ');

@@ -22,7 +22,8 @@
           "spoiler": false,
           "stickied": true,
           "link_flair_text": "Announcement",
-          "selftext": "Hi everyone! **Please read** the [rules](https://old.reddit.com/r/pics/wiki/rules) before posting.\n\n&#x200B;\n\n> No screenshots &amp; no memes.\n\n* Be civil\n* Credit the artist\n\n---\n\nThe last episode >!ends happily!< by the way."
+          "selftext": "Hi everyone! **Please read** the [rules](https://old.reddit.com/r/pics/wiki/rules) before posting.\n\n&#x200B;\n\n> No screenshots &amp; no memes.\n\n* Be civil\n* Credit the artist\n\n---\n\nThe last episode >!ends happily!< by the way.",
+          "likes": null
         }
       },
       {
@@ -76,7 +77,12 @@
               }
             ]
           },
-          "selftext": ""
+          "selftext": "",
+          "sr_detail": {
+            "community_icon": "https://styles.redditmedia.com/t5_2qh0u/styles/communityIcon_pics.png?width=256&s=d",
+            "icon_img": ""
+          },
+          "likes": true
         }
       },
       {
@@ -116,14 +122,15 @@
                 ]
               }
             ]
-          }
+          },
+          "likes": null
         }
       },
       {
         "kind": "t3",
         "data": {
           "name": "t3_1q2c004",
-          "title": "Marked NSFW: no preview shown",
+          "title": "Marked NSFW",
           "subreddit": "pics",
           "author": "someone",
           "score": 77,
@@ -155,7 +162,8 @@
               }
             ]
           },
-          "selftext": ""
+          "selftext": "",
+          "likes": null
         }
       },
       {
@@ -196,6 +204,13 @@
                 ]
               }
             ]
+          },
+          "likes": null,
+          "secure_media": {
+            "reddit_video": {
+              "hls_url": "https://v.redd.it/vid005/HLSPlaylist.m3u8?a=1",
+              "fallback_url": "https://v.redd.it/vid005/DASH_720.mp4"
+            }
           }
         }
       },
@@ -286,7 +301,8 @@
               "status": "failed",
               "id": "g3"
             }
-          }
+          },
+          "likes": null
         }
       },
       {
@@ -344,9 +360,11 @@
                     ]
                   }
                 ]
-              }
+              },
+              "likes": null
             }
-          ]
+          ],
+          "likes": null
         }
       }
     ]

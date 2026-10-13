@@ -6,13 +6,25 @@
   /* Color, by reddit's roles */
   --color-global-brand-orangered: #ff4500;           /* the wordmark */
   --color-neutral-background: #fff;                  /* the page, the bar */
+  --color-neutral-background-weak: #f6f8f9;          /* the strip on top */
   --color-neutral-content-strong: #181c1f;           /* the page's text: titles, names */
   --color-neutral-content: #333d42;                  /* a text post's opening */
-  --color-neutral-content-weak: #5c6c74;             /* when, who; sorts not chosen */
+  --color-neutral-content-weak: #5c6c74;             /* when, who; the sorts */
   --color-neutral-border-weak: #00000019;            /* between posts, under the bar */
-  --color-secondary-background: #e5ebee;             /* buttons: score, comments, More posts */
-  --color-secondary-background-selected: #c9d7de;    /* the chosen sort */
+  --color-neutral-border-medium: #0000007f;          /* an outlined button: Joined */
+  --color-secondary-background: #e5ebee;             /* buttons: votes, comments, More posts; a missing icon's stand-in */
+  --color-neutral-background-selected: #e5ebee;      /* the menu: where you are */
+  --color-scrim: #00000099;                          /* behind the menu */
   --color-a-default: #115bca;                        /* a link post's site */
+  --color-upvote-background: #d93900;                /* your upvote */
+  --color-upvote-onBackground: #fff;
+  --color-downvote-background: #6a5cff;              /* your downvote */
+  --color-downvote-onBackground: #fff;
+  --color-action-upvote: #d93900;                    /* a comment's score, upvoted */
+  --color-action-downvote: #6a5cff;                  /* …downvoted */
+  --color-danger-content: #bc0117;                   /* what went wrong (a comment reddit refused) */
+  --color-primary-background: #000;                  /* Join */
+  --color-primary-onBackground: #fff;
   --color-tags-neutral-background: #eef1f3;          /* flair, Spoiler */
   --color-tags-neutral-content: #333d42;
   --color-tags-moderator-background: #ddf8d7;        /* Pinned (mods pin) */
@@ -21,26 +33,68 @@
   --color-tags-nsfw-content: #b2007f;
   --color-media-background: #00000099;               /* a pill on a picture */
   --color-media-onBackground: #fff;
+  --color-lightbox: #000;                            /* behind a picture opened big */
   --loader-color: #000;                              /* the loader's ring */
 
   /* Type: reddit's --font-sans, and its sizes with their line heights */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --font-mono: "Noto Mono", Menlo, Monaco, Consolas, monospace;  /* reddit's --font-mono: code in posts and comments */
   --text-xs: 12px; --leading-xs: 16px;   /* --font-caption-1, label-2: when, who, tags, small buttons */
   --text-sm: 14px; --leading-sm: 20px;   /* --font-body-2, label-1: the page's text */
-  --text-lg: 18px; --leading-lg: 24px;   /* --font-title-3: post titles, the bar's name */
+  --text-base: 16px; --leading-base: 20px; /* --font-headline: post titles; a dropdown's control (16px: iOS won't zoom) */
+  --text-lg: 18px; --leading-lg: 24px;   /* --font-title-3: a missing icon's initial, large */
+  --text-xl: 20px; --leading-xl: 24px;   /* where you are (reddit.com's community name, on a phone) */
+  --text-3xl: 32px; --leading-3xl: 36px; /* --font-title-1: a community's name, wider */
   --semibold: 600; --bold: 700;
 
   /* Space and size (Tailwind's numbers: 1 = 4px; reddit's spacers and
-     button heights sit on the same grid: 32px small, 48px large) */
-  --s0_5: 2px; --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
+     button heights sit on the same grid: 32px small, 48px large; its header, 56px) */
+  --s0_5: 2px; --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s14: 56px; --s16: 64px; --s22: 88px; --s24: 96px; --s32: 128px; --s64: 256px;
 
-  /* Corners: an image (reddit's --radius-4); pills and buttons */
+  /* Corners: an image (reddit's --radius-4); code, a spoiler (--radius-sm); pills and buttons */
   --radius-media: 16px;
+  --radius-sm: 4px;
   --radius-full: 9999px;
+
+  /* Raised: a dropdown (reddit's --elevation-md) */
+  --elevation-md: 0 .25rem .5rem 0 #0000001a, 0 .375rem .75rem 0 #00000040;
 
   /* Layers */
   --z-bar: 10;
+  --z-menu: 20;
+
+  /* Motion: the menu sliding in, its scrim fading */
+  --duration: 200ms;
+  --ease-out: cubic-bezier(0, 0, .2, 1);
 
   /* Pressed: what's tappable dims while touched */
   --opacity-pressed: .6;
+}
+
+/* Dark (data-theme="dark": core/theme.ts). reddit's own dark colors where we
+   have them: its light theme carries them as --color-inverted-* and as the
+   "on media" colors meant for dark backgrounds. The rest (≈) are estimates
+   until captured from reddit.com in dark mode with docs/reddit-vars.js. */
+[data-restyle][data-theme="dark"] {
+  color-scheme: dark;
+  --color-neutral-background: #0e1113;               /* --color-inverted-neutral-background */
+  --color-neutral-background-weak: #181c1f;          /* --color-inverted-neutral-background-hover */
+  --color-neutral-content-strong: #eef1f3;           /* --color-inverted-neutral-content-strong */
+  --color-neutral-content: #b7cad4;                  /* --color-inverted-neutral-content */
+  --color-neutral-content-weak: #8ba2ad;             /* ≈ */
+  --color-neutral-border-weak: #ffffff19;            /* ≈ (--color-inverted-neutral-border is #ffffff33) */
+  --color-neutral-border-medium: #ffffff7f;          /* ≈ */
+  --color-secondary-background: #2a3236;             /* --color-global-darkblue */
+  --color-neutral-background-selected: #2a3236;      /* ≈ */
+  --color-a-default: #648efc;                        /* ≈ */
+  --color-primary-background: #fff;                  /* ≈ (inverted: Join in white) */
+  --color-primary-onBackground: #000;                /* ≈ */
+  --color-tags-neutral-background: #2a3236;          /* ≈ */
+  --color-tags-neutral-content: #b7cad4;             /* --color-inverted-neutral-content */
+  --color-tags-moderator-background: #0b2e10;        /* ≈ */
+  --color-tags-moderator-content: #00c61c;           /* --color-tags-success-media-content-weaker */
+  --color-tags-nsfw-background: #3a0f2a;             /* ≈ */
+  --color-tags-nsfw-content: #ff7eca;                /* --color-tags-nsfw-media-content-weaker */
+  --color-danger-content: #ff6b6b;                   /* ≈ */
+  --loader-color: #fff;                              /* ≈ */
 }

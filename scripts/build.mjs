@@ -18,7 +18,7 @@ const JS_HEADER = `// ==UserScript==
 // @name         ${NAME}
 // @namespace    https://local/reddit-restyle
 // @version      ${version}
-// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page goes to www.reddit.com. Built from ~/Developer/reddit-restyle: edit there, not here.
+// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page is left as it comes (broken without old reddit's code, on purpose: what's missing shows). Built from ~/Developer/reddit-restyle: edit there, not here.
 // @author       you
 // @match        *://old.reddit.com/*
 // @run-at       document-start

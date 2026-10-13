@@ -1,61 +1,69 @@
-/* A post in a listing: where and when, its title, its preview, its score and comments */
+/* A post in a listing: where (a mixed listing: its subreddit; one subreddit's:
+   who) and when, its title, its media (it plays, it opens big) or the start of
+   its text, its score and comments. Its title, its comments, or a tap on the
+   rest: its page. */
 
+import type { Vote } from '../../../account/contract';
+import { Avatar } from '../../../components/avatar';
 import { Icon } from '../../../components/icon';
-import { cx, ui } from '../../../components/ui';
+import { Tags } from '../../../components/tags';
+import { ui } from '../../../components/ui';
+import { Votes } from '../../../components/votes';
+import { MediaView } from './media';
 import { ago, compact } from '../../../core/text';
 import type { Post } from '../contract';
 
-export function PostCard({ post }: { post: Post }) {
-  const tagged = post.pinned || post.nsfw || post.spoiler || post.flair !== null;
+interface PostCardProps {
+  post: Post;
+  mixed: boolean;  // a listing of more than one subreddit
+  onVote: (vote: Vote) => void;
+}
+
+export function PostCard({ post, mixed, onVote }: PostCardProps) {
   return (
-    <article class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak">
-      <p class="rr-flex rr-flex-wrap rr-gap-x-1 rr-text-xs rr-text-neutral-content-weak">
-        <a
-          class="rr-font-semibold rr-text-neutral-content-strong"
-          href={`/r/${post.subreddit}/`}
-        >
-          r/{post.subreddit}
-        </a>
-        <span>· {ago(post.created)} · u/{post.author}</span>
+    // A tap on it, but not on something of its own (a link, a button, a video): the post. (Keys: its title.)
+    <article
+      class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak"
+      onClick={(event) => {
+        if (!(event.target as Element).closest('a, button, video')) location.assign(post.permalink);
+      }}
+    >
+      <p class="rr-flex rr-items-center rr-gap-1 rr-text-xs rr-text-neutral-content-weak">
+        {mixed ? (
+          <a
+            class="rr-flex rr-items-center rr-gap-2 rr-min-w-0 rr-font-semibold rr-text-neutral-content-strong"
+            href={`/r/${post.subreddit}/`}
+          >
+            <Avatar
+              name={post.subreddit}
+              icon={post.subredditIcon}
+            />
+            <span class="rr-truncate">r/{post.subreddit}</span>
+          </a>
+        ) : (
+          <a
+            class="rr-min-w-0 rr-truncate rr-font-semibold rr-text-neutral-content-strong"
+            href={`/user/${post.author}/`}
+          >
+            u/{post.author}
+          </a>
+        )}
+        <span class="rr-flex-none">· {ago(post.created)}</span>
       </p>
       <a
-        class="rr-text-lg rr-font-semibold"
+        class="rr-text-base rr-font-semibold"
         href={post.permalink}
       >
         {post.title}
       </a>
-      {tagged && (
-        <p class="rr-flex rr-flex-wrap rr-gap-1">
-          {post.pinned && <span class={cx(ui.tag, 'rr-bg-tags-moderator-background rr-text-tags-moderator-content')}>Pinned</span>}
-          {post.nsfw && <span class={cx(ui.tag, 'rr-bg-tags-nsfw-background rr-text-tags-nsfw-content')}>NSFW</span>}
-          {post.spoiler && <span class={cx(ui.tag, 'rr-bg-tags-neutral-background')}>Spoiler</span>}
-          {post.flair && <span class={cx(ui.tag, 'rr-bg-tags-neutral-background rr-text-tags-neutral-content')}>{post.flair}</span>}
-        </p>
-      )}
-      {post.image ? (
-        <a
-          class="rr-relative rr-block"
-          href={post.permalink}
-        >
-          <img
-            class="rr-block rr-w-full rr-h-auto rr-rounded-media"
-            src={post.image.url}
-            width={post.image.width}
-            height={post.image.height}
-            loading="lazy"
-            decoding="async"
-            alt=""
-          />
-          {post.video && <span class={ui.badge}><Icon name="play" /><span class="rr-sr-only">Video</span></span>}
-          {post.gallery > 1 && <span class={ui.badge}>1/{post.gallery}</span>}
-        </a>
-      ) : post.text && (
-        <a
-          class="rr-line-clamp-3 rr-text-neutral-content"
-          href={post.permalink}
-        >
-          {post.text}
-        </a>
+      <Tags
+        pinned={post.pinned}
+        nsfw={post.nsfw}
+        spoiler={post.spoiler}
+        flair={post.flair}
+      />
+      {post.media ? <MediaView media={post.media} /> : post.text && (
+        <p class="rr-line-clamp-3 rr-text-neutral-content">{post.text}</p>
       )}
       {post.link && (
         <a
@@ -66,11 +74,12 @@ export function PostCard({ post }: { post: Post }) {
         </a>
       )}
       <div class="rr-flex rr-gap-2">
-        <span class={ui.action}>
-          <Icon name="up" />
-          {compact(post.score)}
-          <Icon name="down" />
-        </span>
+        <Votes
+          vote={post.vote}
+          score={post.score}
+          pill
+          onVote={onVote}
+        />
         <a
           class={ui.action}
           href={post.permalink}

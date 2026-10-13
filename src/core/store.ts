@@ -2,7 +2,7 @@
    pure reducer returns the next state, and listeners (views, effects) react.
    State only one component cares about stays in that component (useState). */
 
-export type Reducer<S, A> = (state: S, action: A) => S;
+type Reducer<S, A> = (state: S, action: A) => S;
 export type Listener<S, A> = (state: S, previous: S, action: A) => void;
 
 export interface Store<S, A> {
@@ -42,3 +42,6 @@ export function follow<S, A>(store: Store<S, A>, draw: (state: S) => void) {
   draw(store.getState());
   store.subscribe(draw);
 }
+
+// Something on its way from the network: coming, here (its data), or not coming (and why)
+export type Load<T> = { status: 'loading' } | { status: 'loaded'; data: T } | { status: 'failed'; error: string };

@@ -4,3 +4,16 @@ export async function fetchJson<T>(url: string, init: RequestInit = {}): Promise
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   return response.json() as Promise<T>;
 }
+
+// POSTs a form to reddit's API (as the signed-in user); throws on an error status
+export async function postForm(url: string, fields: Record<string, string>): Promise<void> {
+  const response = await fetch(url, { method: 'POST', credentials: 'same-origin', body: new URLSearchParams(fields) });
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+}
+
+// POSTs a form to reddit's API and reads its JSON answer; throws on an error status
+export async function postJson<T>(url: string, fields: Record<string, string>): Promise<T> {
+  const response = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' }, body: new URLSearchParams(fields) });
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+  return response.json() as Promise<T>;
+}

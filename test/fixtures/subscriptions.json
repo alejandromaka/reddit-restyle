@@ -1,0 +1,12 @@
+{
+  "kind": "Listing",
+  "data": {
+    "after": null,
+    "children": [
+      { "kind": "t5", "data": { "display_name": "aviation", "display_name_prefixed": "r/aviation", "url": "/r/aviation/", "community_icon": "", "icon_img": "", "user_has_favorited": false } },
+      { "kind": "t5", "data": { "display_name": "u_someone", "display_name_prefixed": "u/someone", "url": "/user/someone/", "community_icon": "", "icon_img": "https://styles.redditmedia.com/t5_u1/styles/profileIcon_a.png?width=256&s=b", "user_has_favorited": null } },
+      { "kind": "t5", "data": { "display_name": "AskHistorians", "display_name_prefixed": "r/AskHistorians", "url": "/r/AskHistorians/", "community_icon": "https://styles.redditmedia.com/t5_2ssp3/styles/communityIcon_x.png?width=256&s=c", "icon_img": "https://b.thumbs.redditmedia.com/old.png", "user_has_favorited": false } },
+      { "kind": "t5", "data": { "display_name": "soccer", "display_name_prefixed": "r/soccer", "url": "/r/soccer/", "community_icon": "", "icon_img": "https://b.thumbs.redditmedia.com/soccer.png", "user_has_favorited": true } }
+    ]
+  }
+}

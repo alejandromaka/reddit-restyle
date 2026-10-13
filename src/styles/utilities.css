@@ -8,6 +8,7 @@
 
 [data-restyle] {
   /* --- Display --- */
+  .rr-hidden { display: none; }
   .rr-block { display: block; }
   .rr-inline-block { display: inline-block; }
   .rr-flex { display: flex; }
@@ -17,57 +18,117 @@
   /* --- Flex and grid --- */
   .rr-flex-wrap { flex-wrap: wrap; }
   .rr-flex-none { flex: none; }
+  .rr-flex-1 { flex: 1 1 0%; }
   .rr-items-center { align-items: center; }
+  .rr-justify-end { justify-content: flex-end; }  /* a switch, on */
+  .rr-self-center { align-self: center; }
   .rr-place-items-center { place-items: center; }
+  .rr-justify-items-start { justify-items: start; }
   .rr-gap-1 { gap: var(--s1); }
   .rr-gap-2 { gap: var(--s2); }
   .rr-gap-3 { gap: var(--s3); }
-  .rr-gap-x-1 { column-gap: var(--s1); }
+  .rr-gap-4 { gap: var(--s4); }
+  .rr-gap-5 { gap: var(--s5); }
 
   /* --- Position --- */
   .rr-relative { position: relative; }
   .rr-absolute { position: absolute; }
+  .rr-fixed { position: fixed; }
   .rr-sticky { position: sticky; }
   .rr-inset-0 { inset: 0; }
+  .rr-inset-y-0 { top: 0; bottom: 0; }
+  .rr-inset-x-0 { left: 0; right: 0; }
+  .rr-bottom-0 { bottom: 0; }
+  .rr-left-0 { left: 0; }
   .rr-top-0 { top: 0; }
+  .rr-top-14 { top: var(--s14); }  /* under the bar */
+  .rr-top-full { top: 100%; }        /* a dropdown, under what opened it */
+  .rr-top-4 { top: var(--s4); }
+  .rr-right-4 { right: var(--s4); }
   .rr-top-2 { top: var(--s2); }
   .rr-right-2 { right: var(--s2); }
   .rr-z-bar { z-index: var(--z-bar); }
+  .rr-z-menu { z-index: var(--z-menu); }
 
   /* --- Size --- */
   .rr-w-full { width: 100%; }
   .rr-min-w-0 { min-width: 0; }  /* lets a flex item shrink, so its text can truncate */
   .rr-w-4 { width: var(--s4); }
+  .rr-w-5 { width: var(--s5); }
   .rr-w-6 { width: var(--s6); }
+  .rr-w-8 { width: var(--s8); }
+  .rr-w-10 { width: var(--s10); }
   .rr-w-12 { width: var(--s12); }
   .rr-h-auto { height: auto; }
+  .rr-h-full { height: 100%; }
   .rr-h-4 { height: var(--s4); }
+  .rr-h-5 { height: var(--s5); }
   .rr-h-6 { height: var(--s6); }
   .rr-h-8 { height: var(--s8); }    /* reddit's small button */
+  .rr-h-10 { height: var(--s10); }  /* reddit's button; the menu's rows */
   .rr-h-12 { height: var(--s12); }  /* reddit's large button */
-  .rr-max-w-\[40rem\] { max-width: 40rem; }  /* a phone's column, centered when the window is wider */
+  .rr-h-14 { height: var(--s14); }  /* reddit's header */
+  .rr-h-16 { height: var(--s16); }  /* a subreddit's banner */
+  .rr-min-h-24 { min-height: var(--s24); }  /* a comment box */
+  .rr-max-h-\[75vh\] { max-height: 75vh; }  /* a post's video */
+  .rr-w-64 { width: var(--s64); }             /* a dropdown */
+  .rr-w-\[18rem\] { width: 18rem; }          /* the menu */
+  .rr-w-\[272px\] { width: 272px; }          /* the sidebar, as reddit.com's */
+  .rr-h-\[calc\(100dvh-3\.5rem\)\] { height: calc(100dvh - 3.5rem); }  /* the sidebar: the screen under the bar */
+  .rr-max-w-\[85\%\] { max-width: 85%; }      /* the menu, on a narrow phone */
+  .rr-max-h-\[85\%\] { max-height: 85%; }     /* a sheet from the bottom */
+  .rr-max-w-\[732px\] { max-width: 732px; }  /* the feed's column, as reddit.com's (its padding inside); centered when the window is wider */
+  .rr-max-w-\[764px\] { max-width: 764px; }  /* a post's: 732px of post, 16px of padding each side */
 
   /* --- Space --- */
   .rr-m-auto { margin: auto; }
   .rr-mx-auto { margin-inline: auto; }
+  .rr-ml-3 { margin-left: var(--s3); }  /* replies, under their comment's avatar */
+  .rr-mx-4 { margin-inline: var(--s4); }
+  .rr-my-2 { margin-block: var(--s2); }
+  .rr-ml-auto { margin-left: auto; }
+  .rr-mr-2 { margin-right: var(--s2); }
+  .rr-mt-2 { margin-top: var(--s2); }
+  .rr-p-0\.5 { padding: var(--s0_5); }
+  .rr-p-2 { padding: var(--s2); }
+  .rr-p-3 { padding: var(--s3); }
   .rr-p-4 { padding: var(--s4); }
+  .rr-px-1 { padding-inline: var(--s1); }
   .rr-px-2 { padding-inline: var(--s2); }
   .rr-px-3 { padding-inline: var(--s3); }
   .rr-px-4 { padding-inline: var(--s4); }
   .rr-py-0\.5 { padding-block: var(--s0_5); }
+  .rr-py-1 { padding-block: var(--s1); }
+  .rr-py-2 { padding-block: var(--s2); }
   .rr-py-3 { padding-block: var(--s3); }
   .rr-py-12 { padding-block: var(--s12); }
+  .rr-pt-1 { padding-top: var(--s1); }
+  .rr-pt-2 { padding-top: var(--s2); }
   .rr-pt-3 { padding-top: var(--s3); }
+  .rr-pt-5 { padding-top: var(--s5); }
   .rr-pb-2 { padding-bottom: var(--s2); }
+  .rr-pb-4 { padding-bottom: var(--s4); }
+  .rr-pl-3 { padding-left: var(--s3); }
+  .rr-pl-6 { padding-left: var(--s6); }   /* a list's markers */
+  .rr-pl-8 { padding-left: var(--s8); }   /* a comment, past its avatar */
   .rr-pb-8 { padding-bottom: var(--s8); }
 
   /* --- Type (a size brings its line height, as in Tailwind) --- */
   .rr-text-xs { font-size: var(--text-xs); line-height: var(--leading-xs); }
+  .rr-text-base { font-size: var(--text-base); line-height: var(--leading-base); }
   .rr-text-lg { font-size: var(--text-lg); line-height: var(--leading-lg); }
+  .rr-text-xl { font-size: var(--text-xl); line-height: var(--leading-xl); }
+  .rr-font-mono { font-family: var(--font-mono); }
   .rr-font-semibold { font-weight: var(--semibold); }
   .rr-font-bold { font-weight: var(--bold); }
+  .rr-italic { font-style: italic; }
+  .rr-underline { text-decoration-line: underline; }
+  .rr-line-through { text-decoration-line: line-through; }
+  .rr-list-disc { list-style-type: disc; }
+  .rr-list-decimal { list-style-type: decimal; }
+  .rr-break-words { overflow-wrap: anywhere; }  /* a long address in a post or comment */
   .rr-text-center { text-align: center; }
-  .rr-capitalize { text-transform: capitalize; }
+  .rr-uppercase { text-transform: uppercase; }
   .rr-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rr-line-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 
@@ -81,26 +142,98 @@
   .rr-text-tags-moderator-content { color: var(--color-tags-moderator-content); }
   .rr-text-tags-nsfw-content { color: var(--color-tags-nsfw-content); }
   .rr-text-media-onBackground { color: var(--color-media-onBackground); }
+  .rr-text-upvote-onBackground { color: var(--color-upvote-onBackground); }
+  .rr-text-downvote-onBackground { color: var(--color-downvote-onBackground); }
+  .rr-text-primary-onBackground { color: var(--color-primary-onBackground); }
+  .rr-text-action-upvote { color: var(--color-action-upvote); }
+  .rr-text-action-downvote { color: var(--color-action-downvote); }
+  .rr-text-danger-content { color: var(--color-danger-content); }
   .rr-text-transparent { color: transparent; }
   .rr-bg-neutral-background { background-color: var(--color-neutral-background); }
+  .rr-bg-neutral-background-weak { background-color: var(--color-neutral-background-weak); }
   .rr-bg-secondary-background { background-color: var(--color-secondary-background); }
-  .rr-bg-secondary-background-selected { background-color: var(--color-secondary-background-selected); }
+  .rr-bg-neutral-background-selected { background-color: var(--color-neutral-background-selected); }
+  .rr-bg-scrim { background-color: var(--color-scrim); }
+  .rr-bg-lightbox { background-color: var(--color-lightbox); }
   .rr-bg-tags-neutral-background { background-color: var(--color-tags-neutral-background); }
   .rr-bg-tags-moderator-background { background-color: var(--color-tags-moderator-background); }
   .rr-bg-tags-nsfw-background { background-color: var(--color-tags-nsfw-background); }
   .rr-bg-media-background { background-color: var(--color-media-background); }
+  .rr-bg-neutral-content-strong { background-color: var(--color-neutral-content-strong); }  /* a spoiler, hidden */
+  .rr-bg-upvote-background { background-color: var(--color-upvote-background); }
+  .rr-bg-downvote-background { background-color: var(--color-downvote-background); }
+  .rr-bg-primary-background { background-color: var(--color-primary-background); }
 
   /* --- Borders and corners --- */
+  .rr-border { border: 1px solid; }
+  .rr-border-t { border-top: 1px solid; }
   .rr-border-b { border-bottom: 1px solid; }
+  .rr-border-l { border-left: 1px solid; }
+  .rr-border-r { border-right: 1px solid; }
+  .rr-border-l-4 { border-left: 4px solid; }  /* a quote */
   .rr-border-neutral-border-weak { border-color: var(--color-neutral-border-weak); }
+  .rr-border-neutral-border-medium { border-color: var(--color-neutral-border-medium); }
   .rr-border-spinner { border: 3px solid var(--color-neutral-border-weak); border-top-color: var(--loader-color); }  /* the loader's ring */
   .rr-rounded-media { border-radius: var(--radius-media); }
+  .rr-rounded-sm { border-radius: var(--radius-sm); }
   .rr-rounded-full { border-radius: var(--radius-full); }
+  .rr-shadow-md { box-shadow: var(--elevation-md); }  /* a dropdown; a switch's knob */
+  .rr-rounded-t-media { border-radius: var(--radius-media) var(--radius-media) 0 0; }  /* a sheet from the bottom */
+  .rr-object-cover { object-fit: cover; }
+  .rr-object-contain { object-fit: contain; }  /* a picture opened big: all of it */
 
-  /* --- Interaction and motion --- */
+  /* --- Scroll, interaction and motion --- */
+  .rr-overflow-hidden { overflow: hidden; }
+  .rr-overflow-x-auto { overflow-x: auto; }  /* the strip, a gallery, code: swipe for more */
+  .rr-snap-x { scroll-snap-type: x mandatory; }  /* a gallery: one picture at a time */
+  .rr-snap-center { scroll-snap-align: center; }
+  .rr-overflow-y-auto { overflow-y: auto; }
+  .rr-overscroll-contain { overscroll-behavior: contain; }  /* the menu's scroll stops at its ends */
+  .rr-touch-none { touch-action: none; }                    /* the scrim: no scrolling the page behind */
+  .rr-touch-pan-x { touch-action: pan-x pinch-zoom; }       /* pictures opened big: swiped through, zoomed; the page behind stays */
+  .rr-outline-none { outline: none; }                       /* a sheet's panel (focused for screen readers); a field inside its own rounded border */
   .rr-pointer-events-none { pointer-events: none; }
+  .rr-transition-transform { transition: transform var(--duration) var(--ease-out); }
+  .rr-transition-opacity { transition: opacity var(--duration) var(--ease-out); }
+  .-rr-translate-x-full { transform: translateX(-100%); }  /* the menu, closed */
+  .rr-translate-y-full { transform: translateY(100%); }    /* a sheet from the bottom, closed */
+  .rr-opacity-0 { opacity: 0; }                              /* the menu's scrim, closed; a dropdown's control */
   .rr-animate-spin { animation: rr-spin 1s linear infinite; }
+  /* --- Wider than a phone (Tailwind's sm): a subreddit's header, as reddit.com's on a computer --- */
+  @media (min-width: 640px) {
+    .sm\:rr-flex { display: flex; }
+    .sm\:rr-items-start { align-items: flex-start; }
+    .sm\:rr-items-end { align-items: flex-end; }
+    .sm\:rr-min-w-0 { min-width: 0; }
+    .sm\:rr-w-22 { width: var(--s22); }
+    .sm\:rr-h-22 { height: var(--s22); }
+    .sm\:rr-h-32 { height: var(--s32); }
+    .sm\:rr-mt-2 { margin-top: var(--s2); }
+    .sm\:-rr-mt-10 { margin-top: calc(var(--s10) * -1); }  /* the icon, over the banner's edge */
+    .sm\:rr-ml-auto { margin-left: auto; }
+    .sm\:rr-pt-0 { padding-top: 0; }
+    .sm\:rr-pt-4 { padding-top: var(--s4); }  /* a subreddit's name, under its banner */
+    .sm\:rr-pb-3 { padding-bottom: var(--s3); }
+    .sm\:rr-text-3xl { font-size: var(--text-3xl); line-height: var(--leading-3xl); }
+    .sm\:rr-border-4 { border-width: 4px; }
+    .sm\:rr-border-neutral-background { border-color: var(--color-neutral-background); }  /* a ring the page's color */
+    .sm\:rr-rounded-media { border-radius: var(--radius-media); }
+  }
+
+  /* --- Wide screens (Tailwind's lg): your account, a dropdown --- */
+  @media (min-width: 1024px) {
+    .lg\:rr-hidden { display: none; }
+    .lg\:rr-block { display: block; }
+  }
+
+  /* --- Wider (Tailwind's xl: 272px beside a centered 732px column): the sidebar, no ☰ --- */
+  @media (min-width: 1280px) {
+    .xl\:rr-hidden { display: none; }
+    .xl\:rr-block { display: block; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .motion-reduce\:rr-animate-none { animation: none; }
+    .motion-reduce\:rr-transition-none { transition: none; }
   }
 }
