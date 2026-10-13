@@ -1,20 +1,23 @@
 /* One of someone's comments, as reddit.com's profile has them: the subreddit
-   and the post it's on, who and when, what they wrote, ↑ score ↓. A tap on
-   it (not on a link or a button): it, in its thread. */
+   and the post it's on, who and when, what they wrote, ↑ score ↓ and "…"
+   (Report). A tap on it (not on a link or a button): it, in its thread. */
 
 import type { Vote } from '../../../account/contract';
 import { Avatar } from '../../../components/avatar';
 import { Markdown } from '../../../components/markdown';
 import { Votes } from '../../../components/votes';
 import { ago } from '../../../core/text';
+import type { Spot } from '../../../overflow/state';
+import { MoreButton } from '../../../overflow/views';
 import type { UserComment } from '../contract';
 
 interface CommentCardProps {
   comment: UserComment;
   onVote: (vote: Vote) => void;
+  onMore: (at: Spot) => void;
 }
 
-export function CommentCard({ comment, onVote }: CommentCardProps) {
+export function CommentCard({ comment, onVote, onMore }: CommentCardProps) {
   return (
     <article
       class="rr-grid rr-gap-1 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak"
@@ -55,13 +58,14 @@ export function CommentCard({ comment, onVote }: CommentCardProps) {
         class="rr-pl-8 rr-pt-1"
       />
       {/* The arrow under the words (the vote's button pads it) */}
-      <div class="rr-flex rr-pl-6 rr-text-neutral-content-weak">
+      <div class="rr-flex rr-items-center rr-gap-1 rr-pl-6 rr-text-neutral-content-weak">
         <Votes
           vote={comment.vote}
           score={comment.score}
           hidden={comment.scoreHidden}
           onVote={onVote}
         />
+        <MoreButton onOpen={onMore} />
       </div>
     </article>
   );

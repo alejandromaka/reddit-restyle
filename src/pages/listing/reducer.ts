@@ -1,5 +1,6 @@
 import type { Vote } from '../../account/contract';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
+import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
 import { pageOf } from '../../core/paging';
 import type { Post } from './contract';
 import { TIMES, type Kind, type ListingAction, type ListingState, type Sort, type Time } from './types';
@@ -24,7 +25,10 @@ export function initialState(path: string, search = ''): ListingState {
     path, search, page: pageOf(search),
     posts: [], after: null, before: null, status: 'loading', error: null,
     about: kind === 'subreddit' ? { status: 'loading' } : null,
+    filters: kind === 'all' ? { status: 'loading' } : null,
+    filterError: null,
     ...initialChrome(),
+    ...initialOverflow(),
   };
 }
 
@@ -37,6 +41,14 @@ function joined(state: ListingState, join: boolean): ListingState {
   if (state.about?.status !== 'loaded' || state.about.data.joined === join) return state;
   const { data } = state.about;
   return { ...state, about: { status: 'loaded', data: { ...data, joined: join, members: data.members + (join ? 1 : -1) } } };
+}
+
+// r/all's filter with a subreddit in it or out (A–Z, each once, any case)
+function filtered(state: ListingState, subreddit: string, keep: boolean): ListingState {
+  if (state.filters?.status !== 'loaded') return state;
+  const others = state.filters.data.filter((name) => name.toLowerCase() !== subreddit.toLowerCase());
+  const names = keep ? [...others, subreddit].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) : others;
+  return { ...state, filters: { status: 'loaded', data: names } };
 }
 
 export function listingReducer(state: ListingState, action: ListingAction): ListingState {
@@ -55,7 +67,15 @@ export function listingReducer(state: ListingState, action: ListingAction): List
       return { ...state, about: { status: 'loaded', data: action.about } };
     case 'about/failed':
       return { ...state, about: { status: 'failed', error: action.error } };
+    case 'filters/loaded':
+      return { ...state, filters: { status: 'loaded', data: action.filters } };
+    case 'filters/failed':
+      return { ...state, filters: { status: 'failed', error: action.error } };
+    case 'filter/requested':
+      return { ...filtered(state, action.subreddit, action.filtered), filterError: null };
+    case 'filter/failed':
+      return { ...filtered(state, action.subreddit, !action.filtered), filterError: action.error };
     default:
-      return chromeReducer(state, action);
+      return isOverflowAction(action) ? overflowReducer(state, action) : chromeReducer(state, action);
   }
 }

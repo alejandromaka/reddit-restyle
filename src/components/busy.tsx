@@ -20,16 +20,18 @@ function Spinner() {
 
 interface BusyButtonProps {
   busy: boolean;
+  disabled?: boolean;
   class: string;
   onClick?: () => void;
   children?: ComponentChildren;
 }
 
-export function BusyButton({ busy, class: className, onClick, children }: BusyButtonProps) {
+export function BusyButton({ busy, disabled = false, class: className, onClick, children }: BusyButtonProps) {
   return (
     <button
       type="button"
       class={cx(className, busy && BUSY)}
+      disabled={disabled}
       onClick={onClick}
     >
       {children}

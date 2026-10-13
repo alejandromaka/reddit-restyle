@@ -95,6 +95,18 @@ describe('a post’s page', () => {
     expect(line.parentElement!.contains(button('3 more replies'))).toBe(false);
   });
 
+  it('"…": the post’s, Hide and Report; a comment’s, Report (reddit hides posts only), by the post’s subreddit’s rules', async () => {
+    const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+    const items = () => [...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean);  // not the scrim's
+    main().querySelector<HTMLButtonElement>('article button[aria-label="More options"]')!.click();  // the post's, first
+    await vi.waitFor(() => expect(items()).toEqual(['Hide', 'Report']));
+    comment('early_riser').querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(items()).toEqual(['Report']));
+    [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Report')!.click();
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"][aria-label="Report"]')!.textContent).toContain('Report this comment'));
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
+  });
+
   it('the name: their profile, not a fold', () => {
     const name = row('early_riser').querySelector('a')!;
     expect(name.getAttribute('href')).toBe('/user/early_riser/');

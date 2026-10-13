@@ -1,5 +1,5 @@
 /* The post, as reddit.com shows it on its page: where, when and who (its
-   subreddit's icon; Join), its title and tags, all of it (text, pictures,
+   subreddit's icon; Join, "…"), its title and tags, all of it (text, pictures,
    video, link), then its votes, comments and Share */
 
 import { useState } from 'preact/hooks';
@@ -15,6 +15,8 @@ import type { Load } from '../../../core/store';
 import { ago, compact } from '../../../core/text';
 import type { About } from '../../listing/contract';
 import { MediaView } from '../../listing/views/media';
+import type { Spot } from '../../../overflow/state';
+import { MoreButton } from '../../../overflow/views';
 import type { FullPost } from '../contract';
 
 interface PostHeadProps {
@@ -22,9 +24,10 @@ interface PostHeadProps {
   about: Load<About> | null;
   onVote: (vote: Vote) => void;
   onJoin: (join: boolean) => void;
+  onMore: (at: Spot) => void;
 }
 
-export function PostHead({ post, about, onVote, onJoin }: PostHeadProps) {
+export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps) {
   return (
     <article class="rr-grid rr-gap-3 rr-px-4 rr-pt-3 rr-pb-2">
       <div class="rr-flex rr-items-center rr-gap-2">
@@ -55,14 +58,15 @@ export function PostHead({ post, about, onVote, onJoin }: PostHeadProps) {
             u/{post.author}
           </a>
         </div>
-        {about?.status === 'loaded' && (
-          <span class="rr-ml-auto">
+        <span class="rr-flex rr-items-center rr-gap-1 rr-ml-auto">
+          {about?.status === 'loaded' && (
             <JoinButton
               joined={about.data.joined}
               onJoin={onJoin}
             />
-          </span>
-        )}
+          )}
+          <MoreButton onOpen={onMore} />
+        </span>
       </div>
       <h1 class="rr-text-xl rr-font-bold rr-break-words">{post.title}</h1>
       <Tags

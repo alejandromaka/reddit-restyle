@@ -1,0 +1,36 @@
+{
+  "rules": [
+    {
+      "kind": "link",
+      "description": "Screenshots go in r/screenshots.",
+      "short_name": "No screenshots",
+      "violation_reason": "Screenshot",
+      "created_utc": 1600000000.0,
+      "priority": 0,
+      "description_html": "<div class=\"md\"><p>Screenshots go in r/screenshots.</p>\n</div>"
+    },
+    {
+      "kind": "all",
+      "description": "No insults.",
+      "short_name": "Be civil",
+      "violation_reason": "Incivility",
+      "created_utc": 1600000001.0,
+      "priority": 1,
+      "description_html": "<div class=\"md\"><p>No insults.</p>\n</div>"
+    },
+    {
+      "kind": "comment",
+      "description": "",
+      "short_name": "No spoilers in comments",
+      "created_utc": 1600000002.0,
+      "priority": 2,
+      "description_html": null
+    }
+  ],
+  "site_rules": [
+    "Spam",
+    "Personal and confidential information",
+    "Threatening, harassing, or inciting violence"
+  ],
+  "site_rules_flow": []
+}

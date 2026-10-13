@@ -10,12 +10,16 @@ import type { Shell } from '../src/shell/blocker';
 const fixture = readFileSync(resolve(__dirname, 'fixtures/listing.json'), 'utf8');
 const subscriptions = readFileSync(resolve(__dirname, 'fixtures/subscriptions.json'), 'utf8');
 const about = readFileSync(resolve(__dirname, 'fixtures/about.json'), 'utf8');
+const rules = readFileSync(resolve(__dirname, 'fixtures/rules.json'), 'utf8');
+const filters = readFileSync(resolve(__dirname, 'fixtures/filters.json'), 'utf8');
 // reddit, from the fixtures: you (your modhash), what you do (taken), your
 // communities, a subreddit's about, the next page, a listing
 const answer = (url: string) => new Response(
   url === '/api/me.json?raw_json=1' ? '{"data":{"name":"you","modhash":"MODHASH","snoovatar_img":"https://i.redd.it/snoovatar/you.png"}}'
-    : url.startsWith('/api/') || url === '/logout' ? '{}'
-      : url.startsWith('/subreddits/') ? subscriptions : url.includes('/about.json') ? about : url.includes('after=') ? second : fixture,
+    : url.startsWith('/api/filter/') && !url.includes('/r/') ? filters
+      : url.startsWith('/api/') || url === '/logout' ? '{}'
+      : url.startsWith('/subreddits/') ? subscriptions : url.includes('/about.json') ? about : url.includes('/about/rules.json') ? rules
+        : url.includes('after=') ? second : fixture,
 );
 const posted = (fetchMock: ReturnType<typeof vi.fn>, url: string) =>
   fetchMock.mock.calls.filter(([to, init]) => to === url && init?.method === 'POST').map(([, init]) => Object.fromEntries(init.body as URLSearchParams));
@@ -86,6 +90,48 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(titles()).toEqual(['From the next page']));
     const before = '/r/pics/top/?t=week&count=51&before=t3_next';
     expect(pages()).toEqual([['‹ Prev', before], ['1', '/r/pics/top/?t=week'], ['2', before], ['3', null]]);
+  });
+
+  // The page's menu (in jsdom both the phone's sheet and the wider dropdown are there: the sheet's first)
+  const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+  const inMenu = (label: string) => [...menu().querySelectorAll('button')].find((b) => b.textContent === label)!;
+  const report = () => document.querySelector('[role="dialog"][aria-label="Report"]')!;
+  const more = (index: number) => document.querySelectorAll<HTMLButtonElement>('article button[aria-label="More options"]')[index]!;
+
+  it('a post’s "…": Hide, Report; hidden, it’s a line with Undo, and reddit’s told each time', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(1).click();
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    expect([...menu().querySelectorAll('button')].map((b) => b.textContent)).toEqual(expect.arrayContaining(['Hide', 'Report']));
+    inMenu('Hide').click();
+    await vi.waitFor(() => expect(titles()).not.toContain('Sunrise over the Grand Canyon this morning'));
+    expect(menu().hasAttribute('inert')).toBe(true);
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/hide')).toEqual([{ id: 't3_1q2c002', uh: 'MODHASH' }]));
+    const undo = [...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo')!;
+    expect(undo.parentElement!.textContent).toBe('Post hiddenUndo');
+    undo.click();
+    await vi.waitFor(() => expect(titles()).toContain('Sunrise over the Grand Canyon this morning'));
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/unhide')).toEqual([{ id: 't3_1q2c002', uh: 'MODHASH' }]));
+  });
+
+  it('reporting a post: its subreddit’s rules for posts and reddit’s, one chosen, sent; thanks', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(0).click();
+    inMenu('Report').click();
+    await vi.waitFor(() => expect(report().hasAttribute('inert')).toBe(false));
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
+    const reasons = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    await vi.waitFor(() => expect(reasons().map((b) => b.textContent)).toEqual([
+      'No screenshots', 'Be civil', 'Spam', 'Personal and confidential information', 'Threatening, harassing, or inciting violence',
+    ]));
+    const send = [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Report')!;
+    expect(send.disabled).toBe(true);
+    reasons()[1]!.click();
+    await vi.waitFor(() => expect(reasons()[1]!.getAttribute('aria-pressed')).toBe('true'));
+    expect(send.disabled).toBe(false);
+    send.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([{ api_type: 'json', thing_id: 't3_1q2c001', reason: 'Incivility', uh: 'MODHASH' }]));
+    await vi.waitFor(() => expect(report().textContent).toContain('Thanks for your report'));
   });
 
   it('top: its span, a dropdown on the week as the address says, each option an address', async () => {
@@ -226,5 +272,49 @@ describe('listing page, when reddit says no', () => {
     await vi.waitFor(() => expect(document.querySelector('main')!.textContent).toContain('Couldn’t load this page'));
     expect(document.querySelector('main')!.textContent).toContain('/r/pics/.json?raw_json=1&sr_detail=1&limit=25: 403');
     expect(document.querySelectorAll('article')).toHaveLength(0);
+  });
+});
+
+describe('r/all', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  const changed = (method: string) => fetchMock.mock.calls.filter(([, init]) => init?.method === method)
+    .map(([url, init]) => [url, init.headers?.['X-Modhash'], init.body ? Object.fromEntries(init.body as URLSearchParams) : null]);
+  const rail = () => document.querySelector('aside section')!;
+  const listed = () => [...rail().querySelectorAll('li a')].map((a) => a.textContent);
+
+  beforeEach(() => {
+    history.replaceState(null, '', '/r/all/');
+    fetchMock = vi.fn(async (url: string) => answer(url));
+    vi.stubGlobal('fetch', fetchMock);
+    setUpListing(shell);
+  });
+
+  const show = () => [...rail().querySelectorAll('button')].find((b) => b.textContent?.startsWith('Show'))!;
+
+  it('the subreddits you keep out of it, A–Z: in the bar, folded (Show 3) as old reddit’s; behind Filters (N), open', async () => {
+    await vi.waitFor(() => expect(show().textContent).toBe('Show 3'));
+    expect(listed()).toEqual([]);
+    show().click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile']));
+    expect(show().textContent).toBe('Show less');
+    expect([...document.querySelectorAll('[role="dialog"][aria-label="Filtered from r/all"] li a')].map((a) => a.textContent)).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile']);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/api/filter/user/you/f/all?raw_json=1');
+    expect([...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Filters'))!.textContent).toBe('Filters (3)');
+  });
+
+  it('one added (r/name or name): listed, reddit told (PUT, your modhash), its posts gone from the page; × lets it back in', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    await vi.waitFor(() => expect(show()).toBeTruthy());
+    show().click();
+    const form = rail().querySelector('form')!;
+    form.querySelector('input')!.value = 'r/pics';
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile', 'r/pics']));
+    expect(titles()).toEqual([]);  // every post here is r/pics'
+    expect(form.querySelector('input')!.value).toBe('');
+    await vi.waitFor(() => expect(changed('PUT')).toEqual([['/api/filter/user/you/f/all/r/pics', 'MODHASH', { model: '{"name":"pics"}' }]]));
+    rail().querySelector<HTMLButtonElement>('button[aria-label="Let r/GenZ back into r/all"]')!.click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/MadeMeSmile', 'r/pics']));
+    await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/GenZ', 'MODHASH', null]]));
   });
 });

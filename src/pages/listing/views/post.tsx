@@ -1,7 +1,7 @@
 /* A post in a listing: where (a mixed listing: its subreddit; one subreddit's:
-   who) and when, its title, its media (it plays, it opens big) or the start of
-   its text, its score and comments. Its title, its comments, or a tap on the
-   rest: its page. */
+   who) and when, and its "…" (Hide, Report), its title, its media (it plays,
+   it opens big) or the start of its text, its score and comments. Its title,
+   its comments, or a tap on the rest: its page. */
 
 import type { Vote } from '../../../account/contract';
 import { Avatar } from '../../../components/avatar';
@@ -9,17 +9,20 @@ import { Icon } from '../../../components/icon';
 import { Tags } from '../../../components/tags';
 import { ui } from '../../../components/ui';
 import { Votes } from '../../../components/votes';
-import { MediaView } from './media';
 import { ago, compact } from '../../../core/text';
+import type { Spot } from '../../../overflow/state';
+import { MoreButton } from '../../../overflow/views';
 import type { Post } from '../contract';
+import { MediaView } from './media';
 
 interface PostCardProps {
   post: Post;
   mixed: boolean;  // a listing of more than one subreddit
   onVote: (vote: Vote) => void;
+  onMore: (at: Spot) => void;
 }
 
-export function PostCard({ post, mixed, onVote }: PostCardProps) {
+export function PostCard({ post, mixed, onVote, onMore }: PostCardProps) {
   return (
     // A tap on it, but not on something of its own (a link, a button, a video): the post. (Keys: its title.)
     <article
@@ -49,6 +52,9 @@ export function PostCard({ post, mixed, onVote }: PostCardProps) {
           </a>
         )}
         <span class="rr-flex-none">· {ago(post.created)}</span>
+        <span class="rr-ml-auto -rr-my-2">
+          <MoreButton onOpen={onMore} />
+        </span>
       </p>
       <a
         class="rr-text-base rr-font-semibold"

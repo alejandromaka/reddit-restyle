@@ -50,6 +50,7 @@
   .rr-top-full { top: 100%; }        /* a dropdown, under what opened it */
   .rr-top-4 { top: var(--s4); }
   .rr-right-4 { right: var(--s4); }
+  .rr-left-full { left: 100%; }  /* a bar beside the feed's column */
   .rr-left-1 { left: var(--s1); }  /* a thread's line: its tap area, centered under the avatar */
   .-rr-left-4 { left: calc(var(--s4) * -1); }  /* a reply's curve, from its parent's line */
   .rr-top-2 { top: var(--s2); }
@@ -69,6 +70,7 @@
   .rr-w-12 { width: var(--s12); }
   .rr-h-auto { height: auto; }
   .rr-h-full { height: 100%; }
+  .rr-h-fit { height: fit-content; }  /* a dialog in the middle: as tall as it needs */
   .rr-h-3 { height: var(--s3); }    /* a reply's curve */
   .rr-h-4 { height: var(--s4); }
   .rr-h-5 { height: var(--s5); }
@@ -86,6 +88,9 @@
   .rr-w-64 { width: var(--s64); }             /* a dropdown */
   .rr-w-\[18rem\] { width: 18rem; }          /* the menu */
   .rr-w-\[272px\] { width: 272px; }          /* the sidebar, as reddit.com's */
+  .rr-w-\[316px\] { width: 316px; }          /* a bar beside the feed, as reddit.com's right rail */
+  .rr-w-\[32rem\] { width: 32rem; }          /* a dialog in the middle: a report */
+  .rr-max-w-\[calc\(100\%-2rem\)\] { max-width: calc(100% - 2rem); }  /* …never wider than the window */
   .rr-h-\[calc\(100dvh-3\.5rem\)\] { height: calc(100dvh - 3.5rem); }  /* the sidebar: the screen under the bar */
   .rr-max-w-\[85\%\] { max-width: 85%; }      /* the menu, on a narrow phone */
   .rr-max-h-\[85\%\] { max-height: 85%; }     /* a sheet from the bottom */
@@ -97,7 +102,9 @@
   .rr-mx-auto { margin-inline: auto; }
   .rr-mx-4 { margin-inline: var(--s4); }
   .rr-my-2 { margin-block: var(--s2); }
+  .-rr-my-2 { margin-block: calc(var(--s2) * -1); }  /* a post's "…": its row no taller for it */
   .rr-ml-auto { margin-left: auto; }
+  .rr-ml-4 { margin-left: var(--s4); }
   .rr-ml-3 { margin-left: var(--s3); }  /* a thread's line, in the middle of its tap area */
   .rr-mr-1 { margin-right: var(--s1); }
   .rr-mr-2 { margin-right: var(--s2); }
@@ -119,6 +126,7 @@
   .rr-pt-1 { padding-top: var(--s1); }
   .rr-pt-2 { padding-top: var(--s2); }
   .rr-pt-3 { padding-top: var(--s3); }
+  .rr-pt-4 { padding-top: var(--s4); }
   .rr-pt-5 { padding-top: var(--s5); }
   .rr-pb-2 { padding-bottom: var(--s2); }
   .rr-pb-4 { padding-bottom: var(--s4); }
@@ -253,9 +261,19 @@
     .xl\:rr-block { display: block; }
   }
 
+  /* --- Disabled (Tailwind's disabled:): reddit's colors for a button that can't yet --- */
+  .disabled\:rr-bg-button-primary-background-disabled:disabled { background-color: var(--color-button-primary-background-disabled); }
+  .disabled\:rr-text-button-primary-text-disabled:disabled { color: var(--color-button-primary-text-disabled); }
+
   /* --- A mouse on it (Tailwind's hover: only where there's a mouse, so a tap doesn't stick) --- */
   @media (hover: hover) {
     .has-\[\>div\>button\:hover\]\:rr-\[--line\:var\(--color-neutral-content-weak\)\]:has(> div > button:hover) { --line: var(--color-neutral-content-weak); }  /* a comment, a mouse on its line */
+  }
+
+  /* --- Room beside the feed (1400px: the 732px column centered, 16px and a 316px bar each side): r/all's filters as a bar --- */
+  @media (min-width: 1400px) {
+    .min-\[1400px\]\:rr-hidden { display: none; }
+    .min-\[1400px\]\:rr-block { display: block; }
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,7 @@
 import type { Vote } from '../../account/contract';
 import type { Load } from '../../core/store';
 import type { ChromeAction, ChromeState } from '../../nav/chrome';
+import type { OverflowAction, OverflowState } from '../../overflow/state';
 import type { Time } from '../listing/types';
 import type { Item, Items, User } from './contract';
 
@@ -20,7 +21,7 @@ export const SORTED: readonly Tab[] = ['overview', 'submitted', 'comments'];  //
 export const SORTS = ['new', 'hot', 'top', 'controversial'] as const;       // newest first unless the address says
 export type Sort = (typeof SORTS)[number];
 
-export interface ProfileState extends ChromeState {
+export interface ProfileState extends ChromeState, OverflowState {
   name: string;               // whose
   tab: Tab;
   sort: Sort | null;          // null: a tab without sorts
@@ -43,4 +44,5 @@ export type ProfileAction =
   | { type: 'user/failed'; error: string }
   | { type: 'vote/requested'; id: string; vote: Vote }
   | { type: 'vote/failed'; id: string; vote: Vote }     // back to the vote before
-  | ChromeAction;
+  | ChromeAction
+  | OverflowAction;

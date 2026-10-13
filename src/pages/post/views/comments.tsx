@@ -1,9 +1,10 @@
 /* The comments, as reddit.com's: who and when (a tap on the row folds the
    comment and its replies away, again brings them back; on the name: their
-   profile), what they wrote, ⊖ (folds it too), ↑ score ↓ and Reply, then its
-   replies. A comment with replies has a line down from its avatar, past what
-   it wrote (⊖ on it), curving into each reply and ending in the last one's
-   curve; a tap on the line folds it too, a mouse on it darkens it.
+   profile), what they wrote, ⊖ (folds it too), ↑ score ↓, Reply and "…"
+   (Report), then its replies. A comment with replies has a line down from
+   its avatar, past what it wrote (⊖ on it), curving into each reply and
+   ending in the last one's curve; a tap on the line folds it too, a mouse on
+   it darkens it.
    "N more replies" loads the rest; a thread too deep for here continues on its
    own page. Searching: the loaded comments that match, on their own. */
 
@@ -14,6 +15,8 @@ import { Markdown } from '../../../components/markdown';
 import { cx, ui } from '../../../components/ui';
 import { Votes } from '../../../components/votes';
 import { ago } from '../../../core/text';
+import { commentThing } from '../../../overflow/state';
+import { MoreButton } from '../../../overflow/views';
 import type { Comment, More, Reply } from '../contract';
 import type { PostAction, PostState } from '../types';
 import { Composer } from './composer';
@@ -21,7 +24,8 @@ import { Composer } from './composer';
 // What every comment needs from the page
 export interface Talk {
   state: Pick<PostState, 'folded' | 'loading' | 'replyingTo' | 'sending' | 'sendError'>;
-  closed: boolean;  // locked or archived: no replies
+  subreddit: string;  // its rules, to report a comment by
+  closed: boolean;    // locked or archived: no replies
   dispatch: (action: PostAction) => void;
 }
 
@@ -167,6 +171,7 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
                   Reply
                 </button>
               )}
+              <MoreButton onOpen={(at) => dispatch({ type: 'menu/opened', thing: commentThing(comment.id, talk.subreddit), at })} />
             </div>
             {replying && (
               <div class="rr-pl-10">

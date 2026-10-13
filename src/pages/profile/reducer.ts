@@ -1,6 +1,7 @@
 import type { Vote } from '../../account/contract';
 import { pageOf } from '../../core/paging';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
+import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
 import { TIMES } from '../listing/types';
 import type { Item } from './contract';
 import { SORTED, SORTS, TABS, type ProfileAction, type ProfileState } from './types';
@@ -17,6 +18,7 @@ export function initialState(path: string, search = ''): ProfileState {
     items: [], after: null, before: null, status: 'loading', error: null,
     user: { status: 'loading' },
     ...initialChrome(),
+    ...initialOverflow(),
   };
 }
 
@@ -42,6 +44,6 @@ export function profileReducer(state: ProfileState, action: ProfileAction): Prof
     case 'vote/failed':
       return { ...state, items: voted(state.items, action.id, action.vote) };
     default:
-      return chromeReducer(state, action);
+      return isOverflowAction(action) ? overflowReducer(state, action) : chromeReducer(state, action);
   }
 }

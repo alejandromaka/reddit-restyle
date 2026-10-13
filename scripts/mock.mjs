@@ -9,13 +9,14 @@
 // document start). Nothing reaches reddit: every old.reddit.com page is a bare
 // old reddit page (its own scripts and CSS refused, as Reddit Blocker does),
 // every listing is test/fixtures/listing.json (its next page, after=: the
-// same posts under new ids, the last page), every post's page test/fixtures/thread.json
-// (more comments: morechildren.json; your comment: posted.json, with your
-// words), every profile test/fixtures/user.json and user-listing.json,
-// every subreddit's about test/fixtures/about.json (under its own name), your communities test/fixtures/subscriptions.json,
-// what you do (vote, join, leave, log out) is taken and printed, and every image is a
-// placeholder. A page we don't draw stays the bare old reddit page, as on the
-// phone.
+// same posts under new ids, the last page), every post's page
+// test/fixtures/thread.json (more comments: morechildren.json; your comment:
+// posted.json, with your words), every profile test/fixtures/user.json and
+// user-listing.json, every subreddit's about test/fixtures/about.json (under
+// its own name) and its rules rules.json, your communities
+// test/fixtures/subscriptions.json, your r/all filters filters.json, what you
+// do (vote, join, leave, hide, report, filter, log out) is taken and printed, and every image is a placeholder. A
+// page we don't draw stays the bare old reddit page, as on the phone.
 //
 // MOCK_SHOT=file.png: no window; a screenshot of the page there, then exit
 // MOCK_TAP="Menu > r/soccer": with MOCK_SHOT, what to tap first (a label or text)
@@ -43,7 +44,10 @@ if (!existsSync(JS)) {
 // Old reddit's page, as far as the restyle cares: its head's own CSS and
 // script (refused below), and some markup for ours to replace. Its charset in
 // the page itself: Playwright's WebKit ignores the one in a fulfilled header
-const oldReddit = (js) => `<!DOCTYPE html><html><head><meta charset="utf-8"><script>${js}</script>
+// MOCK_REDDIT_INIT=file: old reddit's reddit-init.js (saved from the real page), run before ours, as
+// when Reddit Blocker's rules are missing (Userscripts drops them for a moment on every window focus)
+const REDDIT_INIT = process.env.MOCK_REDDIT_INIT ? (await readFile(process.env.MOCK_REDDIT_INIT, 'utf8')).replace(/<\/script/gi, '<\\/script') : null;
+const oldReddit = (js) => `<!DOCTYPE html><html><head><meta charset="utf-8">${REDDIT_INIT ? `<script>${REDDIT_INIT}</script>` : ''}<script>${js}</script>
 <title>reddit: the front page of the internet</title>
 <link rel="stylesheet" href="https://www.redditstatic.com/reddit.mock.css">
 <script src="https://www.redditstatic.com/reddit-init.en.mock.js"></script>
@@ -94,8 +98,9 @@ async function answer(route) {
       return json(JSON.stringify(posted));
     }
     if (url.pathname === '/api/me.json') return json('{"data":{"name":"you","modhash":"MOCK","snoovatar_img":"https://i.redd.it/snoovatar/mock.png"}}');
-    if ((url.pathname.startsWith('/api/') || url.pathname === '/logout') && request.method() === 'POST') {
-      console.log(`(you) ${url.pathname} ${request.postData()}`);
+    if (url.pathname.startsWith('/api/filter/') && request.method() === 'GET') return json(await fixture('filters'));
+    if ((url.pathname.startsWith('/api/') || url.pathname === '/logout') && request.method() !== 'GET') {
+      console.log(`(you) ${request.method()} ${url.pathname} ${request.postData() ?? ''}`);
       return json('{}');
     }
     if (request.resourceType() === 'document') {
@@ -105,6 +110,7 @@ async function answer(route) {
     if (url.pathname === '/subreddits/mine/subscriber.json') return json(await fixture('subscriptions'));
     const subreddit = url.pathname.match(/^\/r\/([^/]+)\/about\.json$/)?.[1];
     if (subreddit) return json(await about(subreddit));
+    if (/^\/r\/[^/]+\/about\/rules\.json$/.test(url.pathname)) return json(await fixture('rules'));
     if (/^\/user\/[^/]+\/about\.json$/.test(url.pathname)) return json(await fixture('user'));
     if (url.pathname.startsWith('/user/') && url.pathname.endsWith('.json')) return json(await fixture('user-listing'));
     if (url.pathname.includes('/comments/') && url.pathname.endsWith('.json')) return json(await fixture('thread'));
@@ -122,7 +128,7 @@ await page.goto(`https://old.reddit.com${START}`);
 if (SHOT) {
   await page.waitForTimeout(1000);
   for (const tap of TAP ? TAP.split(' > ') : []) {
-    await page.getByLabel(tap, { exact: true }).or(page.getByText(tap, { exact: true })).first().click();
+    await page.getByLabel(tap, { exact: true }).or(page.getByText(tap, { exact: true })).locator('visible=true').first().click();  // the one on screen (a phone's sheet and a wider dropdown can both be there)
     await page.waitForTimeout(1000);
   }
   if (process.env.MOCK_HOVER) await page.hover(process.env.MOCK_HOVER);

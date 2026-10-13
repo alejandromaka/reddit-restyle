@@ -1,5 +1,6 @@
-/* Network → actions: your votes and joins, sent (each already on screen; one
-   reddit refuses goes back, and the console says why) */
+/* Network → actions: your votes, joins and r/all filters, sent (each already
+   on screen; one reddit refuses goes back, and the console, or the filters,
+   say why) */
 
 import type { Vote } from '../../account/contract';
 import type { Store } from '../../core/store';
@@ -8,6 +9,7 @@ import type { ListingAction, ListingState } from './types';
 interface ListingApi {
   vote: (id: string, dir: Vote) => Promise<void>;
   subscribe: (name: string, join: boolean) => Promise<void>;
+  filter: (subreddit: string, filtered: boolean) => Promise<void>;
 }
 
 export function startEffects(store: Store<ListingState, ListingAction>, api: ListingApi) {
@@ -17,6 +19,11 @@ export function startEffects(store: Store<ListingState, ListingAction>, api: Lis
       api.vote(action.id, action.vote).catch((error: unknown) => {
         console.error(error);
         store.dispatch({ type: 'vote/failed', id: action.id, vote: before });
+      });
+    }
+    if (action.type === 'filter/requested') {
+      api.filter(action.subreddit, action.filtered).catch((error: unknown) => {
+        store.dispatch({ type: 'filter/failed', subreddit: action.subreddit, filtered: action.filtered, error: String(error) });
       });
     }
     if (action.type === 'join/requested' && state.about?.status === 'loaded' && state.about !== previous.about) {

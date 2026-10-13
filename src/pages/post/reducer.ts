@@ -1,5 +1,6 @@
 import type { Vote } from '../../account/contract';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
+import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
 import { MORE_AT_ONCE, type Comment, type More, type Reply } from './contract';
 import { COMMENT_SORTS, type CommentSort, type PostAction, type PostState } from './types';
 
@@ -27,6 +28,7 @@ export function initialState(path: string, search = ''): PostState {
     sendError: null,
     sent: 0,
     ...initialChrome(),
+    ...initialOverflow(),
   };
 }
 
@@ -116,6 +118,6 @@ export function postReducer(state: PostState, action: PostAction): PostState {
     case 'comment/failed':
       return { ...state, sending: null, sendError: { parent: action.parent, error: action.error } };
     default:
-      return chromeReducer(state, action);
+      return isOverflowAction(action) ? overflowReducer(state, action) : chromeReducer(state, action);
   }
 }

@@ -1,6 +1,7 @@
 import type { Vote } from '../../account/contract';
 import type { Load } from '../../core/store';
 import type { ChromeAction, ChromeState } from '../../nav/chrome';
+import type { OverflowAction, OverflowState } from '../../overflow/state';
 import type { About, Listing, Post } from './contract';
 
 export const SORTS = ['hot', 'new', 'top', 'rising'] as const;  // the ones we offer, in order (the front page: Best first)
@@ -11,7 +12,7 @@ export type Time = (typeof TIMES)[number];
 // What a listing is of: the front page, reddit's two, several subreddits at once, or one
 export type Kind = 'home' | 'popular' | 'all' | 'multi' | 'subreddit';
 
-export interface ListingState extends ChromeState {
+export interface ListingState extends ChromeState, OverflowState {
   subreddit: string | null;  // null: the front page
   kind: Kind;
   sort: Sort;
@@ -25,6 +26,8 @@ export interface ListingState extends ChromeState {
   status: 'loading' | 'failed' | 'idle';
   error: string | null;      // why the page didn't come
   about: Load<About> | null;  // one subreddit's; null: not one subreddit
+  filters: Load<string[]> | null;  // r/all: the subreddits you keep out of it, A–Z; null: not r/all
+  filterError: string | null;      // why a change to them didn't go
 }
 
 export type ListingAction =
@@ -36,4 +39,9 @@ export type ListingAction =
   | { type: 'join/failed'; joined: boolean }            // back to before
   | { type: 'about/loaded'; about: About }
   | { type: 'about/failed'; error: string }
-  | ChromeAction;
+  | { type: 'filters/loaded'; filters: string[] }
+  | { type: 'filters/failed'; error: string }
+  | { type: 'filter/requested'; subreddit: string; filtered: boolean }   // kept out of r/all, or let back in
+  | { type: 'filter/failed'; subreddit: string; filtered: boolean; error: string }  // back to before
+  | ChromeAction
+  | OverflowAction;

@@ -9,10 +9,8 @@ import { Avatar } from '../components/avatar';
 import { Dropdown } from '../components/dropdown';
 import { Icon } from '../components/icon';
 import { Sheet } from '../components/sheet';
-import { cx } from '../components/ui';
+import { cx, ui } from '../components/ui';
 import { chooseTheme, isDark } from '../core/theme';
-
-const ROW = 'rr-flex rr-items-center rr-gap-4 rr-w-full rr-h-12 rr-px-4';
 
 interface AccountProps {
   open: boolean;
@@ -78,7 +76,7 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
       </a>
       <hr class="rr-my-2 rr-border-b rr-border-neutral-border-weak" />
       <a
-        class={ROW}
+        class={ui.row}
         href="/prefs/"
       >
         <Icon name="settings" large />
@@ -86,7 +84,7 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
       </a>
       <button
         type="button"
-        class={ROW}
+        class={ui.row}
         role="switch"
         aria-checked={dark}
         onClick={(event) => {
@@ -103,7 +101,7 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
       </button>
       <button
         type="button"
-        class={ROW}
+        class={ui.row}
         onClick={onLogOut}
       >
         <Icon name="logout" large />

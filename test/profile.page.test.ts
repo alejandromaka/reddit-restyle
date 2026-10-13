@@ -89,6 +89,8 @@ describe('profile page', () => {
     expect(first!.textContent).toContain('someone commented');
     expect(first!.querySelector('strong')!.textContent).toBe('unreal');
     expect(post!.querySelector('a[href^="/r/pics/comments/"]')!.textContent).toBe('A lighthouse at night (from r/EarthPorn)');
+    expect(first!.querySelector('button[aria-label="More options"]')).not.toBeNull();
+    expect(post!.querySelector('button[aria-label="More options"]')).not.toBeNull();
     const next = '/user/someone/?count=25&after=t1_u1c002';
     expect([...main().querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.getAttribute('href'))).toEqual([next, next]);
   });

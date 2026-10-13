@@ -4,9 +4,11 @@
    it's parsed. */
 
 import { render } from 'preact';
-import { comment, subscribe, vote } from '../../account/contract';
+import { comment, hide, report, subscribe, vote } from '../../account/contract';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
+import { fetchRules } from '../../overflow/contract';
+import { startOverflow } from '../../overflow/state';
 import type { Shell } from '../../shell/blocker';
 import { fetchAbout } from '../listing/contract';
 import { fetchMore, fetchThread, readPosted } from './contract';
@@ -31,6 +33,7 @@ export function setUpPost(shell: Shell) {
       more: fetchMore,
       comment: async (parent, text) => readPosted(await comment(parent, text)),
     });
+    startOverflow(store, { hide, report, rules: fetchRules });
     chrome(store);
     shell.reveal();
     first.then(

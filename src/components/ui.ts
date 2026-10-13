@@ -11,6 +11,7 @@ export const ui = {
   action: `${pill} rr-gap-1 rr-px-3 rr-bg-secondary-background`,  // comments, Share
   plain: `${pill} rr-gap-1 rr-px-3`,  // Reply: an action without its pill
   icon: 'rr-grid rr-place-items-center rr-flex-none rr-w-8 rr-h-8 rr-rounded-full',  // a round button with an icon in it
+  row: 'rr-flex rr-items-center rr-gap-4 rr-w-full rr-h-12 rr-px-4',  // a menu's: an icon, then its words
 };
 
 export const cx = (...parts: (string | false | null | undefined)[]) => [...new Set(parts.filter(Boolean).join(' ').split(' ').filter(Boolean))].join(' ');

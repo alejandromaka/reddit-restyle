@@ -1,7 +1,8 @@
 /* Every page's frame: the strip and the bar on top, the page in a column
    centered in the window, as reddit.com's (a feed: 732px with its padding; a
    post: 732px of post, its padding around it), and on a wide screen the
-   sidebar at its left (it doesn't push the column over) */
+   sidebar at its left (it doesn't push the column over). The column is
+   positioned: a page can put a bar beside it (r/all's filters). */
 
 import type { ComponentChildren } from 'preact';
 import { cx } from '../components/ui';
@@ -31,7 +32,7 @@ export function Frame({ current, chrome, dispatch, post = false, children }: Fra
           current={current}
           communities={chrome.communities}
         />
-        <main class={cx('rr-w-full rr-min-w-0 rr-mx-auto rr-pb-8', post ? 'rr-max-w-[764px]' : 'rr-max-w-[732px]')}>{children}</main>
+        <main class={cx('rr-relative rr-w-full rr-min-w-0 rr-mx-auto rr-pb-8', post ? 'rr-max-w-[764px]' : 'rr-max-w-[732px]')}>{children}</main>
       </div>
     </>
   );

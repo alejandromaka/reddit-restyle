@@ -4,7 +4,7 @@ import { initialState, kindOf, listingReducer } from '../src/pages/listing/reduc
 
 const post = (id: string): Post => ({
   id, title: id, subreddit: 'pics', subredditIcon: null, author: 'a', score: 1, vote: 0, comments: 0, created: 0, permalink: `/r/pics/comments/${id}/`,
-  domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, flair: null,
+  domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, hidden: false, flair: null,
 });
 const listing = (ids: string[], after: string | null, before: string | null = null): Listing => ({ posts: ids.map(post), after, before });
 
@@ -65,6 +65,18 @@ describe('listingReducer', () => {
     expect(listingReducer(up, { type: 'vote/requested', id: 'a', vote: -1 }).posts[0]).toMatchObject({ vote: -1, score: 0 });
     expect(listingReducer(up, { type: 'vote/failed', id: 'a', vote: 0 }).posts[0]).toMatchObject({ vote: 0, score: 1 });
     expect(up.posts[1]).toBe(loaded.posts[1]);
+  });
+
+  it('r/all: its filters asked for (only there); one added, A–Z and once, or taken out; back again when it fails, and why', () => {
+    expect(initialState('/r/pics/').filters).toBeNull();
+    const all = listingReducer(initialState('/r/all/'), { type: 'filters/loaded', filters: ['GenZ', 'MadeMeSmile'] });
+    const added = listingReducer(all, { type: 'filter/requested', subreddit: 'aww', filtered: true });
+    expect(added.filters).toEqual({ status: 'loaded', data: ['aww', 'GenZ', 'MadeMeSmile'] });
+    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'AWW', filtered: true }).filters).toEqual({ status: 'loaded', data: ['AWW', 'GenZ', 'MadeMeSmile'] });
+    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'genz', filtered: false }).filters).toEqual({ status: 'loaded', data: ['aww', 'MadeMeSmile'] });
+    const refused = listingReducer(added, { type: 'filter/failed', subreddit: 'aww', filtered: true, error: 'Error: 400' });
+    expect([refused.filters, refused.filterError]).toEqual([{ status: 'loaded', data: ['GenZ', 'MadeMeSmile'] }, 'Error: 400']);
+    expect(initialState('/r/all/').filters).toEqual({ status: 'loading' });
   });
 
   it('joining: the subreddit, and its members with it; back again when it fails', () => {

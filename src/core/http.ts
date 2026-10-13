@@ -17,3 +17,10 @@ export async function postJson<T>(url: string, fields: Record<string, string>): 
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   return response.json() as Promise<T>;
 }
+
+// PUTs or DELETEs to reddit's API (as the signed-in user, your modhash in a
+// header as old reddit's own scripts send it); throws on an error status
+export async function change(method: 'PUT' | 'DELETE', url: string, modhash: string, fields?: Record<string, string>): Promise<void> {
+  const response = await fetch(url, { method, credentials: 'same-origin', headers: { 'X-Modhash': modhash }, ...(fields ? { body: new URLSearchParams(fields) } : {}) });
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+}

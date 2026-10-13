@@ -39,6 +39,7 @@ export interface RedditPost {
   over_18: boolean;
   spoiler: boolean;
   stickied: boolean;
+  hidden: boolean;                 // you hid it from your listings
   link_flair_text: string | null;
   likes: boolean | null;  // your vote: up, down, none
   preview?: { images?: { source: RedditImage; resolutions: RedditImage[]; variants?: { mp4?: RedditSizes } }[] };  // mp4: a gif, as video
@@ -85,6 +86,7 @@ export interface Post {
   nsfw: boolean;
   spoiler: boolean;
   pinned: boolean;
+  hidden: boolean;         // you hid it (reddit's say)
   flair: string | null;
 }
 
@@ -159,6 +161,7 @@ export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
     nsfw: post.over_18,
     spoiler: post.spoiler,
     pinned: post.stickied,
+    hidden: post.hidden,
     flair: post.link_flair_text || null,
   };
 }

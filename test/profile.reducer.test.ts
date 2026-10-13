@@ -13,7 +13,7 @@ describe('initialState', () => {
 });
 
 describe('profileReducer', () => {
-  const post = { id: 't3_p', title: 'p', subreddit: 'pics', subredditIcon: null, author: 'someone', score: 5, vote: 0 as const, comments: 0, created: 0, permalink: '/r/pics/comments/p/', domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, flair: null };
+  const post = { id: 't3_p', title: 'p', subreddit: 'pics', subredditIcon: null, author: 'someone', score: 5, vote: 0 as const, comments: 0, created: 0, permalink: '/r/pics/comments/p/', domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, hidden: false, flair: null };
   const comment = { id: 't1_c', author: 'someone', html: '', score: 2, scoreHidden: false, vote: 1 as const, created: 0, subreddit: 'pics', subredditIcon: null, postTitle: 'p', postPath: '/r/pics/comments/p/', permalink: '/r/pics/comments/p/x/c/' };
   const items: Items = { items: [{ kind: 'post', post }, { kind: 'comment', comment }], after: 't1_c', before: null };
   const loaded = profileReducer(initialState('/user/someone/'), { type: 'page/loaded', items });

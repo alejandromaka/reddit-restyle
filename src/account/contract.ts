@@ -1,11 +1,10 @@
 /* You, on reddit: who you are (your name and avatar, for the bar) and what
-   you do on a page (vote, join, leave, comment, log out), posted to old
-   reddit's own API as you
-   (your cookies), each with your modhash: old reddit's token against forged
-   requests. All from /api/me.json, asked for once per page (again after a
-   failure). */
+   you do on a page (vote, join, leave, comment, hide, report, filter r/all,
+   log out), sent to old reddit's own API as you (your cookies), each with
+   your modhash: old reddit's token against forged requests. All from
+   /api/me.json, asked for once per page (again after a failure). */
 
-import { fetchJson, postForm, postJson } from '../core/http';
+import { change, fetchJson, postForm, postJson } from '../core/http';
 
 interface RedditMe {
   data?: { name: string; modhash: string; snoovatar_img?: string; icon_img?: string };  // none when you're signed out
@@ -50,6 +49,40 @@ export async function subscribe(name: string, join: boolean) {
   await postForm('/api/subscribe', { action: join ? 'sub' : 'unsub', sr_name: name, uh, ...(join ? { skip_initial_defaults: 'true' } : {}) });
 }
 
+// Hiding a post from your listings (id: t3_…; reddit hides posts only), or showing it again
+export async function hide(id: string, hidden: boolean) {
+  await postForm(hidden ? '/api/hide' : '/api/unhide', { id, uh: (await myData()).modhash });
+}
+
+// What reddit says went wrong, from an api_type=json answer's errors ([code, message, field])
+const wrong = (errors: string[][]) => errors.map((error) => error[1] ?? error[0]).join('; ');
+
+// Reporting a post or comment (t3_… or t1_…) to its subreddit's moderators, for
+// a reason: one of its rules, or one of reddit's, in their words
+export async function report(id: string, reason: string) {
+  const answer = await postJson<{ json?: { errors: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, reason, uh: (await myData()).modhash });
+  if (answer.json?.errors.length) throw new Error(wrong(answer.json.errors));
+}
+
+// r/all's filter: the subreddits you keep out of it, A–Z (/api/filter/user/you/f/all: a multi of them)
+interface RedditFilter {
+  data: { subreddits: { name: string }[] };
+}
+
+const filterPath = (me: string) => `/api/filter/user/${me}/f/all`;
+
+export async function fetchFilters(): Promise<string[]> {
+  const { data } = await fetchJson<RedditFilter>(`${filterPath((await myData()).name)}?raw_json=1`);
+  return data.subreddits.map(({ name }) => name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+}
+
+// A subreddit kept out of r/all, or let back in
+export async function filter(subreddit: string, filtered: boolean) {
+  const { name, modhash } = await myData();
+  const url = `${filterPath(name)}/r/${subreddit}`;
+  await (filtered ? change('PUT', url, modhash, { model: JSON.stringify({ name: subreddit }) }) : change('DELETE', url, modhash));
+}
+
 // Logging out (old reddit's own: your cookies cleared in its answer)
 export async function logOut() {
   await postForm('/logout', { uh: (await myData()).modhash, top: 'off' });
@@ -64,7 +97,7 @@ interface RedditPosted {
 // comment as reddit made it (its t1's data: the post page reads it)
 export async function comment(parent: string, text: string): Promise<unknown> {
   const answer = await postJson<RedditPosted>('/api/comment', { api_type: 'json', thing_id: parent, text, uh: (await myData()).modhash });
-  if (answer.json.errors.length) throw new Error(answer.json.errors.map((error) => error[1] ?? error[0]).join('; '));
+  if (answer.json.errors.length) throw new Error(wrong(answer.json.errors));
   const made = answer.json.data?.things[0];
   if (!made) throw new Error('/api/comment: no comment in reddit’s answer');
   return made.data;

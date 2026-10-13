@@ -89,7 +89,8 @@
               "likes": null
             }
           ],
-          "likes": null
+          "likes": null,
+          "hidden": false
         }
       },
       {

@@ -25,6 +25,8 @@
   --color-danger-content: #bc0117;                   /* what went wrong (a comment reddit refused) */
   --color-primary-background: #000;                  /* Join */
   --color-primary-onBackground: #fff;
+  --color-button-primary-background-disabled: #0000000c;  /* Report, before a reason's chosen */
+  --color-button-primary-text-disabled: #0000003f;
   --color-tags-neutral-background: #eef1f3;          /* flair, Spoiler */
   --color-tags-neutral-content: #333d42;
   --color-tags-moderator-background: #ddf8d7;        /* Pinned (mods pin) */
@@ -90,6 +92,8 @@
   --color-a-default: #648efc;                        /* ≈ */
   --color-primary-background: #fff;                  /* ≈ (inverted: Join in white) */
   --color-primary-onBackground: #000;                /* ≈ */
+  --color-button-primary-background-disabled: #ffffff0c;  /* ≈ */
+  --color-button-primary-text-disabled: #ffffff3f;        /* ≈ */
   --color-tags-neutral-background: #2a3236;          /* ≈ */
   --color-tags-neutral-content: #b7cad4;             /* --color-inverted-neutral-content */
   --color-tags-moderator-background: #0b2e10;        /* ≈ */

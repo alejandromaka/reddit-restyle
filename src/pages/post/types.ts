@@ -1,6 +1,7 @@
 import type { Vote } from '../../account/contract';
 import type { Load } from '../../core/store';
 import type { ChromeAction, ChromeState } from '../../nav/chrome';
+import type { OverflowAction, OverflowState } from '../../overflow/state';
 import type { About } from '../listing/contract';
 import type { Comment, Reply, Thread, FullPost } from './contract';
 
@@ -8,7 +9,7 @@ import type { Comment, Reply, Thread, FullPost } from './contract';
 export const COMMENT_SORTS = { confidence: 'Best', top: 'Top', new: 'New', controversial: 'Controversial', old: 'Old', qa: 'Q&A' } as const;
 export type CommentSort = keyof typeof COMMENT_SORTS;
 
-export interface PostState extends ChromeState {
+export interface PostState extends ChromeState, OverflowState {
   path: string;                     // the post's own address (…/comments/id/slug/), without a comment's
   subreddit: string | null;         // from the address (null: /comments/id/, until the post says)
   focus: string | null;             // one comment's thread (…/comments/id/slug/abc/): t1_abc
@@ -45,4 +46,5 @@ export type PostAction =
   | { type: 'comment/requested'; parent: string; text: string }
   | { type: 'comment/posted'; parent: string; comment: Comment }
   | { type: 'comment/failed'; parent: string; error: string }
-  | ChromeAction;
+  | ChromeAction
+  | OverflowAction;
