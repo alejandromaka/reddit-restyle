@@ -42,7 +42,7 @@ src/
                      the viewport fixed, our root in place of reddit's markup
   core/
     store.ts         createStore: a page's state (Preact draws from it)
-    http.ts, text.ts, theme.ts (light or dark)
+    http.ts, text.ts, theme.ts (light or dark), domains.ts (sites you block)
     html.ts          reddit's rendered markdown, rebuilt safe, with our classes
   pages/<page>/      listing (the front page, subreddits), post (a post and its comments)
     contract.ts      reddit's requests and answers (its JSON), read into our
@@ -54,7 +54,7 @@ src/
     views/           Preact components: our markup from the state (utility
                      classes); DOM events → actions
   account/           you on reddit (me.json: name, avatar, modhash); vote,
-                     join, leave, comment, log out
+                     join, leave, comment, block, log out
   nav/               what every page shares: its frame (strip, bar, sidebar,
                      column), the menu, your account, your communities, and
                      their data (chrome.ts)
@@ -86,12 +86,20 @@ docs/
   (nothing of it loads until played); pictures (one, or a gallery to swipe
   through) open big when tapped (components/lightbox.tsx); a link's card
   opens the link (an outside video: ▶). Else its text's opening. NSFW too;
-  none for spoilers. Its title, its comments, or a tap anywhere else on it:
-  its page.
+  none for spoilers. Only its title and its comments open its page: a tap
+  anywhere else on it (its media, its text) doesn't.
 
-What you do (vote, join, leave) shows at once and goes to old reddit's own
-API as you (src/account: /api/vote, /api/subscribe, with your modhash from
-/api/me.json); one reddit refuses goes back, and the console says why.
+What you do (vote, join, leave, block) shows at once and goes to old
+reddit's own API as you (src/account: /api/vote, /api/subscribe,
+/api/block_user, with your modhash from /api/me.json); one reddit refuses
+goes back, and the console says why. Blocking someone (Block u/name in a
+post's or comment's "…", or Block on their profile; asked first) turns
+their posts into a line with Undo and folds their comments, marked Blocked
+(as reddit says, too); Unblock is in the same places. Blocking a site (Block
+site.com in a link post's "…") is this device's (core/domains.ts: reddit
+keeps no such list): its posts, and its subdomains', turn into a line with
+Undo, and from then on are left out; your account's Blocked Domains lists
+them, each with Unblock.
 
 - **post**: a post and its comments (or one comment's thread), as
   reddit.com's: where, when, who, Join; its title, tags and all of it (text,
@@ -101,7 +109,14 @@ API as you (src/account: /api/vote, /api/subscribe, with your modhash from
   then the comments along their threads: votes, Reply (a box under it), ⊖
   to fold; "N more replies" loads them, a thread too deep continues on its
   own page. Text and comments are reddit's markdown, rebuilt safe
-  (core/html.ts): spoilers stay hidden until tapped.
+  (core/html.ts): spoilers stay hidden until tapped. A comment's link to a
+  picture (reddit's own, or any https picture file) shows the picture in the
+  comment, loaded only as it nears the screen (reddit's: a phone's width of
+  it, its room kept before it comes); a tap opens it big. A gif with a video
+  of itself (reddit's, Giphy's, imgur's .gifv: a fraction of the gif's size)
+  is that video, muted and looping, loading and playing only while it's on
+  screen (components/markdown.tsx); reddit's markdown for comment media, if
+  old reddit leaves it as written (![gif](giphy|id)), shows it too.
 
 On top, as old reddit has it, a strip: Home, Popular, All, then your
 communities (favorites first, A–Z, fetched alongside the page's posts), side
@@ -110,10 +125,12 @@ reddit.com's: ☰ slides in the menu under it (the same, as a list; ☰ again
 closes it), reddit's wordmark goes home, and your avatar opens your account
 (a sheet from the bottom on a phone, a dropdown on a wide screen): View
 Profile and Settings (old reddit's pages, which break until we build them),
-Dark Mode (this device remembers it; else your system's), Log Out. The page
+Dark Mode (this device remembers it; else your system's), Blocked Domains,
+Log Out. The page
 is a column (732px, as reddit.com's) centered in the window; on a screen
-wide enough to have the menu beside it (1280px and up) the menu is also a
-sidebar, always there, at the left edge (it doesn't push the column over).
+1024px and up (an iPad mini across, 1133px) the menu is also a sidebar,
+always there, at the left edge: from 1280px over the column's margin, and
+narrower the column moves over beside it.
 
 ## Rules
 

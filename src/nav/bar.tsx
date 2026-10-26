@@ -44,7 +44,7 @@ export function Bar({ current, communities, me, onLogOut }: BarProps) {
       >
         <button
           type="button"
-          class={`${ui.icon} rr-mr-2 xl:rr-hidden`}
+          class={`${ui.icon} rr-mr-2 lg:rr-hidden`}
           aria-label="Menu"
           aria-expanded={open === 'menu'}
           onClick={toggleMenu}

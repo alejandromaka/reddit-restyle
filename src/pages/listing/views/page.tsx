@@ -1,11 +1,13 @@
 /* A listing, in the frame: where you are and its sorts, a page of its posts
-   (one you hid here: a line, Undo), the pages around it; the page's "…" menu
-   and report, outside the frame (the menu's dropdown is placed on the page) */
+   (one you hid here, or by someone or from a site you blocked here: a line,
+   Undo; from a site you blocked before: none), the pages around it; the
+   page's "…" menu, report and block, outside the frame (the menu's dropdown
+   is placed on the page) */
 
 import { Loader } from '../../../components/busy';
 import { Pager } from '../../../components/pager';
 import { Frame } from '../../../nav/frame';
-import { postThing } from '../../../overflow/state';
+import { isBlocked, postThing, siteBlock, siteOf } from '../../../overflow/state';
 import { HiddenPost, Overflow } from '../../../overflow/views';
 import type { ListingAction, ListingState } from '../types';
 import { FiltersButton, FiltersRail } from './filters';
@@ -23,7 +25,9 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
   const onFilter = (subreddit: string, filtered: boolean) => dispatch({ type: 'filter/requested', subreddit, filtered });
   // r/all: a subreddit you just filtered out leaves the page at once (reddit leaves it out of the next)
   const out = filters?.status === 'loaded' ? new Set(filters.data.map((name) => name.toLowerCase())) : null;
-  const posts = out ? state.posts.filter((post) => !out.has(post.subreddit.toLowerCase())) : state.posts;
+  const kept = out ? state.posts.filter((post) => !out.has(post.subreddit.toLowerCase())) : state.posts;
+  // A site you blocked before: its posts left out (blocked here: a line, Undo)
+  const posts = kept.filter((post) => siteBlock(state, siteOf(post))?.here !== false);
   return (
     <>
       <Frame
@@ -72,20 +76,46 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
         {state.status === 'idle' && posts.length === 0 && (
           <p class="rr-py-12 rr-text-center rr-text-neutral-content-weak">No posts here</p>
         )}
-        {posts.map((post) => (state.hidden[post.id] ? (
-          <HiddenPost
-            key={post.id}
-            onUndo={() => dispatch({ type: 'hide/requested', id: post.id, hidden: false })}
-          />
-        ) : (
-          <PostCard
-            key={post.id}
-            post={post}
-            mixed={state.kind !== 'subreddit'}
-            onVote={(vote) => dispatch({ type: 'vote/requested', id: post.id, vote })}
-            onMore={(at) => dispatch({ type: 'menu/opened', thing: postThing(post, state.hidden), at })}
-          />
-        )))}
+        {posts.map((post) => {
+          if (state.hidden[post.id]) {
+            return (
+              <HiddenPost
+                key={post.id}
+                onUndo={() => dispatch({ type: 'hide/requested', id: post.id, hidden: false })}
+              />
+            );
+          }
+          if (isBlocked(state, post.author)) {
+            return (
+              <HiddenPost
+                key={post.id}
+                blocked={`u/${post.author}`}
+                onUndo={() => dispatch({ type: 'block/requested', name: post.author, blocked: false })}
+              />
+            );
+          }
+          const site = siteBlock(state, siteOf(post));
+          if (site) {
+            return (
+              <HiddenPost
+                key={post.id}
+                blocked={site.domain}
+                onUndo={() => dispatch({ type: 'domain/requested', domain: site.domain, blocked: false })}
+              />
+            );
+          }
+          return (
+            <PostCard
+              key={post.id}
+              post={post}
+              mixed={state.kind !== 'subreddit'}
+              onVote={(vote) => dispatch({ type: 'vote/requested', id: post.id, vote })}
+              hidden={state.hidden[post.id] ?? post.hidden}
+              onHide={(hidden) => dispatch({ type: 'hide/requested', id: post.id, hidden })}
+              onMore={(at) => dispatch({ type: 'menu/opened', thing: postThing(post, state.hidden), at })}
+            />
+          );
+        })}
         {state.status === 'idle' && (
           <Pager
             path={state.path}

@@ -1,15 +1,17 @@
 /* Your account, as reddit.com's: on a phone a sheet from the bottom, on a
    wide screen a dropdown under your avatar (so it goes in the bar). View
    Profile, Settings (old reddit's pages: not ours yet, so they break), Dark
-   Mode, Log Out. */
+   Mode, Blocked Domains (folded: the sites this device blocks, each with
+   Unblock), Log Out. */
 
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import type { Me } from '../account/contract';
 import { Avatar } from '../components/avatar';
 import { Dropdown } from '../components/dropdown';
 import { Icon } from '../components/icon';
 import { Sheet } from '../components/sheet';
 import { cx, ui } from '../components/ui';
+import { blockDomain, blockedDomains, followDomains } from '../core/domains';
 import { chooseTheme, isDark } from '../core/theme';
 
 interface AccountProps {
@@ -99,6 +101,7 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
           <span class="rr-w-5 rr-h-5 rr-rounded-full rr-bg-neutral-background rr-shadow-md" />
         </span>
       </button>
+      <BlockedDomains />
       <button
         type="button"
         class={ui.row}
@@ -108,5 +111,52 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
         Log Out
       </button>
     </>
+  );
+}
+
+// The sites this device blocks (a link post's "…": Block site.com), folded
+// under their row, each with Unblock; up to date as they change. Taps in it
+// open and unblock, they don't close the menu
+function BlockedDomains() {
+  const [domains, setDomains] = useState(blockedDomains);
+  useEffect(() => followDomains(setDomains), []);
+  return (
+    <details
+      class="rr-group"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <summary class={cx(ui.row, 'rr-cursor-pointer')}>
+        <Icon name="block" large />
+        Blocked Domains
+        <span class="rr-flex rr-items-center rr-gap-2 rr-ml-auto rr-text-neutral-content-weak">
+          {domains.length}
+          <span class="group-open:rr-rotate-180">
+            <Icon name="chevron" />
+          </span>
+        </span>
+      </summary>
+      {domains.length ? (
+        <ul>
+          {domains.map((domain) => (
+            <li
+              key={domain}
+              class="rr-flex rr-items-center rr-gap-4 rr-h-12 rr-px-4"
+            >
+              <span class="rr-flex-none rr-w-5" />
+              <span class="rr-flex-1 rr-min-w-0 rr-truncate">{domain}</span>
+              <button
+                type="button"
+                class={ui.action}
+                onClick={() => blockDomain(domain, false)}
+              >
+                Unblock
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="rr-px-4 rr-pb-2 rr-text-xs rr-text-neutral-content-weak">None yet. A link post’s “…” blocks its site.</p>
+      )}
+    </details>
   );
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /* A post's page drawn from reddit's JSON (the fixtures): the post, its
-   comments, folding, replying, more, searching, sorting */
+   comments, folding, replying, more, searching, sorting, blocking */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -13,7 +13,7 @@ const PATH = '/r/pics/comments/1q2c001/welcome_to_rpics/';
 
 // reddit, from the fixtures
 const answer = (url: string) => new Response(
-  url === '/api/me.json?raw_json=1' ? '{"data":{"name":"you","modhash":"MODHASH"}}'
+  url === '/api/me.json?raw_json=1' ? '{"data":{"id":"y0u","name":"you","modhash":"MODHASH"}}'
     : url === '/api/comment' ? read('posted')
       : url.startsWith('/api/morechildren.json') ? read('morechildren')
         : url.startsWith('/subreddits/') ? read('subscriptions')
@@ -95,16 +95,73 @@ describe('a post’s page', () => {
     expect(line.parentElement!.contains(button('3 more replies'))).toBe(false);
   });
 
-  it('"…": the post’s, Hide and Report; a comment’s, Report (reddit hides posts only), by the post’s subreddit’s rules', async () => {
+  it('"…": the post’s, Hide, Report and Block its author (a text post: no site); a comment’s, Report and Block (reddit hides posts only), by the post’s subreddit’s rules', async () => {
     const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
     const items = () => [...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean);  // not the scrim's
     main().querySelector<HTMLButtonElement>('article button[aria-label="More options"]')!.click();  // the post's, first
-    await vi.waitFor(() => expect(items()).toEqual(['Hide', 'Report']));
+    await vi.waitFor(() => expect(items()).toEqual(['Hide', 'Report', 'Block u/pics-mod']));
     comment('early_riser').querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
-    await vi.waitFor(() => expect(items()).toEqual(['Report']));
+    await vi.waitFor(() => expect(items()).toEqual(['Report', 'Block u/early_riser']));
     [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Report')!.click();
     await vi.waitFor(() => expect(document.querySelector('[role="dialog"][aria-label="Report"]')!.textContent).toContain('Report this comment'));
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
+  });
+
+  it('blocking a comment’s author: asked first; sent; their comments folded, Blocked; unblocked from the "…", again open', async () => {
+    const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+    const sure = () => document.querySelector('[role="dialog"][aria-label="Block account"]')!;
+    comment('pics-mod').querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(button('Block u/pics-mod', menu())).toBeDefined());
+    button('Block u/pics-mod', menu()).click();
+    await vi.waitFor(() => expect(sure().textContent).toContain('Block u/pics-mod?'));
+    expect(sent('/api/block_user')).toEqual([]);  // not before you're sure
+    button('Block account', sure()).click();
+    await vi.waitFor(() => expect(sent('/api/block_user')).toEqual([{ name: 'pics-mod', uh: 'MODHASH' }]));
+    await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'automod']));
+    expect(row('pics-mod').textContent).toContain('Blocked');
+    expect(comment('pics-mod').querySelector('button[aria-label="More options"]')).toBeNull();  // folded: its row only
+    row('pics-mod').click();  // still yours to open
+    await vi.waitFor(() => expect(comment('pics-mod').querySelector('button[aria-label="More options"]')).not.toBeNull());
+    comment('pics-mod').querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(button('Unblock u/pics-mod', menu())).toBeDefined());
+    button('Unblock u/pics-mod', menu()).click();
+    await vi.waitFor(() => expect(sent('/api/unfriend')).toEqual([{ name: 'pics-mod', type: 'enemy', container: 't2_y0u', uh: 'MODHASH' }]));
+    expect(row('pics-mod').textContent).not.toContain('Blocked');
+  });
+
+  it('a picture a comment links to: in it, sized (reddit’s copy a phone’s width), loaded as it nears the screen; a tap opens it big', async () => {
+    const image = comment('pics-mod').querySelector<HTMLImageElement>('a[data-picture] img')!;
+    expect(['src', 'width', 'height', 'loading'].map((name) => image.getAttribute(name))).toEqual(['https://preview.redd.it/v8x2k1top.jpeg?width=640&crop=smart&auto=webp&s=a2', '640', '480', 'lazy']);
+    expect(comment('pics-mod').textContent).toContain('Here it is from the top:');
+    expect(comment('pics-mod').textContent).not.toContain('https://');  // the picture, not its address
+    image.click();
+    const viewer = () => document.querySelector('[role="dialog"][aria-label="Pictures"]');
+    await vi.waitFor(() => expect(viewer()).not.toBeNull());
+    expect(viewer()!.querySelector('img')!.getAttribute('src')).toBe('https://preview.redd.it/v8x2k1top.jpeg?width=1080&crop=smart&auto=webp&s=a3');
+  });
+
+  it('a gif a comment has (reddit’s markdown for it, as written): its video, which loads and plays only while it’s on screen', async () => {
+    let tell: (entries: { target: Element; isIntersecting: boolean }[]) => void = () => {};
+    const watched: Element[] = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: typeof tell) { tell = callback; }
+      observe(target: Element) { watched.push(target); }
+      unobserve() {}
+    });
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    setUpPost(shell);  // the page again, with gifs watched
+    const gif = await vi.waitFor(() => comment('pics-mod').querySelector('video')!);
+    expect(comment('pics-mod').textContent).not.toContain('![gif]');
+    expect(gif.getAttribute('src')).toBeNull();  // nothing until it nears the screen
+    await vi.waitFor(() => expect(watched).toContain(gif));
+    tell([{ target: gif, isIntersecting: true }]);
+    expect([gif.getAttribute('src'), gif.getAttribute('poster'), gif.muted]).toEqual(['https://external-preview.redd.it/gif.gif?width=480&format=mp4&s=b4', 'https://external-preview.redd.it/still.png?width=480&crop=smart&format=png8&s=b2', true]);
+    expect(play).toHaveBeenCalled();
+    tell([{ target: gif, isIntersecting: false }]);
+    expect(pause).toHaveBeenCalled();
+    play.mockRestore();
+    pause.mockRestore();
   });
 
   it('the name: their profile, not a fold', () => {

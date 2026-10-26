@@ -72,8 +72,35 @@
                       "name": "t1_c2",
                       "parent_id": "t1_c1",
                       "author": "pics-mod",
-                      "body": "Thanks!",
-                      "body_html": "<div class=\"md\"><p>Thanks!</p></div>",
+                      "body": "Thanks! Here it is from the top:\n\nhttps://preview.redd.it/v8x2k1top.jpeg?width=1600&format=pjpg&auto=webp&s=f00d\n\n![gif](giphy|l0MYt5jPR6QX5pnqM|downsized)",
+                      "body_html": "<div class=\"md\"><p>Thanks! Here it is from the top:</p>\n\n<p><a href=\"https://preview.redd.it/v8x2k1top.jpeg?width=1600&amp;format=pjpg&amp;auto=webp&amp;s=f00d\">https://preview.redd.it/v8x2k1top.jpeg?width=1600&amp;format=pjpg&amp;auto=webp&amp;s=f00d</a></p>\n\n<p>![gif](giphy|l0MYt5jPR6QX5pnqM|downsized)</p>\n</div>",
+                      "media_metadata": {
+                        "v8x2k1top": {
+                          "status": "valid",
+                          "e": "Image",
+                          "m": "image/jpeg",
+                          "p": [
+                            { "y": 81, "x": 108, "u": "https://preview.redd.it/v8x2k1top.jpeg?width=108&crop=smart&auto=webp&s=a1" },
+                            { "y": 480, "x": 640, "u": "https://preview.redd.it/v8x2k1top.jpeg?width=640&crop=smart&auto=webp&s=a2" },
+                            { "y": 810, "x": 1080, "u": "https://preview.redd.it/v8x2k1top.jpeg?width=1080&crop=smart&auto=webp&s=a3" }
+                          ],
+                          "s": { "y": 1200, "x": 1600, "u": "https://preview.redd.it/v8x2k1top.jpeg?width=1600&format=pjpg&auto=webp&s=f00d" },
+                          "id": "v8x2k1top"
+                        },
+                        "giphy|l0MYt5jPR6QX5pnqM": {
+                          "status": "valid",
+                          "e": "AnimatedImage",
+                          "m": "image/gif",
+                          "ext": "https://giphy.com/gifs/l0MYt5jPR6QX5pnqM",
+                          "p": [
+                            { "y": 80, "x": 140, "u": "https://external-preview.redd.it/still.png?width=140&crop=smart&format=png8&s=b1" },
+                            { "y": 274, "x": 480, "u": "https://external-preview.redd.it/still.png?width=480&crop=smart&format=png8&s=b2" }
+                          ],
+                          "s": { "y": 274, "x": 480, "gif": "https://external-preview.redd.it/gif.gif?width=480&s=b3", "mp4": "https://external-preview.redd.it/gif.gif?width=480&format=mp4&s=b4" },
+                          "t": "giphy",
+                          "id": "giphy|l0MYt5jPR6QX5pnqM"
+                        }
+                      },
                       "score": 10,
                       "score_hidden": false,
                       "likes": null,

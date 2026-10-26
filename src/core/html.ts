@@ -4,7 +4,14 @@
    other: its words, unlinked); nothing
    else (no scripts, styles, handlers, reddit's classes). A spoiler (reddit's
    md-spoiler-text) stays hidden until tapped (data-spoiler:
-   components/markdown.tsx). */
+   components/markdown.tsx). A comment's link to a picture shows the picture
+   (under the link's words, if it has any besides its address), loaded only
+   as it nears the screen; a tap opens it big (data-picture). A gif with a
+   video of itself (reddit's, Giphy's, imgur's .gifv: a fraction of the
+   gif's size) is that video, muted and looping, which loads and plays only
+   while on screen (data-src: components/markdown.tsx). reddit's markdown for
+   a comment's media, left as written (![gif](giphy|id), ![img](id)), shows it
+   too. Built in a document of its own, so nothing loads while it's built. */
 
 const SPOILER = 'rr-rounded-sm rr-bg-neutral-content-strong rr-text-transparent';  // hidden until tapped
 
@@ -42,17 +49,95 @@ const TAGS: Record<string, string> = {
 };
 const DROPPED = new Set(['script', 'style', 'iframe', 'object', 'embed', 'template', 'noscript']);  // nor what's in them
 const LINK = /^(https?:\/\/|\/)/i;
+const IMAGE = /^https:\/\/[^?#]+\.(?:jpe?g|png|gif|webp)(?:[?#]|$)/i;  // a link to a picture file
+const GIFV = /^https:\/\/i\.imgur\.com\/(\w+)\.gifv(?:[?#]|$)/i;        // imgur's gif, as a page
+const GIPHY = /^https:\/\/(?:(?:media\d*|i)\.giphy\.com\/media\/(?:v1\.\w+\/)?(\w+)|(?:www\.)?giphy\.com\/gifs\/(?:[\w-]*-)?(\w+))/i;
+const MEDIA = /!\[(?:img|gif)\]\(((?:giphy\|)?[\w-]+)(?:\|[\w-]+)?\)/;  // reddit's markdown for a comment's media: ![gif](giphy|id|size), ![img](id)
+const WRITTEN = /(!\[(?:img|gif)\]\((?:giphy\|)?[\w-]+(?:\|[\w-]+)?\))/;  // …to split text by
+const BARE = /^(?:https?:\/\/\S*|<?(?:image|img|gif)>?)$/i;  // a link's words that say nothing: its address, or what old reddit writes for media
+const PICTURE = 'rr-block rr-max-w-full rr-h-auto rr-max-h-64 rr-object-contain rr-object-left';  // as wide as it is, at most the comment's, not too tall
 
-export function clean(html: string): string {
-  const target = document.createElement('div');
-  copy(new DOMParser().parseFromString(html, 'text/html').body, target);
+// A picture to show for a link: the one to load (a gif's video: its still, ''
+// none), its size (0: as it comes), the one to open big; a gif, its video
+export interface Picture { url: string; width: number; height: number; big: string; video?: string }
+// The pictures reddit knows (a comment's media_metadata), by link or by id: sized, and smaller than the link's
+export type Pictures = (ref: string) => Picture | null;
+
+// A Giphy gif's id, from a link to it (its page, or the gif)
+export const giphyOf = (href: string) => {
+  const found = GIPHY.exec(href);
+  return found ? found[1] ?? found[2]! : null;
+};
+
+let inert: Document | null = null;  // where it's built: nothing in it loads
+
+// pictures: a comment's (else its links stay links)
+export function clean(html: string, pictures?: Pictures): string {
+  inert ??= document.implementation.createHTMLDocument('');
+  const target = inert.createElement('div');
+  copy(new DOMParser().parseFromString(html, 'text/html').body, target, pictures);
   return target.innerHTML;
 }
 
-function copy(from: Node, to: Node) {
+// A link's picture, if it is one: as reddit knows it, else from where it's
+// from (Giphy's and imgur's gifs, as their videos; any picture file), as it comes
+function pictureOf(href: string, pictures: Pictures): Picture | null {
+  const known = pictures(href);
+  if (known) return known;
+  const giphy = giphyOf(href);
+  if (giphy) return { url: `https://media.giphy.com/media/${giphy}/giphy_s.gif`, width: 0, height: 0, big: `https://media.giphy.com/media/${giphy}/giphy.gif`, video: `https://media.giphy.com/media/${giphy}/giphy.mp4` };  // its still (Giphy's): shown until it plays, or if it can't
+  const gifv = GIFV.exec(href)?.[1];
+  if (gifv) return { url: `https://i.imgur.com/${gifv}l.jpg`, width: 0, height: 0, big: `https://i.imgur.com/${gifv}.gif`, video: `https://i.imgur.com/${gifv}.mp4` };
+  return IMAGE.test(href) ? { url: href, width: 0, height: 0, big: href } : null;
+}
+
+function show(picture: Picture, href: string, to: Node) {
+  const made = to.ownerDocument!;
+  const link = made.createElement('a');
+  link.className = 'rr-block rr-w-fit rr-max-w-full active:rr-opacity-100';  // a tap on the picture, not beside it; no dimming
+  link.setAttribute('href', href);
+  link.setAttribute('rel', 'noopener noreferrer');
+  link.setAttribute('data-picture', picture.big);
+  const image = made.createElement(picture.video ? 'video' : 'img');
+  image.className = PICTURE;
+  if (picture.video) {  // nothing yet: its video (and still) when it nears the screen
+    image.setAttribute('data-src', picture.video);
+    if (picture.url) image.setAttribute('data-poster', picture.url);
+    for (const flag of ['muted', 'loop', 'playsinline']) image.setAttribute(flag, '');
+    image.setAttribute('preload', 'none');
+    image.setAttribute('aria-label', 'GIF');
+  } else {
+    image.setAttribute('loading', 'lazy');  // first: it waits to load until it nears the screen
+    image.setAttribute('decoding', 'async');
+    image.setAttribute('alt', '');
+  }
+  if (picture.width && picture.height) {  // its room, before it comes
+    image.setAttribute('width', String(picture.width));
+    image.setAttribute('height', String(picture.height));
+  }
+  if (!picture.video) image.setAttribute('src', picture.url);
+  link.appendChild(image);
+  to.appendChild(link);
+}
+
+// Text with reddit's markdown for media in it: each shown, if it's known (else as written)
+function written(text: string, to: Node, pictures: Pictures) {
+  const made = to.ownerDocument!;
+  text.split(WRITTEN).forEach((part, index) => {
+    const ref = index % 2 ? MEDIA.exec(part)?.[1] : undefined;  // the odd ones: what split it
+    const picture = ref ? pictureOf(ref.startsWith('giphy|') ? `https://giphy.com/gifs/${ref.slice(6)}` : ref, pictures) : null;
+    if (picture) show(picture, picture.big, to);
+    else if (part) to.appendChild(made.createTextNode(part));
+  });
+}
+
+function copy(from: Node, to: Node, pictures?: Pictures) {
+  const made = to.ownerDocument!;
   for (const node of from.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) {
-      to.appendChild(document.createTextNode(node.textContent ?? ''));
+      const text = node.textContent ?? '';
+      if (pictures && WRITTEN.test(text)) written(text, to, pictures);
+      else to.appendChild(made.createTextNode(text));
       continue;
     }
     if (node.nodeType !== Node.ELEMENT_NODE) continue;  // comments (reddit's SC_OFF/SC_ON)
@@ -60,10 +145,10 @@ function copy(from: Node, to: Node) {
     const tag = element.tagName.toLowerCase();
     if (DROPPED.has(tag)) continue;
     if (tag === 'span' && element.classList.contains('md-spoiler-text')) {
-      const spoiler = document.createElement('span');
+      const spoiler = made.createElement('span');
       spoiler.className = SPOILER;
       spoiler.setAttribute('data-spoiler', '');
-      copy(element, spoiler);
+      copy(element, spoiler, pictures);
       to.appendChild(spoiler);
       continue;
     }
@@ -71,16 +156,23 @@ function copy(from: Node, to: Node) {
     const href = tag === 'a' ? element.getAttribute('href') ?? '' : null;
     // a tag markdown doesn't make (reddit's <div class="md">, …), a link to elsewhere: its contents only
     if (classes === undefined || (href !== null && !LINK.test(href))) {
-      copy(element, to);
+      copy(element, to, pictures);
       continue;
     }
-    const clone = document.createElement(tag);
+    const picture = href && pictures ? pictureOf(href, pictures) : null;
+    const words = element.textContent?.trim() ?? '';
+    if (picture && (!words || BARE.test(words))) {  // just its address (or "<image>"): the picture in its place
+      show(picture, href!, to);
+      continue;
+    }
+    const clone = made.createElement(tag);
     if (classes) clone.className = classes;
     if (href) {
       clone.setAttribute('href', href);
       clone.setAttribute('rel', 'noopener noreferrer');
     }
-    copy(element, clone);
+    copy(element, clone, pictures);
     to.appendChild(clone);
+    if (picture) show(picture, href!, to);  // its words, then the picture
   }
 }

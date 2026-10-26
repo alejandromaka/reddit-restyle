@@ -22,7 +22,7 @@
   summary { list-style: none; -webkit-tap-highlight-color: transparent; }  /* ours: a chevron */
   summary::-webkit-details-marker { display: none; }
   /* Pressed: the tap highlight is off, so everything tappable dims while touched
-     (the script turns :active on for iOS) */
+     (the script turns :active on for iOS); not media (active:rr-opacity-100) */
   :is(a, button):active { opacity: var(--opacity-pressed); }
   [hidden] { display: none !important; }
 }

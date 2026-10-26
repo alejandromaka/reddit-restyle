@@ -21,6 +21,7 @@ describe('readUser', () => {
       followers: 12,
       created: 1700000000,
       suspended: false,
+      blocked: false,
     });
     expect(userUrl('someone')).toBe('/user/someone/about.json?raw_json=1');
   });

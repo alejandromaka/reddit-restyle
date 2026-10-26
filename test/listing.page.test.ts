@@ -15,7 +15,7 @@ const filters = readFileSync(resolve(__dirname, 'fixtures/filters.json'), 'utf8'
 // reddit, from the fixtures: you (your modhash), what you do (taken), your
 // communities, a subreddit's about, the next page, a listing
 const answer = (url: string) => new Response(
-  url === '/api/me.json?raw_json=1' ? '{"data":{"name":"you","modhash":"MODHASH","snoovatar_img":"https://i.redd.it/snoovatar/you.png"}}'
+  url === '/api/me.json?raw_json=1' ? '{"data":{"id":"y0u","name":"you","modhash":"MODHASH","snoovatar_img":"https://i.redd.it/snoovatar/you.png"}}'
     : url.startsWith('/api/filter/') && !url.includes('/r/') ? filters
       : url.startsWith('/api/') || url === '/logout' ? '{}'
       : url.startsWith('/subreddits/') ? subscriptions : url.includes('/about.json') ? about : url.includes('/about/rules.json') ? rules
@@ -67,6 +67,35 @@ describe('listing page', () => {
     expect(document.querySelector('article')!.textContent).toContain('Please read the rules before posting.');
   });
 
+  it('a picture open big: a swipe down closes it; a short one, or one across, doesn’t', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    const viewer = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Pictures"]');
+    // A finger: down, two moves, up; a swipe down claims its moves (the page behind doesn't scroll)
+    const claimed: boolean[] = [];
+    const swipe = (dx: number, dy: number) => {
+      const at = (type: string, x: number, y: number) => {
+        const touch = Object.assign(new Event(type, { bubbles: true, cancelable: true }), { touches: type === 'touchend' ? [] : [{ clientX: x, clientY: y }] });
+        viewer()!.dispatchEvent(touch);
+        if (type === 'touchmove') claimed.push(touch.defaultPrevented);
+      };
+      at('touchstart', 100, 100);
+      at('touchmove', 100 + dx / 2, 100 + dy / 2);
+      at('touchmove', 100 + dx, 100 + dy);
+      at('touchend', 100 + dx, 100 + dy);
+    };
+    document.querySelector<HTMLButtonElement>('article button[aria-label="Open the picture"]')!.click();
+    await vi.waitFor(() => expect(viewer()).not.toBeNull());
+    swipe(0, 60);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(viewer()).not.toBeNull();
+    swipe(200, 20);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(viewer()).not.toBeNull();
+    expect(claimed).toEqual([true, true, false, false]);  // the short swipe down: its; across: the gallery's
+    swipe(0, 160);
+    await vi.waitFor(() => expect(viewer()).toBeNull());
+  });
+
   it('a picture, tapped: open big (at its full size); Escape closes it', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     document.querySelector<HTMLButtonElement>('article button[aria-label="Open the picture"]')!.click();
@@ -112,6 +141,67 @@ describe('listing page', () => {
     undo.click();
     await vi.waitFor(() => expect(titles()).toContain('Sunrise over the Grand Canyon this morning'));
     await vi.waitFor(() => expect(posted(fetchMock, '/api/unhide')).toEqual([{ id: 't3_1q2c002', uh: 'MODHASH' }]));
+  });
+
+  it('blocking a post’s author: asked first; each of their posts a line, reddit told; Undo unblocks them, all back', async () => {
+    const sure = () => document.querySelector('[role="dialog"][aria-label="Block account"]')!;
+    const lines = () => [...document.querySelectorAll('button')].filter((b) => b.textContent === 'Undo').map((undo) => undo.parentElement!.textContent);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(3).click();  // someone's, the first of their four
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    inMenu('Block u/someone').click();
+    await vi.waitFor(() => expect(sure().textContent).toContain('Block u/someone?'));
+    [...sure().querySelectorAll('button')].find((b) => b.textContent === 'Block account')!.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(3));
+    expect(lines()).toEqual(Array(4).fill('u/someone blockedUndo'));
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/block_user')).toEqual([{ name: 'someone', uh: 'MODHASH' }]));
+    [...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo')!.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/unfriend')).toEqual([{ name: 'someone', type: 'enemy', container: 't2_y0u', uh: 'MODHASH' }]));
+  });
+
+  it('blocking a link post’s site: this device’s at once, a line with Undo; blocked before, its posts left out; your account lists it, Unblock brings them back', async () => {
+    const KEY = 'reddit-restyle:domains';
+    const undo = () => [...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo');
+    localStorage.removeItem(KEY);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(1).click();  // a picture on reddit: no site to block
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    expect([...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean)).toEqual(['Hide', 'Report', 'Block u/early_riser']);
+    more(2).click();  // newsy's link to example.com
+    await vi.waitFor(() => expect(inMenu('Block example.com')).toBeDefined());
+    inMenu('Block example.com').click();
+    await vi.waitFor(() => expect(titles()).not.toContain('Museum restores a 400-year-old painting'));
+    expect(undo()!.parentElement!.textContent).toBe('example.com blockedUndo');
+    expect(localStorage.getItem(KEY)).toBe('["example.com"]');
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toEqual([]);  // reddit's not told: this device's
+    undo()!.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    expect(localStorage.getItem(KEY)).toBe('[]');
+
+    localStorage.setItem(KEY, '["example.com"]');  // blocked before this page
+    setUpListing(shell);
+    await vi.waitFor(() => expect(titles()).toHaveLength(6));
+    expect(undo()).toBeUndefined();  // left out, no line
+    document.querySelector<HTMLButtonElement>('header button[aria-label="Account"]')!.click();
+    const sheet = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Account"]')!;
+    const blocked = sheet.querySelector('details')!;
+    expect(blocked.querySelector('summary')!.textContent).toBe('Blocked Domains1');
+    expect(blocked.querySelector('li')!.textContent).toBe('example.comUnblock');
+    blocked.querySelector('button')!.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    expect(blocked.querySelector('li')).toBeNull();
+    expect(localStorage.getItem(KEY)).toBe('[]');
+    localStorage.removeItem(KEY);
+  });
+
+  it('Hide beside a post’s comments: the same hide as its "…" (a line with Undo, reddit told)', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    const pill = [...document.querySelectorAll<HTMLButtonElement>('article button')].find((b) => b.textContent === 'Hide')!;
+    expect(pill.closest('article')!.querySelector('a[href*="/comments/"]')).not.toBeNull();
+    pill.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(6));
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/hide')).toEqual([{ id: 't3_1q2c001', uh: 'MODHASH' }]));
   });
 
   it('reporting a post: its subreddit’s rules for posts and reddit’s, one chosen, sent; thanks', async () => {

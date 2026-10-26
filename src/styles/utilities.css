@@ -20,6 +20,7 @@
   .rr-flex-none { flex: none; }
   .rr-flex-1 { flex: 1 1 0%; }
   .rr-items-center { align-items: center; }
+  .rr-items-start { align-items: flex-start; }  /* a comment's actions: ⊖ stays on the first line when the rest wraps */
   .rr-justify-end { justify-content: flex-end; }  /* a switch, on */
   .rr-justify-center { justify-content: center; }  /* the pages */
   .rr-self-center { align-self: center; }
@@ -51,10 +52,10 @@
   .rr-top-4 { top: var(--s4); }
   .rr-right-4 { right: var(--s4); }
   .rr-left-full { left: 100%; }  /* a bar beside the feed's column */
-  .rr-left-1 { left: var(--s1); }  /* a thread's line: its tap area, centered under the avatar */
-  .-rr-left-4 { left: calc(var(--s4) * -1); }  /* a reply's curve, from its parent's line */
+  .-rr-left-2 { left: calc(var(--s2) * -1); }  /* a reply's curve, from its parent's line */
   .rr-top-2 { top: var(--s2); }
   .rr-right-2 { right: var(--s2); }
+  .rr-left-2 { left: var(--s2); }  /* a gallery's ‹ */
   .rr-z-bar { z-index: var(--z-bar); }
   .rr-z-menu { z-index: var(--z-menu); }
 
@@ -62,6 +63,7 @@
   .rr-w-full { width: 100%; }
   .rr-min-w-0 { min-width: 0; }  /* lets a flex item shrink, so its text can truncate */
   .rr-min-w-8 { min-width: var(--s8); }  /* a page's number: round, wider for more digits */
+  .rr-w-2 { width: var(--s2); }  /* a reply's curve */
   .rr-w-4 { width: var(--s4); }
   .rr-w-5 { width: var(--s5); }
   .rr-w-6 { width: var(--s6); }
@@ -71,7 +73,7 @@
   .rr-h-auto { height: auto; }
   .rr-h-full { height: 100%; }
   .rr-h-fit { height: fit-content; }  /* a dialog in the middle: as tall as it needs */
-  .rr-h-3 { height: var(--s3); }    /* a reply's curve */
+  .rr-h-2 { height: var(--s2); }    /* a reply's curve */
   .rr-h-4 { height: var(--s4); }
   .rr-h-5 { height: var(--s5); }
   .rr-h-6 { height: var(--s6); }
@@ -85,6 +87,9 @@
   .rr-h-22 { height: var(--s22); }
   .rr-min-h-24 { min-height: var(--s24); }  /* a comment box */
   .rr-max-h-\[75vh\] { max-height: 75vh; }  /* a post's video */
+  .rr-max-h-64 { max-height: var(--s64); }   /* a picture in a comment */
+  .rr-max-w-full { max-width: 100%; }         /* …never wider than the comment */
+  .rr-w-fit { width: fit-content; }           /* …its link, as wide as it */
   .rr-w-64 { width: var(--s64); }             /* a dropdown */
   .rr-w-\[18rem\] { width: 18rem; }          /* the menu */
   .rr-w-\[272px\] { width: 272px; }          /* the sidebar, as reddit.com's */
@@ -100,16 +105,17 @@
   /* --- Space --- */
   .rr-m-auto { margin: auto; }
   .rr-mx-auto { margin-inline: auto; }
+  .rr-my-auto { margin-block: auto; }  /* a gallery's ‹ ›: halfway down (top and bottom 0) */
   .rr-mx-4 { margin-inline: var(--s4); }
   .rr-my-2 { margin-block: var(--s2); }
   .-rr-my-2 { margin-block: calc(var(--s2) * -1); }  /* a post's "…": its row no taller for it */
   .rr-ml-auto { margin-left: auto; }
+  .-rr-ml-1 { margin-left: calc(var(--s1) * -1); }  /* a comment's ⊖: centered under its avatar */
   .rr-ml-4 { margin-left: var(--s4); }
   .rr-ml-3 { margin-left: var(--s3); }  /* a thread's line, in the middle of its tap area */
-  .rr-mr-1 { margin-right: var(--s1); }
   .rr-mr-2 { margin-right: var(--s2); }
   .rr-mt-2 { margin-top: var(--s2); }
-  .-rr-mt-6 { margin-top: calc(var(--s6) * -1); }  /* someone's avatar, over their banner's edge */
+  .-rr-mt-12 { margin-top: calc(var(--s12) * -1); }  /* someone's avatar (96px with its ring), centered on their banner's edge */
   .rr-p-0\.5 { padding: var(--s0_5); }
   .rr-p-2 { padding: var(--s2); }
   .rr-p-3 { padding: var(--s3); }
@@ -131,9 +137,9 @@
   .rr-pb-2 { padding-bottom: var(--s2); }
   .rr-pb-4 { padding-bottom: var(--s4); }
   .rr-pl-3 { padding-left: var(--s3); }
+  .rr-pl-5 { padding-left: var(--s5); }   /* replies, past their thread's line */
   .rr-pl-6 { padding-left: var(--s6); }   /* a list's markers */
-  .rr-pl-8 { padding-left: var(--s8); }   /* replies, past their thread's line */
-  .rr-pl-10 { padding-left: var(--s10); } /* a comment, past its avatar */
+  .rr-pl-8 { padding-left: var(--s8); }   /* a comment, past its avatar; a profile's comment, under its post */
   .rr-pb-8 { padding-bottom: var(--s8); }
 
   /* --- Type (a size brings its line height, as in Tailwind) --- */
@@ -176,6 +182,7 @@
   .rr-bg-neutral-background { background-color: var(--color-neutral-background); }
   .rr-bg-neutral-background-weak { background-color: var(--color-neutral-background-weak); }
   .rr-bg-secondary-background { background-color: var(--color-secondary-background); }
+  .rr-bg-op-background { background-color: var(--color-op-background); }  /* OP's avatar */
   .rr-bg-neutral-background-selected { background-color: var(--color-neutral-background-selected); }
   .rr-bg-scrim { background-color: var(--color-scrim); }
   .rr-bg-lightbox { background-color: var(--color-lightbox); }
@@ -195,8 +202,10 @@
   .rr-border-l { border-left: 1px solid; }
   .rr-border-r { border-right: 1px solid; }
   .rr-border-l-4 { border-left: 4px solid; }  /* a quote */
+  .rr-border-4 { border: 4px solid; }          /* someone's avatar's ring */
   .rr-border-neutral-border-weak { border-color: var(--color-neutral-border-weak); }
   .rr-border-neutral-border-medium { border-color: var(--color-neutral-border-medium); }
+  .rr-border-neutral-background { border-color: var(--color-neutral-background); }  /* a ring the page's color */
   .rr-border-\(--line\) { border-color: var(--line); }  /* a thread's line, its replies' curves */
   .rr-\[--line\:var\(--color-neutral-border-weak\)\] { --line: var(--color-neutral-border-weak); }  /* a comment: its line's color */
   .rr-border-spinner { border: 3px solid var(--color-neutral-border-weak); border-top-color: var(--loader-color); }  /* the loader's ring */
@@ -207,10 +216,12 @@
   .rr-shadow-md { box-shadow: var(--elevation-md); }  /* a dropdown; a switch's knob */
   .rr-rounded-t-media { border-radius: var(--radius-media) var(--radius-media) 0 0; }  /* a sheet from the bottom */
   .rr-object-cover { object-fit: cover; }
-  .rr-object-contain { object-fit: contain; }  /* a picture opened big: all of it */
+  .rr-object-contain { object-fit: contain; }  /* a picture opened big: all of it; one in a comment */
+  .rr-object-left { object-position: left; }   /* a picture in a comment, kept from growing taller: at the left of its room */
 
   /* --- Scroll, interaction and motion --- */
   .rr-overflow-hidden { overflow: hidden; }
+  .rr-overflow-x-clip { overflow-x: clip; }  /* the frame: never sideways (clip keeps sticky things sticking) */
   .rr-overflow-x-auto { overflow-x: auto; }  /* the strip, a gallery, code: swipe for more */
   .rr-snap-x { scroll-snap-type: x mandatory; }  /* a gallery: one picture at a time */
   .rr-snap-center { scroll-snap-align: center; }
@@ -249,21 +260,33 @@
     .sm\:rr-rounded-media { border-radius: var(--radius-media); }
   }
 
-  /* --- Wide screens (Tailwind's lg): your account, a dropdown --- */
+  /* --- Wide screens (Tailwind's lg: an iPad mini across and up): your account, a dropdown; the sidebar, no ☰ --- */
   @media (min-width: 1024px) {
     .lg\:rr-hidden { display: none; }
     .lg\:rr-block { display: block; }
+    .lg\:rr-pl-\[272px\] { padding-left: 272px; }  /* the frame: the column beside the sidebar, not under it */
+    /* A comment: its avatar 32px, its line under the avatar's middle, its words and replies further in */
+    .lg\:rr-w-8 { width: var(--s8); }
+    .lg\:rr-h-8 { height: var(--s8); }
+    .lg\:rr-left-1 { left: var(--s1); }           /* the line, under the avatar's middle */
+    .lg\:rr-ml-0 { margin-left: 0; }              /* ⊖, on the line */
+    .lg\:rr-pl-6 { padding-left: var(--s6); }     /* replies, 8px past their thread's line */
+    .lg\:rr-pl-10 { padding-left: var(--s10); }   /* what it wrote, past the avatar */
+    .lg\:rr-h-3 { height: var(--s3); }             /* a reply's curve, into its row's middle */
+    .lg\:rr-text-lg { font-size: var(--text-lg); line-height: var(--leading-lg); }  /* a post's title, in a feed */
   }
 
-  /* --- Wider (Tailwind's xl: 272px beside a centered 732px column): the sidebar, no ☰ --- */
+  /* --- Wider (Tailwind's xl: 272px each side of a centered 732px column): the sidebar over the column's margin --- */
   @media (min-width: 1280px) {
-    .xl\:rr-hidden { display: none; }
-    .xl\:rr-block { display: block; }
+    .xl\:rr-pl-0 { padding-left: 0; }
   }
 
   /* --- Disabled (Tailwind's disabled:): reddit's colors for a button that can't yet --- */
   .disabled\:rr-bg-button-primary-background-disabled:disabled { background-color: var(--color-button-primary-background-disabled); }
   .disabled\:rr-text-button-primary-text-disabled:disabled { color: var(--color-button-primary-text-disabled); }
+
+  /* --- Pressed (Tailwind's active:): media doesn't dim under a finger (most often one landing to scroll) --- */
+  .active\:rr-opacity-100:active { opacity: 1; }
 
   /* --- A mouse on it (Tailwind's hover: only where there's a mouse, so a tap doesn't stick) --- */
   @media (hover: hover) {
@@ -274,6 +297,11 @@
   @media (min-width: 1400px) {
     .min-\[1400px\]\:rr-hidden { display: none; }
     .min-\[1400px\]\:rr-block { display: block; }
+  }
+
+  /* --- A mouse or trackpad (Tailwind's pointer-fine:): a gallery's ‹ › (a finger swipes) --- */
+  @media (pointer: fine) {
+    .pointer-fine\:rr-grid { display: grid; }
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,13 +1,13 @@
 /* You, on reddit: who you are (your name and avatar, for the bar) and what
-   you do on a page (vote, join, leave, comment, hide, report, filter r/all,
-   log out), sent to old reddit's own API as you (your cookies), each with
+   you do on a page (vote, join, leave, comment, hide, report, block someone,
+   filter r/all, log out), sent to old reddit's own API as you (your cookies), each with
    your modhash: old reddit's token against forged requests. All from
    /api/me.json, asked for once per page (again after a failure). */
 
 import { change, fetchJson, postForm, postJson } from '../core/http';
 
 interface RedditMe {
-  data?: { name: string; modhash: string; snoovatar_img?: string; icon_img?: string };  // none when you're signed out
+  data?: { id: string; name: string; modhash: string; snoovatar_img?: string; icon_img?: string };  // none when you're signed out (id: without t2_)
 }
 
 export interface Me {
@@ -52,6 +52,14 @@ export async function subscribe(name: string, join: boolean) {
 // Hiding a post from your listings (id: t3_…; reddit hides posts only), or showing it again
 export async function hide(id: string, hidden: boolean) {
   await postForm(hidden ? '/api/hide' : '/api/unhide', { id, uh: (await myData()).modhash });
+}
+
+// Blocking someone (by name), as reddit does: their posts and comments out of
+// your way, and they can't message you or reply to you; or unblocking them
+// (they're off your list of enemies, as reddit's API calls it: yours, t2_…)
+export async function block(name: string, blocked: boolean) {
+  const { id, modhash } = await myData();
+  await postForm(blocked ? '/api/block_user' : '/api/unfriend', blocked ? { name, uh: modhash } : { name, type: 'enemy', container: `t2_${id}`, uh: modhash });
 }
 
 // What reddit says went wrong, from an api_type=json answer's errors ([code, message, field])

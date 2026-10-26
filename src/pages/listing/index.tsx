@@ -5,7 +5,8 @@
    when it's parsed. */
 
 import { render } from 'preact';
-import { fetchFilters, filter, hide, report, subscribe, vote } from '../../account/contract';
+import { block, fetchFilters, filter, hide, report, subscribe, vote } from '../../account/contract';
+import { sites } from '../../core/domains';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
 import { fetchRules } from '../../overflow/contract';
@@ -29,7 +30,7 @@ export function setUpListing(shell: Shell) {
     const root = shell.mount();
     follow(store, (state) => render(<ListingPage state={state} dispatch={store.dispatch} />, root));
     startEffects(store, { vote, subscribe, filter });
-    startOverflow(store, { hide, report, rules: fetchRules });
+    startOverflow(store, { hide, report, rules: fetchRules, block, sites });
     chrome(store);
     shell.reveal();
     first.then(

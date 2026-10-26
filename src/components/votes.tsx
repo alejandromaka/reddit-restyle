@@ -1,6 +1,7 @@
 /* Votes, as reddit.com's: ↑ score ↓. A post's, a pill colored by your vote
-   (orange up, purple down); a comment's, plain, its arrows and score in that
-   color. A tap votes; again, takes it back. */
+   (orange up, purple down), its arrows and score white; a comment's, plain,
+   its arrows and score in that color. The arrow you voted with, filled. A
+   tap votes; again, takes it back. */
 
 import type { Vote } from '../account/contract';
 import { compact } from '../core/text';
@@ -28,7 +29,10 @@ export function Votes({ vote, score, hidden = false, pill = false, onVote }: Vot
         aria-pressed={vote === 1}
         onClick={() => onVote(vote === 1 ? 0 : 1)}
       >
-        <Icon name="up" />
+        <Icon
+          name="up"
+          filled={vote === 1}
+        />
       </button>
       {hidden ? 'Vote' : compact(score)}
       <button
@@ -38,7 +42,10 @@ export function Votes({ vote, score, hidden = false, pill = false, onVote }: Vot
         aria-pressed={vote === -1}
         onClick={() => onVote(vote === -1 ? 0 : -1)}
       >
-        <Icon name="down" />
+        <Icon
+          name="down"
+          filled={vote === -1}
+        />
       </button>
     </span>
   );

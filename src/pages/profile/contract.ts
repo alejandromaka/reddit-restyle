@@ -1,5 +1,6 @@
 /* reddit's profiles: /user/name/about.json, a t2 (who they are: their
-   avatar, their profile's banner and bio, karma, since when, followers), and
+   avatar, their profile's banner and bio, karma, since when, followers,
+   whether you blocked them), and
    /user/name/[tab]/.json, a Listing of their posts (t3) and comments (t1),
    a page at a time as a subreddit's (listingUrl). Read into our types, only
    what we draw. */
@@ -8,7 +9,7 @@ import { voteOf, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
 import { clean } from '../../core/html';
 import { iconOf } from '../../nav/contract';
-import { listingUrl, readPost, type Post, type RedditPost } from '../listing/contract';
+import { listingUrl, picturesOf, readPost, type Post, type RedditMedia, type RedditPost } from '../listing/contract';
 
 // The parts of a t2 we use, as reddit sends them (a suspended account: its name, is_suspended, little else)
 interface RedditUser {
@@ -22,6 +23,7 @@ interface RedditUser {
     comment_karma?: number;
     created_utc?: number;
     is_suspended?: boolean;
+    is_blocked?: boolean;    // by you
     subreddit?: {            // their profile, a subreddit of its own
       title: string;         // their display name; '' when none
       public_description: string;
@@ -43,6 +45,7 @@ interface RedditUserComment {
   subreddit: string;
   link_title: string;
   link_permalink: string;   // the post's, whole (https://www.reddit.com/r/…)
+  media_metadata?: Record<string, RedditMedia>;  // the pictures it links to, reddit's own
   permalink: string;        // the comment's: its thread, from it (/r/…/comments/…/…/id/)
   sr_detail?: { community_icon?: string; icon_img?: string };  // its subreddit's, when reddit sends it (sr_detail=1)
 }
@@ -66,6 +69,7 @@ export interface User {
   followers: number | null;
   created: number | null;   // since when (seconds)
   suspended: boolean;
+  blocked: boolean;         // by you
 }
 
 export interface UserComment {
@@ -103,6 +107,7 @@ export function readUser({ data }: RedditUser): User {
     followers: profile ? profile.subscribers : null,
     created: data.created_utc ?? null,
     suspended: Boolean(data.is_suspended),
+    blocked: Boolean(data.is_blocked),
   };
 }
 
@@ -113,7 +118,7 @@ export function readComment(data: RedditUserComment): UserComment {
   return {
     id: data.name,
     author: data.author,
-    html: clean(data.body_html),
+    html: clean(data.body_html, picturesOf(data.media_metadata)),
     score: data.score,
     scoreHidden: data.score_hidden,
     vote: voteOf(data.likes),

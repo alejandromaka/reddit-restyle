@@ -1,4 +1,5 @@
-/* Our icons: reddit's outline style, 16px (large: 20px), in the text's color */
+/* Our icons: reddit's outline style, 16px (large: 20px), in the text's color;
+   filled, solid in it (a vote you gave) */
 
 import { cx } from './ui';
 
@@ -13,6 +14,8 @@ const PATHS = {
   all: 'M4 17V10M10 17V3M16 17v-5',
   star: 'M10 2.5l2.3 4.8 5.2.7-3.8 3.6.9 5.2L10 14.3l-4.6 2.5.9-5.2L2.5 8l5.2-.7z',
   chevron: 'M6 8l4 4 4-4',
+  back: 'M12 5l-5 5 5 5',
+  forward: 'M8 5l5 5-5 5',
   logout: 'M8 3H4v14h4M13 6l4 4-4 4M17 10H8',
   settings: 'M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4',
   moon: 'M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z',
@@ -26,14 +29,16 @@ const PATHS = {
   hide: 'M3 3l14 14M8.3 5.2A7.6 7.6 0 0 1 10 5c4.5 0 7.5 5 7.5 5a14 14 0 0 1-2.2 2.8M12.1 12.1A3 3 0 0 1 7.9 7.9M5.3 6.4A14 14 0 0 0 2.5 10s3 5 7.5 5c1.2 0 2.3-.3 3.3-.8',
   show: 'M2.5 10S5.5 5 10 5s7.5 5 7.5 5-3 5-7.5 5-7.5-5-7.5-5zM12.5 10a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z',
   flag: 'M5 17.5v-15M5 3.5h10l-2.5 3.5 2.5 3.5H5',
+  block: 'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0zM5.05 5.05l9.9 9.9',
 };
 
 interface IconProps {
   name: keyof typeof PATHS;
   large?: boolean;
+  filled?: boolean;
 }
 
-export function Icon({ name, large = false }: IconProps) {
+export function Icon({ name, large = false, filled = false }: IconProps) {
   return (
     <svg
       class={cx('rr-block rr-flex-none', large ? 'rr-w-5 rr-h-5' : 'rr-w-4 rr-h-4')}
@@ -42,7 +47,7 @@ export function Icon({ name, large = false }: IconProps) {
     >
       <path
         d={PATHS[name]}
-        fill="none"
+        fill={filled ? 'currentColor' : 'none'}
         stroke="currentColor"
         stroke-width="1.6"
         stroke-linejoin="round"

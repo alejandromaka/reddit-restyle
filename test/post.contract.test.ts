@@ -4,8 +4,9 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { clean } from '../src/core/html';
+import { describe, expect, it, vi } from 'vitest';
+import { clean, type Picture } from '../src/core/html';
+import { picturesOf } from '../src/pages/listing/contract';
 import { moreUrl, readMore, readThread, threadUrl, type Comment, type More } from '../src/pages/post/contract';
 
 const fixture = (name: string) => JSON.parse(readFileSync(resolve(__dirname, `fixtures/${name}.json`), 'utf8'));
@@ -18,6 +19,99 @@ describe('clean: reddit’s markdown, safe and ours', () => {
 
   it('a spoiler, hidden until tapped', () => {
     expect(clean('<p><span class="md-spoiler-text">it ends</span></p>')).toBe('<p><span class="rr-rounded-sm rr-bg-neutral-content-strong rr-text-transparent" data-spoiler="">it ends</span></p>');
+  });
+
+  describe('a comment’s links to pictures: the pictures, loaded as they near the screen; a tap opens them big', () => {
+    const big = 'https://preview.redd.it/abc.png?width=1080&s=x';
+    const known: Picture = { url: 'https://preview.redd.it/abc.png?width=640&s=y', width: 640, height: 480, big };
+    const reddits = (href: string) => (href === big ? known : null);
+    const drawn = (html: string) => {
+      const box = document.createElement('div');
+      box.innerHTML = html;
+      return box;
+    };
+
+    it('its address alone: the picture in its place, reddit’s copy at its size', () => {
+      const box = drawn(clean(`<p><a href="${big.replace('&', '&amp;')}">${big.replace('&', '&amp;')}</a></p>`, reddits));
+      const link = box.querySelector('p > a')!;
+      const image = link.querySelector('img')!;
+      expect([link.getAttribute('href'), link.getAttribute('data-picture'), link.textContent]).toEqual([big, big, '']);
+      expect(['src', 'width', 'height', 'loading', 'decoding', 'alt'].map((name) => image.getAttribute(name))).toEqual([known.url, '640', '480', 'lazy', 'async', '']);
+    });
+
+    it('any picture file (https), as it comes; with words, the link and then the picture', () => {
+      const box = drawn(clean('<p>Look: <a href="https://i.imgur.com/cat.JPG">my cat</a></p>', reddits));
+      expect(box.querySelector('a:not([data-picture])')!.textContent).toBe('my cat');
+      const image = box.querySelector('a[data-picture] img')!;
+      expect([image.getAttribute('src'), image.hasAttribute('width')]).toEqual(['https://i.imgur.com/cat.JPG', false]);
+    });
+
+    it('not a picture, not https, or not a comment: links as they were', () => {
+      expect(drawn(clean('<p><a href="https://example.com/page">https://example.com/page</a> <a href="http://i.imgur.com/a.png">x</a></p>', reddits)).querySelector('img')).toBeNull();
+      expect(drawn(clean('<p><a href="https://i.imgur.com/a.png">https://i.imgur.com/a.png</a></p>')).querySelector('img')).toBeNull();
+    });
+
+    it('a gif with a video of itself (Giphy’s, imgur’s .gifv): the video, nothing loading until it nears the screen; opened big as the gif', () => {
+      const box = drawn(clean('<p><a href="https://giphy.com/gifs/happy-dance-l0MYt5jPR6QX5pnqM">https://giphy.com/gifs/happy-dance-l0MYt5jPR6QX5pnqM</a></p><p><a href="https://i.imgur.com/AbC12.gifv">&lt;image&gt;</a></p>', reddits));
+      const [giphy, imgur] = [...box.querySelectorAll('a[data-picture]')];
+      const video = giphy!.querySelector('video')!;
+      expect([video.getAttribute('data-src'), video.hasAttribute('src'), video.hasAttribute('poster'), giphy!.getAttribute('data-picture')]).toEqual(['https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.mp4', false, false, 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif']);
+      expect(video.getAttribute('data-poster')).toBe('https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy_s.gif');  // Giphy's still: never an empty box, playing or not
+      expect(['muted', 'loop', 'playsinline'].every((flag) => video.hasAttribute(flag))).toBe(true);
+      expect(['data-src', 'data-poster'].map((name) => imgur!.querySelector('video')!.getAttribute(name))).toEqual(['https://i.imgur.com/AbC12.mp4', 'https://i.imgur.com/AbC12l.jpg']);
+      expect(box.textContent).toBe('');  // "<image>": the gif in its place
+    });
+
+    it('reddit’s markdown for media, left as written: shown when it’s known, else as written', () => {
+      const known: Picture = { url: 'https://x/still.png', width: 480, height: 274, big: 'https://x/gif.gif', video: 'https://x/gif.mp4' };
+      const box = drawn(clean('<p>lol ![gif](giphy|abc|downsized) and ![img](zzz)</p>', (ref) => (ref === 'https://giphy.com/gifs/abc' ? known : null)));
+      const video = box.querySelector('video')!;
+      expect(['data-src', 'data-poster', 'width', 'height'].map((name) => video.getAttribute(name))).toEqual(['https://x/gif.mp4', 'https://x/still.png', '480', '274']);
+      expect(box.textContent).toBe('lol  and ![img](zzz)');
+    });
+
+    it('built where nothing loads (only once it’s on the page)', () => {
+      const made = vi.spyOn(document, 'createElement');
+      expect(clean('<p><a href="https://i.imgur.com/a.png">https://i.imgur.com/a.png</a></p>', reddits)).toContain('<img');
+      expect(made).not.toHaveBeenCalled();  // not in the page's document: a document of its own, with no window to load in
+      made.mockRestore();
+    });
+  });
+});
+
+describe('picturesOf: a comment’s pictures, as reddit knows them (media_metadata)', () => {
+  const media = {
+    abc: { status: 'valid', p: [{ u: 'https://preview.redd.it/abc.png?width=320&s=1', x: 320, y: 240 }, { u: 'https://preview.redd.it/abc.png?width=640&s=2', x: 640, y: 480 }], s: { u: 'https://preview.redd.it/abc.png?width=2000&s=3', x: 2000, y: 1500 } },
+    gif: { status: 'valid', p: [{ u: 'https://preview.redd.it/gif.gif?width=320&format=png8&s=4', x: 320, y: 180 }], s: { gif: 'https://i.redd.it/gif.gif', x: 480, y: 270 } },
+    new: { status: 'unprocessed' },
+  };
+  const pictures = picturesOf(media);
+
+  it('a link to one (preview.redd.it, i.redd.it): a phone’s width of it, sized; opened big from a bigger one', () => {
+    expect(pictures('https://preview.redd.it/abc.png?width=2000&s=3')).toEqual({ url: 'https://preview.redd.it/abc.png?width=640&s=2', width: 640, height: 480, big: 'https://preview.redd.it/abc.png?width=2000&s=3' });
+    expect(pictures('https://i.redd.it/abc.png')?.url).toBe('https://preview.redd.it/abc.png?width=640&s=2');
+  });
+
+  it('a gif with its video (reddit’s, Giphy’s): the video, its still until it plays, opened big as the gif; by link or by its markdown’s id', () => {
+    const gifs = picturesOf({
+      vid: { status: 'valid', p: [{ u: 'https://preview.redd.it/vid.gif?width=320&format=png8&s=5', x: 320, y: 180 }], s: { gif: 'https://i.redd.it/vid.gif', mp4: 'https://preview.redd.it/vid.gif?format=mp4&s=6', x: 640, y: 360 } },
+      'giphy|xyz': { status: 'valid', p: [], s: { gif: 'https://external-preview.redd.it/g.gif', mp4: 'https://external-preview.redd.it/g.mp4', x: 480, y: 270 } },
+      'giphy|sized|downsized': { status: 'valid', p: [], s: { gif: 'https://external-preview.redd.it/s.gif', mp4: 'https://external-preview.redd.it/s.mp4', x: 200, y: 200 } },
+    });
+    const reddits = { url: 'https://preview.redd.it/vid.gif?width=320&format=png8&s=5', width: 640, height: 360, big: 'https://i.redd.it/vid.gif', video: 'https://preview.redd.it/vid.gif?format=mp4&s=6' };
+    expect(gifs('https://i.redd.it/vid.gif')).toEqual(reddits);
+    expect(gifs('vid')).toEqual(reddits);
+    const giphys = { url: 'https://media.giphy.com/media/xyz/giphy_s.gif', width: 480, height: 270, big: 'https://external-preview.redd.it/g.gif', video: 'https://external-preview.redd.it/g.mp4' };  // reddit has no still: Giphy's
+    expect(gifs('https://giphy.com/gifs/funny-cat-xyz')).toEqual(giphys);
+    expect(gifs('https://media.giphy.com/media/xyz/giphy.gif')).toEqual(giphys);
+    expect(gifs('https://giphy.com/gifs/sized')).toMatchObject({ width: 200, height: 200, video: 'https://external-preview.redd.it/s.mp4' });  // under its size (giphy|id|downsized)
+  });
+
+  it('a gif: itself, moving; not ready, someone else’s, or none at all: not reddit’s to say', () => {
+    expect(pictures('https://i.redd.it/gif.gif')).toEqual({ url: 'https://i.redd.it/gif.gif', width: 480, height: 270, big: 'https://i.redd.it/gif.gif' });
+    expect(pictures('https://i.redd.it/new.png')).toBeNull();
+    expect(pictures('https://i.imgur.com/abc.png')).toBeNull();
+    expect(picturesOf(undefined)('https://i.redd.it/abc.png')).toBeNull();
   });
 });
 

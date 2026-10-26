@@ -9,7 +9,7 @@ import { voteOf, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
 import { clean } from '../../core/html';
 import { plain } from '../../core/text';
-import { BIG_WIDTH, readPost, type Post, type RedditPost } from '../listing/contract';
+import { BIG_WIDTH, picturesOf, readPost, type Post, type RedditMedia, type RedditPost } from '../listing/contract';
 
 // The parts of a t1 (comment) and a "more" we use, as reddit sends them
 interface RedditComment {
@@ -27,6 +27,8 @@ interface RedditComment {
   stickied: boolean;
   author_flair_text: string | null;
   collapsed: boolean;             // reddit folds it (low score, …)
+  author_is_blocked?: boolean;    // by you
+  media_metadata?: Record<string, RedditMedia>;  // the pictures it links to, reddit's own
   depth: number;
   permalink: string;
   replies: '' | { kind: 'Listing'; data: { children: RedditThing[] } };
@@ -63,6 +65,7 @@ export interface Comment {
   pinned: boolean;
   flair: string | null;
   folded: boolean;         // reddit folds it at first
+  blocked: boolean;        // by someone you blocked (reddit's say)
   depth: number;
   permalink: string;       // its own thread
   replies: Reply[];
@@ -97,7 +100,7 @@ export function readComment(data: RedditComment): Comment {
     kind: 'comment',
     id: data.name,
     author: data.author,
-    html: clean(data.body_html),
+    html: clean(data.body_html, picturesOf(data.media_metadata)),
     text: plain(data.body),
     score: data.score,
     scoreHidden: data.score_hidden,
@@ -108,6 +111,7 @@ export function readComment(data: RedditComment): Comment {
     pinned: data.stickied,
     flair: data.author_flair_text || null,
     folded: data.collapsed,
+    blocked: Boolean(data.author_is_blocked),
     depth: data.depth,
     permalink: data.permalink,
     replies: data.replies ? readReplies(data.replies.data.children, data.permalink) : [],

@@ -15,7 +15,8 @@
   --color-secondary-background: #e5ebee;             /* buttons: votes, comments, More posts; a missing icon's stand-in */
   --color-neutral-background-selected: #e5ebee;      /* the menu: where you are */
   --color-scrim: #00000099;                          /* behind the menu */
-  --color-a-default: #115bca;                        /* a link post's site */
+  --color-a-default: #115bca;                        /* a link post's site; OP */
+  --color-op-background: #d9e5f7;                    /* OP's avatar (ours): --color-a-default, 16% over the page */
   --color-upvote-background: #d93900;                /* your upvote */
   --color-upvote-onBackground: #fff;
   --color-downvote-background: #6a5cff;              /* your downvote */
@@ -44,7 +45,7 @@
   --text-xs: 12px; --leading-xs: 16px;   /* --font-caption-1, label-2: when, who, tags, small buttons */
   --text-sm: 14px; --leading-sm: 20px;   /* --font-body-2, label-1: the page's text */
   --text-base: 16px; --leading-base: 20px; /* --font-headline: post titles; a dropdown's control (16px: iOS won't zoom) */
-  --text-lg: 18px; --leading-lg: 24px;   /* --font-title-3: a missing icon's initial, large */
+  --text-lg: 18px; --leading-lg: 24px;   /* --font-title-3: a missing icon's initial, large; a post's title in a feed, wide */
   --text-xl: 20px; --leading-xl: 24px;   /* where you are (reddit.com's community name, on a phone) */
   --text-3xl: 32px; --leading-3xl: 36px; /* --font-title-1: a community's name, wider */
   --semibold: 600; --bold: 700;
@@ -90,6 +91,7 @@
   --color-secondary-background: #2a3236;             /* --color-global-darkblue */
   --color-neutral-background-selected: #2a3236;      /* ≈ */
   --color-a-default: #648efc;                        /* ≈ */
+  --color-op-background: #0f294f;                    /* ours: light's blue, 32% over the page */
   --color-primary-background: #fff;                  /* ≈ (inverted: Join in white) */
   --color-primary-onBackground: #000;                /* ≈ */
   --color-button-primary-background-disabled: #ffffff0c;  /* ≈ */

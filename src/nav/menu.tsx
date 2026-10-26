@@ -1,7 +1,8 @@
 /* The menu every page shares, as reddit.com's: Home, Popular, All and your
    communities (and nothing else). A sheet from the left under the bar (☰);
-   on a screen wide enough to have it beside the centered page, always there:
-   a sidebar at the left, over the page's margin (it doesn't push the page). */
+   on a wide screen (an iPad mini across and up), always there: a sidebar at
+   the left, over the page's margin when there's room (1280px: 272px each side
+   of the centered page), else beside it (the frame moves the page over). */
 
 import type { ComponentChildren } from 'preact';
 import { Avatar } from '../components/avatar';
@@ -43,12 +44,12 @@ interface SidebarProps {
   communities: Load<Community[]>;
 }
 
-// Wide screens (xl: 272px beside a centered 732px column), the menu always
+// Wide screens (lg: an iPad mini across, 1024px and up), the menu always
 // there: down the page's left edge, its list under the bar as you scroll (it
 // scrolls on its own)
 export function Sidebar({ current, communities }: SidebarProps) {
   return (
-    <aside class="rr-hidden xl:rr-block rr-absolute rr-inset-y-0 rr-left-0 rr-w-[272px] rr-border-r rr-border-neutral-border-weak">
+    <aside class="rr-hidden lg:rr-block rr-absolute rr-inset-y-0 rr-left-0 rr-w-[272px] rr-border-r rr-border-neutral-border-weak">
       <div class="rr-sticky rr-top-14 rr-h-[calc(100dvh-3.5rem)] rr-overflow-y-auto rr-overscroll-contain rr-py-2">
         <MenuList
           current={current}

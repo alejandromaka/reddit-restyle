@@ -1,8 +1,11 @@
 /* Every page's frame: the strip and the bar on top, the page in a column
    centered in the window, as reddit.com's (a feed: 732px with its padding; a
    post: 732px of post, its padding around it), and on a wide screen the
-   sidebar at its left (it doesn't push the column over). The column is
-   positioned: a page can put a bar beside it (r/all's filters). */
+   sidebar at its left: over the column's margin from 1280px, and between
+   (an iPad mini across: 1024 to 1133px) the column centered in what's left. The column is
+   positioned: a page can put a bar beside it (r/all's filters). Nothing in
+   it ever scrolls the page sideways: what's too wide is cut at the window
+   (clip, not hidden: the sidebar and bars still stick). */
 
 import type { ComponentChildren } from 'preact';
 import { cx } from '../components/ui';
@@ -27,7 +30,7 @@ export function Frame({ current, chrome, dispatch, post = false, children }: Fra
         me={chrome.me}
         onLogOut={() => dispatch({ type: 'logout/requested' })}
       />
-      <div class="rr-relative">
+      <div class="rr-relative rr-overflow-x-clip lg:rr-pl-[272px] xl:rr-pl-0">
         <Sidebar
           current={current}
           communities={chrome.communities}

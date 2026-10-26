@@ -6,6 +6,7 @@
    only what we draw. */
 
 import { voteOf, type Vote } from '../../account/contract';
+import { giphyOf, type Pictures } from '../../core/html';
 import { fetchJson } from '../../core/http';
 import { PAGE_SIZE } from '../../core/paging';
 import { plain } from '../../core/text';
@@ -15,10 +16,10 @@ import { iconOf } from '../../nav/contract';
 interface RedditImage { url: string; width: number; height: number }
 interface RedditSizes { source: RedditImage; resolutions: RedditImage[] }
 interface RedditSize { u: string; x: number; y: number }
-interface RedditMedia {  // a gallery's picture: p, its sizes (smallest first); s, the original (no u when it's animated)
+export interface RedditMedia {  // a gallery's picture (or a comment's): p, its sizes (smallest first; a gif's: stills); s, the original (a gif: no u; gif, mp4)
   status: string;  // 'valid' once processed
   p?: RedditSize[];
-  s?: Omit<RedditSize, 'u'> & { u?: string };
+  s?: Omit<RedditSize, 'u'> & { u?: string; gif?: string; mp4?: string };
 }
 export interface RedditPost {
   name: string;  // t3_…
@@ -102,6 +103,36 @@ export const BIG_WIDTH = 1080;  // at 3x: a picture opened, and the post page's
 const pick = (sizes: Image[], wide: number) => sizes.find(({ width }) => width >= wide) ?? sizes.at(-1) ?? null;
 
 const sized = ({ u, x, y }: RedditSize): Image => ({ url: u, width: x, height: y });
+
+// Which of a comment's media a link (i.redd.it/id.png, preview.redd.it/id.png?…,
+// a Giphy gif's) or its markdown's id (id, giphy|id) is
+function mediaKey(ref: string) {
+  const reddits = /^https:\/\/(?:i|preview)\.redd\.it\/([\w-]+)\./.exec(ref)?.[1];
+  if (reddits) return reddits;
+  const giphy = giphyOf(ref);
+  if (giphy) return `giphy|${giphy}`;
+  return /^(?:giphy\|)?[\w-]+$/.test(ref) ? ref : null;
+}
+
+// A comment's pictures, from its media_metadata: shown at its size, from a
+// copy a phone's width, opened big from a bigger one; a gif, as its video
+// (a fraction of the gif) with a still until it plays, opened big as the gif
+export function picturesOf(media: Record<string, RedditMedia> | undefined): Pictures {
+  return (ref) => {
+    const key = mediaKey(ref);
+    // A Giphy gif's is often under its size too (giphy|id|downsized)
+    const picture = key ? media?.[key] ?? Object.entries(media ?? {}).find(([name]) => name.startsWith(`${key}|`))?.[1] : undefined;
+    if (picture?.status !== 'valid' || !picture.s) return null;
+    const { p = [], s } = picture;
+    // A gif's still: reddit's, else (a Giphy gif's: reddit often has none) Giphy's own
+    const still = pick(p.map(sized), IMAGE_WIDTH)?.url ?? (key!.startsWith('giphy|') ? `https://media.giphy.com/media/${key!.split('|')[1]}/giphy_s.gif` : '');
+    if (s.mp4) return { url: still, width: s.x, height: s.y, big: s.gif ?? s.mp4, video: s.mp4 };
+    if (s.gif) return { url: s.gif, width: s.x, height: s.y, big: s.gif };
+    const sizes = [...p, ...(s.u ? [{ ...s, u: s.u }] : [])].map(sized);
+    const small = pick(sizes, IMAGE_WIDTH);
+    return small && { ...small, big: pick(sizes, BIG_WIDTH)!.url };
+  };
+}
 
 export function galleryOf(post: RedditPost, wide = IMAGE_WIDTH): Image[] {
   const { gallery_data: data, media_metadata: media } = post;

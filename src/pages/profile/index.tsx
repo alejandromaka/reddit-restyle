@@ -4,7 +4,8 @@
    drawn when it's parsed. */
 
 import { render } from 'preact';
-import { hide, report, vote } from '../../account/contract';
+import { block, hide, report, vote } from '../../account/contract';
+import { sites } from '../../core/domains';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
 import { fetchRules } from '../../overflow/contract';
@@ -27,7 +28,7 @@ export function setUpProfile(shell: Shell) {
     const root = shell.mount();
     follow(store, (state) => render(<ProfilePage state={state} dispatch={store.dispatch} />, root));
     startEffects(store, { vote });
-    startOverflow(store, { hide, report, rules: fetchRules });
+    startOverflow(store, { hide, report, rules: fetchRules, block, sites });
     chrome(store);
     shell.reveal();
     first.then(

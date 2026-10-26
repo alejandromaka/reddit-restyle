@@ -15,7 +15,7 @@
 // user-listing.json, every subreddit's about test/fixtures/about.json (under
 // its own name) and its rules rules.json, your communities
 // test/fixtures/subscriptions.json, your r/all filters filters.json, what you
-// do (vote, join, leave, hide, report, filter, log out) is taken and printed, and every image is a placeholder. A
+// do (vote, join, leave, hide, report, block, filter, log out) is taken and printed, and every image is a placeholder. A
 // page we don't draw stays the bare old reddit page, as on the phone.
 //
 // MOCK_SHOT=file.png: no window; a screenshot of the page there, then exit
@@ -97,7 +97,7 @@ async function answer(route) {
       Object.assign(posted.json.data.things[0].data, { body: text, body_html: `<div class="md"><p>${escape(text)}</p></div>` });
       return json(JSON.stringify(posted));
     }
-    if (url.pathname === '/api/me.json') return json('{"data":{"name":"you","modhash":"MOCK","snoovatar_img":"https://i.redd.it/snoovatar/mock.png"}}');
+    if (url.pathname === '/api/me.json') return json('{"data":{"id":"y0u","name":"you","modhash":"MOCK","snoovatar_img":"https://i.redd.it/snoovatar/mock.png"}}');
     if (url.pathname.startsWith('/api/filter/') && request.method() === 'GET') return json(await fixture('filters'));
     if ((url.pathname.startsWith('/api/') || url.pathname === '/logout') && request.method() !== 'GET') {
       console.log(`(you) ${request.method()} ${url.pathname} ${request.postData() ?? ''}`);

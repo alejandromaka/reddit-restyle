@@ -81,6 +81,21 @@ describe('profile page', () => {
     expect(tabs()).toEqual([['Overview', '/user/other/'], ['Posts', '/user/other/submitted/'], ['Comments', '/user/other/comments/']]);
   });
 
+  it('Block: on someone else’s, asked first, sent; then Unblock. None on yours', async () => {
+    const block = (label: string) => [...main().querySelectorAll<HTMLButtonElement>('header button')].find((b) => b.textContent === label);
+    open('/user/someone/');
+    await vi.waitFor(() => expect(cards()).toHaveLength(3));
+    expect(block('Block')).toBeUndefined();
+    open('/user/other/');
+    await vi.waitFor(() => expect(block('Block')).toBeDefined());
+    block('Block')!.click();
+    const sure = () => document.querySelector('[role="dialog"][aria-label="Block account"]')!;
+    await vi.waitFor(() => expect(sure().textContent).toContain('Block u/other?'));
+    [...sure().querySelectorAll('button')].find((b) => b.textContent === 'Block account')!.click();
+    await vi.waitFor(() => expect(block('Unblock')).toBeDefined());
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/block_user')).toEqual([{ name: 'other', uh: 'MODHASH' }]));
+  });
+
   it('their comments and posts: a comment with the post it’s on, a post as a listing’s; the next page', async () => {
     open('/user/someone/');
     await vi.waitFor(() => expect(cards()).toHaveLength(3));

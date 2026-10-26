@@ -1,7 +1,8 @@
 /* A post in a listing: where (a mixed listing: its subreddit; one subreddit's:
    who) and when, and its "…" (Hide, Report), its title, its media (it plays,
-   it opens big) or the start of its text, its score and comments. Its title,
-   its comments, or a tap on the rest: its page. */
+   it opens big) or the start of its text, its score, comments and Hide (or
+   Unhide). Only its title and its comments open its page: a tap anywhere
+   else (its media, its text) doesn't. */
 
 import type { Vote } from '../../../account/contract';
 import { Avatar } from '../../../components/avatar';
@@ -18,19 +19,15 @@ import { MediaView } from './media';
 interface PostCardProps {
   post: Post;
   mixed: boolean;  // a listing of more than one subreddit
+  hidden: boolean;  // hidden from your listings (as you left it here, else reddit's say)
   onVote: (vote: Vote) => void;
+  onHide: (hidden: boolean) => void;
   onMore: (at: Spot) => void;
 }
 
-export function PostCard({ post, mixed, onVote, onMore }: PostCardProps) {
+export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCardProps) {
   return (
-    // A tap on it, but not on something of its own (a link, a button, a video): the post. (Keys: its title.)
-    <article
-      class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak"
-      onClick={(event) => {
-        if (!(event.target as Element).closest('a, button, video')) location.assign(post.permalink);
-      }}
-    >
+    <article class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak">
       <p class="rr-flex rr-items-center rr-gap-1 rr-text-xs rr-text-neutral-content-weak">
         {mixed ? (
           <a
@@ -57,7 +54,7 @@ export function PostCard({ post, mixed, onVote, onMore }: PostCardProps) {
         </span>
       </p>
       <a
-        class="rr-text-base rr-font-semibold"
+        class="rr-text-base lg:rr-text-lg rr-font-semibold"
         href={post.permalink}
       >
         {post.title}
@@ -93,6 +90,14 @@ export function PostCard({ post, mixed, onVote, onMore }: PostCardProps) {
           <Icon name="comments" />
           {compact(post.comments)}
         </a>
+        <button
+          type="button"
+          class={ui.action}
+          onClick={() => onHide(!hidden)}
+        >
+          <Icon name={hidden ? 'show' : 'hide'} />
+          {hidden ? 'Unhide' : 'Hide'}
+        </button>
       </div>
     </article>
   );
