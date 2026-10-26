@@ -1,9 +1,52 @@
 # Reddit Restyle
 
-old.reddit.com rebuilt for iPhone mini (iOS 16 Safari), as a userscript for
-the Userscripts app. On the phone it runs through a loader, installed once:
-it keeps a copy of the restyle and runs it, and gets a new copy only when you
-ask. Reddit Blocker, its network rules, is installed beside it.
+old.reddit.com, redrawn to look and feel like reddit.com's mobile site, as a
+userscript for Safari on iPhone ([Userscripts](https://github.com/quoid/userscripts)).
+It's built for an iPhone mini on iOS 16, and it also works on an iPad or a
+computer's window.
+
+You keep old reddit's speed and your account, and lose its desktop layout,
+ads and trackers. Listings, posts and comments, and profiles are drawn from
+reddit's own JSON, fetched as you. Voting, joining, commenting, hiding,
+reporting and blocking all go through old reddit's API. Pages it doesn't
+draw yet (settings, messages, search…) come up broken on purpose, so it's
+obvious what's missing.
+
+This is a personal project, shared as is. It isn't affiliated with reddit.
+
+## Install
+
+You need the free [Userscripts](https://github.com/quoid/userscripts)
+app, turned on in Safari and allowed on old.reddit.com.
+
+1. In Safari, open **https://alejandromaka.github.io/reddit-restyle/**.
+2. Install both scripts linked there:
+   - **Reddit Restyle Loader**: keeps a copy of the restyle on your phone and runs it.
+   - **Reddit Blocker**: keeps old reddit's own scripts and stylesheets from loading.
+3. Open old.reddit.com and tap **Install** at the bottom of the page.
+
+## Updating
+
+Nothing updates on its own: the loader never fetches anything unless you
+ask. To get the latest build, use any of these:
+
+- **Update Reddit Restyle** in your account menu (tap your avatar). It shows
+  the build you're on.
+- Any old.reddit.com address with `#restyle-update` added to the end, for
+  when the saved copy won't start.
+- **Update Reddit Restyle** in the Userscripts menu, where the app shows one.
+
+The page tells you either that you're up to date or that a new build is in,
+and then reloads.
+
+## Privacy
+
+There are no analytics, no API key and no server of ours. The script talks
+only to reddit (as you, with your own cookies), and to GitHub Pages when you
+ask it to update. What you block or choose on this device (blocked sites,
+dark mode) stays in Safari's storage for old.reddit.com.
+
+## Development
 
 ```
 npm run watch      # rebuild on every change (into the iCloud folder, if there is one)
@@ -16,31 +59,18 @@ npm run mock [path] # a WebKit iPhone mini on a mock old.reddit.com (fixtures), 
 
 The build writes `Reddit Restyle.user.js`, which carries its own stylesheet,
 and `Reddit Blocker.user.js` to dist/, and to the Userscripts app's iCloud
-folder when that exists (`REDDIT_RESTYLE_OUT` picks another).
+folder when that exists (`REDDIT_RESTYLE_OUT` picks another). Install
+Reddit Restyle.user.js directly while developing, or the loader, but not
+both: if both are in, the first to start wins.
 
-## Installing and updating
+Every push to main publishes to GitHub Pages (.github/workflows/publish.yml;
+Pages on, with GitHub Actions as its source). The loader (src/loader) runs
+the build it keeps in the Userscripts app's storage, in the userscript's
+own world, so reddit's Content Security Policy doesn't apply. The URL it
+fetches is built in (`REDDIT_RESTYLE_URL` at publish, else this
+repository's Pages), so a new one means installing the loader again.
 
-Every push to main publishes to GitHub Pages (.github/workflows/publish.yml:
-Pages on, source GitHub Actions). Its index page links what to install, once,
-in Safari: **Reddit Restyle Loader.user.js** and **Reddit Blocker.user.js**
-(not Reddit Restyle.user.js too: if both are in, the first to start wins).
-
-The loader (src/loader) never fetches by itself. It runs the build it keeps
-in the Userscripts app's storage, in the userscript's own world (so reddit's
-Content Security Policy doesn't apply), and fetches reddit-restyle.js only
-when you ask:
-
-- **Update Reddit Restyle** in your account menu (it shows the build you're on),
-- any old.reddit.com address with `#restyle-update` on the end (for when the
-  kept build won't start),
-- the Userscripts menu's Update Reddit Restyle, where the app shows one,
-- with nothing kept yet, the Install button it puts on the page.
-
-It says on the page how that went: up to date, or the new build and a
-reload. The URL it fetches is built in (`REDDIT_RESTYLE_URL` at publish,
-else this repository's Pages); a new one means installing the loader again.
-
-## How it works
+### How it works
 
 On the pages it owns, the script removes reddit's CSS and every reddit
 script (ads and trackers with them) as the HTML parses, and draws the page
@@ -56,7 +86,7 @@ up when a Safari window regains focus). Old reddit's own pages can't work
 without them, on purpose: every page we don't draw yet comes up broken, so
 what's missing shows. Nothing redirects, nothing falls back.
 
-## Layout
+### Layout
 
 ```
 src/
@@ -99,7 +129,7 @@ docs/
                      come from; reddit-vars.js captures them again
 ```
 
-## Pages
+### Pages
 
 - **listing**: the front page, Popular, All and subreddits (several too:
   r/pics+funny), by sort (a dropdown: Best on the front page, Hot, New, Top
@@ -160,7 +190,7 @@ is a column (732px, as reddit.com's) centered in the window; on a screen
 always there, at the left edge: from 1280px over the column's margin, and
 narrower the column moves over beside it.
 
-## Rules
+### Rules
 
 - Styles: utility classes only (`rr-` prefix, Tailwind's names), values from
   tokens; bundles that repeat are recipes in components/ui.ts. No component

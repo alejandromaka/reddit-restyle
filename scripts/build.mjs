@@ -41,7 +41,7 @@ const JS_HEADER = `// ==UserScript==
 // @name         ${NAME}
 // @namespace    https://local/reddit-restyle
 // @version      ${version}
-// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page is left as it comes (broken without old reddit's code, on purpose: what's missing shows). Built from ~/Developer/reddit-restyle: edit there, not here.
+// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page is left as it comes (broken without old reddit's code, on purpose: what's missing shows). Built from github.com/alejandromaka/reddit-restyle: edit there, not here.
 // @author       you
 // @match        *://old.reddit.com/*
 // @run-at       document-start
@@ -56,7 +56,7 @@ const BLOCKER_HEADER = `// ==UserScript==
 // @name         Reddit Blocker
 // @namespace    https://local/reddit-blocker
 // @version      ${version}
-// @description  Network rules for Reddit Restyle. The Userscripts app gets a page script's code asynchronously, so old reddit's head (its whole JS bundle, reddit-init.js, and its stylesheets) is parsed before Reddit Restyle starts, and runs. These keep them from loading at all: old reddit's own scripts and CSS (www.redditstatic.com/reddit…) and subreddit stylesheets (thumbs.redditmedia.com). Paths only old reddit uses: www.reddit.com is unaffected. Built from ~/Developer/reddit-restyle (src/blocker.json): edit there, not here.
+// @description  Network rules for Reddit Restyle. The Userscripts app gets a page script's code asynchronously, so old reddit's head (its whole JS bundle, reddit-init.js, and its stylesheets) is parsed before Reddit Restyle starts, and runs. These keep them from loading at all: old reddit's own scripts and CSS (www.redditstatic.com/reddit…) and subreddit stylesheets (thumbs.redditmedia.com). Paths only old reddit uses: www.reddit.com is unaffected. Built from github.com/alejandromaka/reddit-restyle (src/blocker.json): edit there, not here.
 // @author       you
 // @run-at       request
 // ==/UserScript==
