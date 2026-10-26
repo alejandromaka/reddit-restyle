@@ -18,6 +18,7 @@ import { LOADER_ATTRIBUTE, UPDATE_EVENT, versionOf } from './contract';
 const CODE = 'code';
 const HASH = '#restyle-update';
 const TIMEOUT = 30_000;  // ms
+const STORAGE_TIMEOUT = 5000;  // ms: the app's storage answers well before
 
 // Once <html> exists (at document start it may not yet)
 function withRoot(callback: (html: HTMLElement) => void) {
@@ -54,7 +55,7 @@ function say(text: string, button?: { label: string; onClick: () => void }) {
     const note = document.createElement('div');
     note.dataset.restyleNote = '';
     note.setAttribute('role', 'status');
-    note.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:12px;background:#1a1a1b;color:#fff;font:14px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+    note.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:12px;background:#1a1a1b;color:#fff;font:14px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3)';
     note.append(Object.assign(document.createElement('span'), { textContent: text, style: 'flex:1' }));
     if (button) {
       const tap = Object.assign(document.createElement('button'), { type: 'button', textContent: button.label });
@@ -64,7 +65,9 @@ function say(text: string, button?: { label: string; onClick: () => void }) {
     } else {
       setTimeout(() => note.remove(), 4000);
     }
-    html.append(note);
+    // In the body once there is one (before it's parsed, <html> holds it)
+    (document.body ?? html).append(note);
+    if (!document.body) document.addEventListener('DOMContentLoaded', () => document.body.append(note), { once: true });
   });
 }
 
@@ -113,7 +116,11 @@ async function start() {
   const owned = pageOf(location.pathname);
   withRoot((html) => { if (owned) html.style.visibility = 'hidden'; });
 
-  const kept = await GM.getValue<string>(CODE);
+  // Storage that never answers would leave the page as it is, with no word why
+  const kept = await Promise.race([
+    GM.getValue<string>(CODE),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('the Userscripts app’s storage didn’t answer')), STORAGE_TIMEOUT)),
+  ]);
   const ask = () => update(kept);
   document.addEventListener(UPDATE_EVENT, ask);
   GM.registerMenuCommand?.('Update Reddit Restyle', ask);
@@ -143,4 +150,8 @@ async function start() {
   if (asked()) ask();
 }
 
-start();
+// A loader that fails says so on the page (Safari's console isn't on the phone)
+start().catch((error: unknown) => {
+  withRoot((html) => html.style.removeProperty('visibility'));
+  say(`Reddit Restyle Loader failed: ${(error as Error)?.message ?? error}`, { label: 'Retry', onClick: () => location.reload() });
+});
