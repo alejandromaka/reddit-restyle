@@ -2,11 +2,12 @@
   "name": "reddit-restyle",
   "version": "0.1.0",
   "private": true,
-  "description": "old.reddit.com rebuilt for iPhone mini, as a userscript. Built into the Userscripts app's iCloud folder.",
+  "description": "old.reddit.com rebuilt for iPhone mini, as a userscript. Installed once as a loader that updates only when asked.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
+    "bundle": "node scripts/build.mjs --publish",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "test": "vitest run",
     "mock": "node scripts/mock.mjs",

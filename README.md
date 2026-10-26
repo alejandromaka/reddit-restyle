@@ -1,18 +1,44 @@
 # Reddit Restyle
 
 old.reddit.com rebuilt for iPhone mini (iOS 16 Safari), as a userscript for
-the Userscripts app. The build writes `Reddit Restyle.user.js`, which carries
-its own stylesheet, and `Reddit Blocker.user.js`, its network rules, into the
-app's iCloud folder; edit here, not there.
+the Userscripts app. On the phone it runs through a loader, installed once:
+it keeps a copy of the restyle and runs it, and gets a new copy only when you
+ask. Reddit Blocker, its network rules, is installed beside it.
 
 ```
-npm run watch      # rebuild on every change (straight to the phone)
+npm run watch      # rebuild on every change (into the iCloud folder, if there is one)
 npm run check      # typecheck, test, build
+npm run bundle     # the build, plus what's published (dist/): reddit-restyle.js,
+                   # Reddit Restyle Loader.user.js, index.html
 npm run mock [path] # a WebKit iPhone mini on a mock old.reddit.com (fixtures), reloading on every build;
                     # MOCK_WIDTH=1280: a computer's window
 ```
 
-`REDDIT_RESTYLE_OUT` overrides the output folder.
+The build writes `Reddit Restyle.user.js`, which carries its own stylesheet,
+and `Reddit Blocker.user.js` to dist/, and to the Userscripts app's iCloud
+folder when that exists (`REDDIT_RESTYLE_OUT` picks another).
+
+## Installing and updating
+
+Every push to main publishes to GitHub Pages (.github/workflows/publish.yml:
+Pages on, source GitHub Actions). Its index page links what to install, once,
+in Safari: **Reddit Restyle Loader.user.js** and **Reddit Blocker.user.js**
+(not Reddit Restyle.user.js too: if both are in, the first to start wins).
+
+The loader (src/loader) never fetches by itself. It runs the build it keeps
+in the Userscripts app's storage, in the userscript's own world (so reddit's
+Content Security Policy doesn't apply), and fetches reddit-restyle.js only
+when you ask:
+
+- **Update Reddit Restyle** in your account menu (it shows the build you're on),
+- any old.reddit.com address with `#restyle-update` on the end (for when the
+  kept build won't start),
+- the Userscripts menu's Update Reddit Restyle, where the app shows one,
+- with nothing kept yet, the Install button it puts on the page.
+
+It says on the page how that went: up to date, or the new build and a
+reload. The URL it fetches is built in (`REDDIT_RESTYLE_URL` at publish,
+else this repository's Pages); a new one means installing the loader again.
 
 ## How it works
 
@@ -35,6 +61,8 @@ what's missing shows. Nothing redirects, nothing falls back.
 ```
 src/
   main.ts            entry: shell → page set-up (at document start)
+  loader/            the loader: runs the kept build, fetches one when asked;
+                     contract.ts: what it shares with the restyle (the page's DOM)
   blocker.json       network rules: old reddit's own scripts and CSS never load
   shell/
     pages.ts         owned pages, by path

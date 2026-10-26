@@ -1,0 +1,45 @@
+# Publishes the restyle to GitHub Pages on every push to main (or by hand):
+# reddit-restyle.js, the build the loader fetches when you ask it to, with the
+# loader and Reddit Blocker to install and an index.html linking them.
+# Pages must be on, with GitHub Actions as its source (Settings → Pages).
+name: Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run bundle
+      - name: The published files
+        run: |
+          mkdir site
+          cp dist/reddit-restyle.js "dist/Reddit Restyle Loader.user.js" "dist/Reddit Blocker.user.js" dist/index.html site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
