@@ -69,13 +69,13 @@ describe('listingReducer', () => {
 
   it('r/all: its filters asked for (only there); one added, A–Z and once, or taken out; back again when it fails, and why', () => {
     expect(initialState('/r/pics/').filters).toBeNull();
-    const all = listingReducer(initialState('/r/all/'), { type: 'filters/loaded', filters: ['GenZ', 'MadeMeSmile'] });
+    const all = listingReducer(initialState('/r/all/'), { type: 'filters/loaded', filters: ['funny', 'gaming'] });
     const added = listingReducer(all, { type: 'filter/requested', subreddit: 'aww', filtered: true });
-    expect(added.filters).toEqual({ status: 'loaded', data: ['aww', 'GenZ', 'MadeMeSmile'] });
-    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'AWW', filtered: true }).filters).toEqual({ status: 'loaded', data: ['AWW', 'GenZ', 'MadeMeSmile'] });
-    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'genz', filtered: false }).filters).toEqual({ status: 'loaded', data: ['aww', 'MadeMeSmile'] });
+    expect(added.filters).toEqual({ status: 'loaded', data: ['aww', 'funny', 'gaming'] });
+    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'AWW', filtered: true }).filters).toEqual({ status: 'loaded', data: ['AWW', 'funny', 'gaming'] });
+    expect(listingReducer(added, { type: 'filter/requested', subreddit: 'funny', filtered: false }).filters).toEqual({ status: 'loaded', data: ['aww', 'gaming'] });
     const refused = listingReducer(added, { type: 'filter/failed', subreddit: 'aww', filtered: true, error: 'Error: 400' });
-    expect([refused.filters, refused.filterError]).toEqual([{ status: 'loaded', data: ['GenZ', 'MadeMeSmile'] }, 'Error: 400']);
+    expect([refused.filters, refused.filterError]).toEqual([{ status: 'loaded', data: ['funny', 'gaming'] }, 'Error: 400']);
     expect(initialState('/r/all/').filters).toEqual({ status: 'loading' });
   });
 

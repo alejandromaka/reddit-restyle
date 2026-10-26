@@ -385,9 +385,9 @@ describe('r/all', () => {
     await vi.waitFor(() => expect(show().textContent).toBe('Show 3'));
     expect(listed()).toEqual([]);
     show().click();
-    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile']));
+    await vi.waitFor(() => expect(listed()).toEqual(['r/funny', 'r/gaming', 'r/memes']));
     expect(show().textContent).toBe('Show less');
-    expect([...document.querySelectorAll('[role="dialog"][aria-label="Filtered from r/all"] li a')].map((a) => a.textContent)).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile']);
+    expect([...document.querySelectorAll('[role="dialog"][aria-label="Filtered from r/all"] li a')].map((a) => a.textContent)).toEqual(['r/funny', 'r/gaming', 'r/memes']);
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/api/filter/user/you/f/all?raw_json=1');
     expect([...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Filters'))!.textContent).toBe('Filters (3)');
   });
@@ -399,12 +399,12 @@ describe('r/all', () => {
     const form = rail().querySelector('form')!;
     form.querySelector('input')!.value = 'r/pics';
     form.dispatchEvent(new Event('submit', { cancelable: true }));
-    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/GenZ', 'r/MadeMeSmile', 'r/pics']));
+    await vi.waitFor(() => expect(listed()).toEqual(['r/funny', 'r/gaming', 'r/memes', 'r/pics']));
     expect(titles()).toEqual([]);  // every post here is r/pics'
     expect(form.querySelector('input')!.value).toBe('');
     await vi.waitFor(() => expect(changed('PUT')).toEqual([['/api/filter/user/you/f/all/r/pics', 'MODHASH', { model: '{"name":"pics"}' }]]));
-    rail().querySelector<HTMLButtonElement>('button[aria-label="Let r/GenZ back into r/all"]')!.click();
-    await vi.waitFor(() => expect(listed()).toEqual(['r/50501', 'r/MadeMeSmile', 'r/pics']));
-    await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/GenZ', 'MODHASH', null]]));
+    rail().querySelector<HTMLButtonElement>('button[aria-label="Let r/funny back into r/all"]')!.click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/gaming', 'r/memes', 'r/pics']));
+    await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/funny', 'MODHASH', null]]));
   });
 });

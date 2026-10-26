@@ -180,7 +180,7 @@ On top, as old reddit has it, a strip: Home, Popular, All, then your
 communities (favorites first, A–Z, fetched alongside the page's posts), side
 by side, swiped for more; it scrolls away. Under it the bar, which stays, as
 reddit.com's: ☰ slides in the menu under it (the same, as a list; ☰ again
-closes it), reddit's wordmark goes home, and your avatar opens your account
+closes it), our wordmark ("restyle", not reddit's logo) goes home, and your avatar opens your account
 (a sheet from the bottom on a phone, a dropdown on a wide screen): View
 Profile and Settings (old reddit's pages, which break until we build them),
 Dark Mode (this device remembers it; else your system's), Blocked Domains,

@@ -53,7 +53,7 @@ export function Bar({ current, communities, me, onLogOut }: BarProps) {
         </button>
         <a
           href="/"
-          aria-label="Reddit home"
+          aria-label="Home"
         >
           <Wordmark />
         </a>

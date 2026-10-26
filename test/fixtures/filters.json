@@ -7,9 +7,9 @@
     "path": "/user/you/f/all/",
     "visibility": "private",
     "subreddits": [
-      { "name": "GenZ" },
-      { "name": "50501" },
-      { "name": "MadeMeSmile" }
+      { "name": "funny" },
+      { "name": "memes" },
+      { "name": "gaming" }
     ]
   }
 }
