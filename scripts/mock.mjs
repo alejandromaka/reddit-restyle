@@ -24,10 +24,13 @@
 // MOCK_WIDTH=1280: a window that wide (a computer's), not the iPhone mini's 375
 // MOCK_HOVER=selector: with MOCK_SHOT, the mouse on it after the taps (a :hover look)
 // MOCK_EVAL: with MOCK_SHOT, an expression evaluated on the page after the taps, printed (a measurement, a check)
+// MOCK_BROWSER=chromium: Chromium instead of WebKit (where there's no WebKit; MOCK_BROWSER_PATH: its executable)
+// MOCK_DARK=1: the system in dark mode
+// MOCK_PICTURES=1: every image a made-up picture (a gradient, one per address), not reddit's gray: for screenshots
 
 import { existsSync, watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { webkit } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
 const JS = 'dist/Reddit Restyle.user.js';
@@ -57,6 +60,11 @@ const oldReddit = (js) => `<!DOCTYPE html><html><head><meta charset="utf-8">${RE
 const escape = (text) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 const PLACEHOLDER = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 3" preserveAspectRatio="none"><rect width="4" height="3" fill="#c9d7de"/></svg>';
+// A made-up picture: two hues picked by the image's address, the same every time
+function picture(address) {
+  const hue = [...address].reduce((sum, c) => (sum * 31 + c.charCodeAt(0)) % 360, 7);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 3" preserveAspectRatio="none"><defs><linearGradient id="g" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue} 70% 62%)"/><stop offset="1" stop-color="hsl(${(hue + 60) % 360} 65% 38%)"/></linearGradient></defs><rect width="4" height="3" fill="url(#g)"/></svg>`;
+}
 
 const fixture = (name) => readFile(`test/fixtures/${name}.json`, 'utf8');
 // A subreddit's about: the fixture's, under that subreddit's name
@@ -75,11 +83,15 @@ async function nextPage() {
   return JSON.stringify(listing);
 }
 
-const browser = await webkit.launch({ headless: Boolean(SHOT) });
+const engine = process.env.MOCK_BROWSER === 'chromium' ? chromium : webkit;
+const browser = await engine.launch({ headless: Boolean(SHOT), executablePath: process.env.MOCK_BROWSER_PATH });
 const WIDTH = Number(process.env.MOCK_WIDTH ?? 375);
-const context = await browser.newContext(WIDTH > 375
-  ? { viewport: { width: WIDTH, height: 900 } }
-  : { viewport: { width: 375, height: 812 }, userAgent: IPHONE, deviceScaleFactor: 2, hasTouch: true });
+const context = await browser.newContext({
+  colorScheme: process.env.MOCK_DARK ? 'dark' : 'light',
+  ...(WIDTH > 375
+    ? { viewport: { width: WIDTH, height: 900 } }
+    : { viewport: { width: 375, height: 812 }, userAgent: IPHONE, deviceScaleFactor: 2, hasTouch: true }),
+});
 await context.route('**/*', (route) => answer(route).catch((error) => {
   console.log(`(mock) ${route.request().url()}: ${error.message}`);
   return route.abort().catch(() => {});
@@ -116,7 +128,7 @@ async function answer(route) {
     if (url.pathname.includes('/comments/') && url.pathname.endsWith('.json')) return json(await fixture('thread'));
     if (url.pathname.endsWith('.json')) return json(url.searchParams.has('after') ? await nextPage() : await fixture('listing'));
   }
-  if (request.resourceType() === 'image') return route.fulfill({ contentType: 'image/svg+xml', body: PLACEHOLDER });
+  if (request.resourceType() === 'image') return route.fulfill({ contentType: 'image/svg+xml', body: process.env.MOCK_PICTURES ? picture(url.pathname) : PLACEHOLDER });
   return route.abort();
 }
 
