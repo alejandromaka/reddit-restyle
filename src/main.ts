@@ -25,7 +25,7 @@ const SET_UP: Record<PageName, (shell: Shell) => unknown> = {
 };
 
 function start(page: PageName) {
-  // Already restyled: the loader's build and this one both installed
+  // Already restyled: two copies of this script installed
   if (document.documentElement.dataset.restyle) return;
   const shell = takeOver(page);
   startTheme();  // light or dark, before anything's drawn

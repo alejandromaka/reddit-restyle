@@ -2,8 +2,7 @@
    wide screen a dropdown under your avatar (so it goes in the bar). View
    Profile, Settings (old reddit's pages: not ours yet, so they break), Dark
    Mode, Blocked Domains (folded: the sites this device blocks, each with
-   Unblock), Update Reddit Restyle (run by the loader: it gets the latest
-   build, only when asked), Log Out. */
+   Unblock), Log Out. */
 
 import { useEffect, useState } from 'preact/hooks';
 import type { Me } from '../account/contract';
@@ -14,7 +13,6 @@ import { Sheet } from '../components/sheet';
 import { cx, ui } from '../components/ui';
 import { blockDomain, blockedDomains, followDomains } from '../core/domains';
 import { chooseTheme, isDark } from '../core/theme';
-import { loadedBuild, requestUpdate } from '../loader/contract';
 
 interface AccountProps {
   open: boolean;
@@ -104,7 +102,6 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
         </span>
       </button>
       <BlockedDomains />
-      <UpdateRestyle />
       <button
         type="button"
         class={ui.row}
@@ -114,24 +111,6 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
         Log Out
       </button>
     </>
-  );
-}
-
-// Run by the loader: the latest build, from where it's published (the loader
-// says how that went, and reloads the page with it)
-function UpdateRestyle() {
-  const build = loadedBuild();
-  if (!build) return null;
-  return (
-    <button
-      type="button"
-      class={ui.row}
-      onClick={requestUpdate}
-    >
-      <Icon name="down" large />
-      Update Reddit Restyle
-      <span class="rr-ml-auto rr-text-xs rr-text-neutral-content-weak">{build}</span>
-    </button>
   );
 }
 

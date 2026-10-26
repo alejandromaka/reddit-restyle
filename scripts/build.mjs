@@ -6,13 +6,12 @@
 // overrides it). --watch rebuilds the script on every change (the rules: on a
 // restart).
 //
-// For publishing (npm run bundle, the Pages workflow): the same script as
-// reddit-restyle.js, its first line its version, for the loader to fetch when
-// asked; and the loader, Reddit Restyle Loader.user.js (src/loader), which
-// fetches it from REDDIT_RESTYLE_URL (by default this repository's GitHub
-// Pages). With an index.html linking them, all in dist/.
+// For publishing (npm run bundle, the Pages workflow): the same two as
+// reddit-restyle.user.js and reddit-blocker.user.js, each with an update URL
+// (this repository's GitHub Pages) and a version that goes up every run, and
+// an index.html linking them, in dist/. The Userscripts app checks that URL
+// when its popup opens, and updates only when you tap Update.
 import { context, build } from 'esbuild';
-import { execSync } from 'node:child_process';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { existsSync, watch } from 'node:fs';
@@ -20,84 +19,64 @@ import { existsSync, watch } from 'node:fs';
 const ICLOUD = `${homedir()}/Library/Mobile Documents/com~apple~CloudDocs/Developer/userscripts`;
 const OUT = process.env.REDDIT_RESTYLE_OUT ?? (existsSync(ICLOUD) ? ICLOUD : null);
 const NAME = 'Reddit Restyle';
-const { version } = JSON.parse(await readFile('package.json', 'utf8'));
 const PUBLISH = process.argv.includes('--publish');
 
-// Where the published build is: this repository's GitHub Pages, unless told
+// Published: the workflow's run number on the end, so each publish is newer
+const { version: PACKAGE_VERSION } = JSON.parse(await readFile('package.json', 'utf8'));
+const version = PUBLISH ? `${PACKAGE_VERSION}.${process.env.GITHUB_RUN_NUMBER ?? 0}` : PACKAGE_VERSION;
+
+// Where the published scripts are: this repository's GitHub Pages, unless told
 const REPOSITORY = process.env.GITHUB_REPOSITORY ?? 'alejandromaka/reddit-restyle';
 const [OWNER, REPO] = REPOSITORY.split('/');
-const BUNDLE = 'reddit-restyle.js';
-const BUNDLE_URL = process.env.REDDIT_RESTYLE_URL ?? `https://${OWNER.toLowerCase()}.github.io/${REPO}/${BUNDLE}`;
-const LOADER = `${NAME} Loader.user.js`;
+const SITE = process.env.REDDIT_RESTYLE_SITE ?? `https://${OWNER.toLowerCase()}.github.io/${REPO}`;
+const PUBLISHED = { js: 'reddit-restyle.user.js', blocker: 'reddit-blocker.user.js' };
 
-// A published build's version: the package's, and the commit it's from
-function buildVersion() {
-  const commit = process.env.GITHUB_SHA
-    ?? (() => { try { return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim(); } catch { return 'local'; } })();
-  return `${version}+${commit.slice(0, 7)}`;
-}
+// A published script's: where the app looks for a newer version, and gets it
+const updateLines = (file) => PUBLISH ? `// @updateURL    ${SITE}/${file}
+// @downloadURL  ${SITE}/${file}
+` : '';
 
 const JS_HEADER = `// ==UserScript==
 // @name         ${NAME}
-// @namespace    https://local/reddit-restyle
+// @namespace    https://github.com/${REPOSITORY}
 // @version      ${version}
-// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page is left as it comes (broken without old reddit's code, on purpose: what's missing shows). Built from github.com/alejandromaka/reddit-restyle: edit there, not here.
+// @description  old.reddit.com rebuilt for the iPhone mini. Carries its own stylesheet: on the pages it owns, removes reddit's CSS and scripts and draws the page from reddit's own JSON; every other page is left as it comes (broken without old reddit's code, on purpose: what's missing shows). Built from github.com/${REPOSITORY}: edit there, not here.
 // @author       you
 // @match        *://old.reddit.com/*
 // @run-at       document-start
 // @inject-into  page
 // @noframes
 // @grant        none
-// ==/UserScript==
+${updateLines(PUBLISHED.js)}// ==/UserScript==
 `;
 
 // Safari's declarativeNetRequest, through Userscripts' request scripts
 const BLOCKER_HEADER = `// ==UserScript==
 // @name         Reddit Blocker
-// @namespace    https://local/reddit-blocker
+// @namespace    https://github.com/${REPOSITORY}/blocker
 // @version      ${version}
-// @description  Network rules for Reddit Restyle. The Userscripts app gets a page script's code asynchronously, so old reddit's head (its whole JS bundle, reddit-init.js, and its stylesheets) is parsed before Reddit Restyle starts, and runs. These keep them from loading at all: old reddit's own scripts and CSS (www.redditstatic.com/reddit…) and subreddit stylesheets (thumbs.redditmedia.com). Paths only old reddit uses: www.reddit.com is unaffected. Built from github.com/alejandromaka/reddit-restyle (src/blocker.json): edit there, not here.
+// @description  Network rules for Reddit Restyle. The Userscripts app gets a page script's code asynchronously, so old reddit's head (its whole JS bundle, reddit-init.js, and its stylesheets) is parsed before Reddit Restyle starts, and runs. These keep them from loading at all: old reddit's own scripts and CSS (www.redditstatic.com/reddit…) and subreddit stylesheets (thumbs.redditmedia.com). Paths only old reddit uses: www.reddit.com is unaffected. Built from github.com/${REPOSITORY} (src/blocker.json): edit there, not here.
 // @author       you
 // @run-at       request
-// ==/UserScript==
-`;
-
-// Installed once; runs the build it keeps, and fetches a new one only when you
-// ask (src/loader/main.ts). The update URL is in its code, not its header:
-// the Userscripts app never updates it by itself
-const LOADER_HEADER = `// ==UserScript==
-// @name         ${NAME} Loader
-// @namespace    https://local/reddit-restyle-loader
-// @version      ${version}
-// @description  Runs Reddit Restyle on old.reddit.com from the copy it keeps, and gets a new copy only when you ask: Update Reddit Restyle in your account menu, or any old.reddit.com address with #restyle-update on the end. Never fetches by itself. Install it instead of Reddit Restyle.user.js (keep Reddit Blocker). Built from github.com/${REPOSITORY}: edit there, not here.
-// @author       you
-// @match        *://old.reddit.com/*
-// @run-at       document-start
-// @inject-into  content
-// @noframes
-// @grant        GM.getValue
-// @grant        GM.setValue
-// @grant        GM.xmlHttpRequest
-// @grant        GM.registerMenuCommand
-// ==/UserScript==
+${updateLines(PUBLISHED.blocker)}// ==/UserScript==
 `;
 
 const escapeHtml = (text) => text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
-// The published page: what to install, and what the loader fetches
-const indexHtml = (built) => `<!DOCTYPE html>
+// The published page: what to install
+const indexHtml = () => `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reddit Restyle</title>
 <style>body{font:16px/1.5 -apple-system,system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem}code{font-size:.9em}</style>
 </head><body>
 <h1>Reddit Restyle</h1>
-<p>Latest build: <code>${escapeHtml(built)}</code></p>
-<p>Install these two in Safari with the Userscripts app, once:</p>
+<p>Latest version: <code>${escapeHtml(version)}</code></p>
+<p>Install both in Safari with the Userscripts app, once: open each, then tap <b>AA</b> (or the puzzle piece) → <b>Userscripts</b> → Install.</p>
 <ul>
-<li><a href="${encodeURI(LOADER)}">${escapeHtml(LOADER)}</a>: keeps a copy of the restyle and runs it. It gets a new one only when you ask: <b>Update Reddit Restyle</b> in your account menu, or any old.reddit.com address with <code>#restyle-update</code> on the end.</li>
-<li><a href="Reddit%20Blocker.user.js">Reddit Blocker.user.js</a>: keeps old reddit's own code from loading.</li>
+<li><a href="${PUBLISHED.js}">${PUBLISHED.js}</a>: the restyle.</li>
+<li><a href="${PUBLISHED.blocker}">${PUBLISHED.blocker}</a>: keeps old reddit's own code from loading.</li>
 </ul>
-<p>The build the loader fetches: <a href="${BUNDLE}">${BUNDLE}</a></p>
+<p>To update: open the Userscripts popup on any page; when it shows an update, tap Update. Nothing updates by itself.</p>
 </body></html>
 `;
 
@@ -148,28 +127,9 @@ const writeJs = async (result) => {
   console.log(`built js ${version} → ${OUT ?? 'dist'}`);
 };
 
-// The published build, the loader that runs it, and the page linking them (dist/ only)
-async function publish(result) {
-  const built = buildVersion();
-  await write(BUNDLE, `// ${NAME} ${built}\n${result.outputFiles[0].text}`, { local: false });
-  const loader = await build({
-    entryPoints: ['src/loader/main.ts'],
-    bundle: true,
-    format: 'iife',
-    target: 'safari16',
-    charset: 'utf8',
-    legalComments: 'none',
-    write: false,
-    logLevel: 'warning',
-    define: { __BUNDLE_URL__: JSON.stringify(BUNDLE_URL) },
-  });
-  await write(LOADER, LOADER_HEADER + loader.outputFiles[0].text, { local: false });
-  await write('index.html', indexHtml(built), { local: false });
-  console.log(`published ${built}: the loader fetches ${BUNDLE_URL}`);
-}
-
 const rules = JSON.parse(await readFile('src/blocker.json', 'utf8'));
-await write('Reddit Blocker.user.js', `${BLOCKER_HEADER}\n${JSON.stringify(rules, null, 2)}\n`);
+const blocker = `${BLOCKER_HEADER}\n${JSON.stringify(rules, null, 2)}\n`;
+await write('Reddit Blocker.user.js', blocker);
 
 options.define = await defines();
 
@@ -193,5 +153,10 @@ if (process.argv.includes('--watch')) {
 } else {
   const result = await build(options);
   await writeJs(result);
-  if (PUBLISH && !result.errors.length) await publish(result);
+  if (PUBLISH && !result.errors.length) {
+    await write(PUBLISHED.js, JS_HEADER + result.outputFiles[0].text, { local: false });
+    await write(PUBLISHED.blocker, blocker, { local: false });
+    await write('index.html', indexHtml(), { local: false });
+    console.log(`published ${version}: updates from ${SITE}`);
+  }
 }

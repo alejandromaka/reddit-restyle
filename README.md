@@ -20,30 +20,23 @@ You need the free [Userscripts](https://github.com/quoid/userscripts)
 app, turned on in Safari and allowed on old.reddit.com.
 
 1. In Safari, open **https://alejandromaka.github.io/reddit-restyle/**.
-2. Install both scripts linked there:
-   - **Reddit Restyle Loader**: keeps a copy of the restyle on your phone and runs it.
-   - **Reddit Blocker**: keeps old reddit's own scripts and stylesheets from loading.
-3. Open old.reddit.com and tap **Install** at the bottom of the page.
+2. Open each of the two scripts linked there, then tap **AA** (or the puzzle
+   piece) → **Userscripts** → **Install**:
+   - **reddit-restyle.user.js**: the restyle.
+   - **reddit-blocker.user.js**: keeps old reddit's own scripts and stylesheets from loading.
+3. Open old.reddit.com.
 
 ## Updating
 
-Nothing updates on its own: the loader never fetches anything unless you
-ask. To get the latest build, use any of these:
-
-- **Update Reddit Restyle** in your account menu (tap your avatar). It shows
-  the build you're on.
-- Any old.reddit.com address with `#restyle-update` added to the end, for
-  when the saved copy won't start.
-- **Update Reddit Restyle** in the Userscripts menu, where the app shows one.
-
-The page tells you either that you're up to date or that a new build is in,
-and then reloads.
+Nothing updates on its own. When you open the Userscripts popup, it checks
+whether a newer version is published and offers it. It installs only when
+you tap **Update**.
 
 ## Privacy
 
 There are no analytics, no API key and no server of ours. The script talks
-only to reddit (as you, with your own cookies), and to GitHub Pages when you
-ask it to update. What you block or choose on this device (blocked sites,
+only to reddit (as you, with your own cookies). The Userscripts app itself
+checks GitHub Pages for updates when you open its popup. What you block or choose on this device (blocked sites,
 dark mode) stays in Safari's storage for old.reddit.com.
 
 ## Development
@@ -51,24 +44,23 @@ dark mode) stays in Safari's storage for old.reddit.com.
 ```
 npm run watch      # rebuild on every change (into the iCloud folder, if there is one)
 npm run check      # typecheck, test, build
-npm run bundle     # the build, plus what's published (dist/): reddit-restyle.js,
-                   # Reddit Restyle Loader.user.js, index.html
+npm run bundle     # the build, plus what's published (dist/): reddit-restyle.user.js,
+                   # reddit-blocker.user.js (with update URLs), index.html
 npm run mock [path] # a WebKit iPhone mini on a mock old.reddit.com (fixtures), reloading on every build;
                     # MOCK_WIDTH=1280: a computer's window
 ```
 
 The build writes `Reddit Restyle.user.js`, which carries its own stylesheet,
 and `Reddit Blocker.user.js` to dist/, and to the Userscripts app's iCloud
-folder when that exists (`REDDIT_RESTYLE_OUT` picks another). Install
-Reddit Restyle.user.js directly while developing, or the loader, but not
-both: if both are in, the first to start wins.
+folder when that exists (`REDDIT_RESTYLE_OUT` picks another). Keep only
+one copy of the restyle installed (the published one or the folder's): if
+both are in, the first to start wins.
 
 Every push to main publishes to GitHub Pages (.github/workflows/publish.yml;
-Pages on, with GitHub Actions as its source). The loader (src/loader) runs
-the build it keeps in the Userscripts app's storage, in the userscript's
-own world, so reddit's Content Security Policy doesn't apply. The URL it
-fetches is built in (`REDDIT_RESTYLE_URL` at publish, else this
-repository's Pages), so a new one means installing the loader again.
+Pages on, with GitHub Actions as its source). The published copies carry
+`@updateURL`/`@downloadURL` (this repository's Pages, or
+`REDDIT_RESTYLE_SITE`) and a version ending in the workflow's run number, so
+each publish reads as newer to the Userscripts app.
 
 ### How it works
 
@@ -91,8 +83,6 @@ what's missing shows. Nothing redirects, nothing falls back.
 ```
 src/
   main.ts            entry: shell → page set-up (at document start)
-  loader/            the loader: runs the kept build, fetches one when asked;
-                     contract.ts: what it shares with the restyle (the page's DOM)
   blocker.json       network rules: old reddit's own scripts and CSS never load
   shell/
     pages.ts         owned pages, by path
