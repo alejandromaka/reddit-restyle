@@ -37,7 +37,9 @@ you tap **Update**.
 There are no analytics, no API key and no server of ours. The script talks
 only to reddit (as you, with your own cookies). The Userscripts app itself
 checks GitHub Pages for updates when you open its popup. What you block or choose on this device (blocked sites,
-dark mode) stays in Safari's storage for old.reddit.com.
+dark mode) stays in Safari's storage for old.reddit.com. So do the last few
+pages you left, for going back to them: in that tab only, gone when it's
+closed.
 
 ## Development
 

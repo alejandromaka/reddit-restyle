@@ -29,7 +29,10 @@ interface PostHeadProps {
 
 export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps) {
   return (
-    <article class="rr-grid rr-gap-3 rr-px-4 rr-pt-3 rr-pb-2">
+    <article
+      data-place={post.id}
+      class="rr-grid rr-gap-3 rr-px-4 rr-pt-3 rr-pb-2"
+    >
       <div class="rr-flex rr-items-center rr-gap-2">
         <a
           class="rr-flex-none"

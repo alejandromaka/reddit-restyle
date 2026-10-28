@@ -104,7 +104,10 @@ function CommentItem({ comment, talk }: { comment: Comment; talk: Talk }) {
   const last = comment.replies.slice(-1);
   return (
     // --line: its line's color, for the line and its replies' curves (theirs set their own); a mouse on the line darkens it
-    <article class="rr-grid rr-min-w-0 rr-pt-3 rr-[--line:var(--color-neutral-border-weak)] has-[>div>button:hover]:rr-[--line:var(--color-neutral-content-weak)]">
+    <article
+      data-place={comment.id}
+      class="rr-grid rr-min-w-0 rr-pt-3 rr-[--line:var(--color-neutral-border-weak)] has-[>div>button:hover]:rr-[--line:var(--color-neutral-content-weak)]"
+    >
       {/* A tap on the row: fold or open it (keys: ⊖) */}
       <header
         class="rr-flex rr-items-center rr-gap-2 rr-text-xs rr-text-neutral-content-weak rr-cursor-pointer"

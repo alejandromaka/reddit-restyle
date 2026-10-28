@@ -20,6 +20,7 @@ interface CommentCardProps {
 export function CommentCard({ comment, onVote, onMore }: CommentCardProps) {
   return (
     <article
+      data-place={comment.id}
       class="rr-grid rr-gap-1 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak"
       onClick={(event) => {
         if (!(event.target as Element).closest('a, button')) location.assign(comment.permalink);

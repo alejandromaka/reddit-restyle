@@ -92,6 +92,9 @@ export const isOverflowAction = (action: { type: string }): action is OverflowAc
 
 export const initialOverflow = (): OverflowState => ({ menu: null, hidden: {}, report: null, rules: {}, blocked: {}, block: null, domains: {}, savedDomains: [] });
 
+// As a page is kept when you leave it (core/place.ts): no menu, report or block open
+export const settledOverflow = <S extends OverflowState>(state: S): S => ({ ...state, menu: null, report: null, block: null });
+
 const closed = <T extends { open: boolean } | null>(it: T): T => (it ? { ...it, open: false } : it);
 
 export function overflowReducer<S extends OverflowState>(state: S, action: OverflowAction): S {

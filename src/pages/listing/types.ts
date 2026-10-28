@@ -33,6 +33,7 @@ export interface ListingState extends ChromeState, OverflowState {
 
 export type ListingAction =
   | { type: 'page/loaded'; listing: Listing }
+  | { type: 'page/refreshed'; listing: Listing }  // back to the page as you left it: its fresh copy
   | { type: 'page/failed'; error: string }
   | { type: 'beyond/loaded'; beyond: string | null }  // page 2's end
   | { type: 'vote/requested'; id: string; vote: Vote }

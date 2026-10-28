@@ -36,6 +36,16 @@ export function initialState(path: string, search = ''): ListingState {
 const voted = (posts: Post[], id: string, vote: Vote) =>
   posts.map((post) => (post.id === id ? { ...post, vote, score: post.score + vote - post.vote } : post));
 
+// A post as you left it, with its score, your vote and its comments as reddit has them now
+export const refreshedPost = <T extends Post>(post: T, now: Post | undefined): T =>
+  now ? { ...post, score: now.score, vote: now.vote, comments: now.comments } : post;
+
+// The page as you left it, refreshed: no post added, gone or moved
+function refreshed(posts: Post[], fresh: Post[]) {
+  const now = new Map(fresh.map((post) => [post.id, post]));
+  return posts.map((post) => refreshedPost(post, now.get(post.id)));
+}
+
 // The subreddit joined or left, its members with it
 function joined(state: ListingState, join: boolean): ListingState {
   if (state.about?.status !== 'loaded' || state.about.data.joined === join) return state;
@@ -55,6 +65,8 @@ export function listingReducer(state: ListingState, action: ListingAction): List
   switch (action.type) {
     case 'page/loaded':
       return { ...state, ...action.listing, status: 'idle' };
+    case 'page/refreshed':
+      return { ...state, posts: refreshed(state.posts, action.listing.posts) };
     case 'beyond/loaded':
       return { ...state, beyond: action.beyond };
     case 'page/failed':

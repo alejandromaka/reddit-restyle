@@ -1,6 +1,7 @@
 import type { Vote } from '../../account/contract';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
 import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
+import { refreshedPost } from '../listing/reducer';
 import { MORE_AT_ONCE, type Comment, type More, type Reply } from './contract';
 import { COMMENT_SORTS, type CommentSort, type PostAction, type PostState } from './types';
 
@@ -81,12 +82,25 @@ function posted(state: PostState, parent: string, comment: Comment): PostState {
   return { ...done, comments: replace(state.comments, parent, (reply) => [reply.kind === 'comment' ? { ...reply, replies: [comment, ...reply.replies] } : reply]) };
 }
 
+// The comments as you left them, each one's score and your vote as reddit has them now (none added, gone or moved)
+function refreshed(replies: Reply[], now: Map<string, Comment>): Reply[] {
+  return replies.map((reply) => {
+    if (reply.kind !== 'comment') return reply;
+    const it = now.get(reply.id);
+    return { ...reply, ...(it ? { score: it.score, vote: it.vote } : {}), replies: refreshed(reply.replies, now) };
+  });
+}
+
 const without = (record: Record<string, string>, id: string) => Object.fromEntries(Object.entries(record).filter(([key]) => key !== id));
 
 export function postReducer(state: PostState, action: PostAction): PostState {
   switch (action.type) {
     case 'page/loaded':
       return { ...state, status: 'idle', post: action.thread.post, comments: action.thread.comments, subreddit: state.subreddit ?? action.thread.post.subreddit };
+    case 'page/refreshed': {
+      const now = new Map(allComments(action.thread.comments).map((comment) => [comment.id, comment]));
+      return { ...state, post: state.post && refreshedPost(state.post, action.thread.post), comments: refreshed(state.comments, now) };
+    }
     case 'page/failed':
       return { ...state, status: 'failed', error: action.error };
     case 'about/loaded':
