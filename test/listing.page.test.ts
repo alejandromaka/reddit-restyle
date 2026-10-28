@@ -112,6 +112,15 @@ describe('listing page', () => {
     expect(document.querySelector('[aria-current="page"]')!.textContent).toBe('1');
   });
 
+  it('page 1: page 2 asked for after it, for where page 3 starts; 1, 2, 3', async () => {
+    const ending = JSON.stringify({ kind: 'Listing', data: { ...JSON.parse(second).data, after: 't3_third' } });
+    fetchMock.mockImplementation(async (url: string) => (url.includes('after=') ? new Response(ending) : answer(url)));
+    setUpListing(shell);
+    const next = '/r/pics/top/?t=week&count=25&after=t3_1q2c007';
+    await vi.waitFor(() => expect(pages()).toEqual([['1', null], ['2', next], ['3', '/r/pics/top/?t=week&count=50&after=t3_third'], ['Next ›', next]]));
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/top/.json?t=week&count=25&after=t3_1q2c007&raw_json=1&sr_detail=1&limit=25');
+  });
+
   it('a later page: asked for where it starts; 1, the one before (count, before), this one; no next', async () => {
     history.replaceState(null, '', '/r/pics/top/?t=week&count=50&after=t3_x');
     setUpListing(shell);

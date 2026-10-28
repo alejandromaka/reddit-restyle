@@ -107,7 +107,8 @@ describe('profile page', () => {
     expect(first!.querySelector('button[aria-label="More options"]')).not.toBeNull();
     expect(post!.querySelector('button[aria-label="More options"]')).not.toBeNull();
     const next = '/user/someone/?count=25&after=t1_u1c002';
-    expect([...main().querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.getAttribute('href'))).toEqual([next, next]);
+    const third = '/user/someone/?count=50&after=t1_u1c002';  // page 2's end (the fixture again)
+    await vi.waitFor(() => expect([...main().querySelectorAll('nav[aria-label="Pages"] a')].map((a) => a.getAttribute('href'))).toEqual([next, third, next]));
   });
 
   it('a vote on a comment: on screen at once, sent with your modhash', async () => {

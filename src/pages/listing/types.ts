@@ -23,6 +23,7 @@ export interface ListingState extends ChromeState, OverflowState {
   posts: Post[];
   after: string | null;      // the next page's start; null: the last page
   before: string | null;     // the page before's end; null: the first
+  beyond: string | null;     // page 1: where page 3 starts, once page 2's been asked for; null: not known (or none)
   status: 'loading' | 'failed' | 'idle';
   error: string | null;      // why the page didn't come
   about: Load<About> | null;  // one subreddit's; null: not one subreddit
@@ -33,6 +34,7 @@ export interface ListingState extends ChromeState, OverflowState {
 export type ListingAction =
   | { type: 'page/loaded'; listing: Listing }
   | { type: 'page/failed'; error: string }
+  | { type: 'beyond/loaded'; beyond: string | null }  // page 2's end
   | { type: 'vote/requested'; id: string; vote: Vote }
   | { type: 'vote/failed'; id: string; vote: Vote }     // back to the vote before
   | { type: 'join/requested'; joined: boolean }

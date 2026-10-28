@@ -20,6 +20,12 @@ export function pageOf(search: string): number {
 export type Start = { after: string } | { before: string };
 
 export function pageUrl(path: string, search: string, page: number, start?: Start) {
+  const rest = pageSearch(search, page, start);
+  return rest ? `${path}?${rest}` : path;
+}
+
+// Its query alone (no ?): what the page's JSON is asked for with
+export function pageSearch(search: string, page: number, start?: Start) {
   const query = new URLSearchParams(search);
   for (const name of ['count', 'after', 'before', 'limit']) query.delete(name);
   if (page > 1 && start) {
@@ -31,6 +37,5 @@ export function pageUrl(path: string, search: string, page: number, start?: Star
       query.set('before', start.before);
     }
   }
-  const rest = query.toString();
-  return rest ? `${path}?${rest}` : path;
+  return query.toString();
 }
