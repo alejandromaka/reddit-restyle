@@ -123,6 +123,7 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
             page={state.page}
             after={state.after}
             before={state.before}
+            beyond={state.beyond}
           />
         )}
       </Frame>

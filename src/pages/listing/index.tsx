@@ -7,6 +7,7 @@
 import { render } from 'preact';
 import { block, fetchFilters, filter, hide, report, subscribe, vote } from '../../account/contract';
 import { sites } from '../../core/domains';
+import { pageSearch } from '../../core/paging';
 import { goTo, keepPlace, placeOf } from '../../core/place';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
@@ -43,9 +44,16 @@ export function setUpListing(shell: Shell) {
     shell.reveal();
     first.then(
       (listing) => {
-        if (place?.state) return store.dispatch({ type: 'page/refreshed', listing });
+        if (place?.state) return store.dispatch({ type: 'page/refreshed', listing });  // its pages' numbers: as kept
         store.dispatch({ type: 'page/loaded', listing });
         if (place) goTo(place.spot);
+        // Page 1: page 2 asked for too, after it, for where page 3 starts (its number in the pages; none if it fails)
+        if (initial.page === 1 && listing.after) {
+          fetchListing(pathname, pageSearch(search, 2, { after: listing.after })).then(
+            (second) => store.dispatch({ type: 'beyond/loaded', beyond: second.after }),
+            () => {},
+          );
+        }
       },
       (error) => {
         if (!place?.state) store.dispatch({ type: 'page/failed', error: String(error) });  // the page as you left it stays

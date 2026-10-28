@@ -32,6 +32,7 @@ export interface ProfileState extends ChromeState, OverflowState {
   items: Item[];
   after: string | null;       // the next page's start; null: the last page
   before: string | null;      // the page before's end; null: the first
+  beyond: string | null;      // page 1: where page 3 starts, once page 2's been asked for; null: not known (or none)
   status: 'loading' | 'failed' | 'idle';
   error: string | null;       // why the page didn't come
   user: Load<User>;
@@ -41,6 +42,7 @@ export type ProfileAction =
   | { type: 'page/loaded'; items: Items }
   | { type: 'page/refreshed'; items: Items }  // back to the page as you left it: its fresh copy
   | { type: 'page/failed'; error: string }
+  | { type: 'beyond/loaded'; beyond: string | null }  // page 2's end
   | { type: 'user/loaded'; user: User }
   | { type: 'user/failed'; error: string }
   | { type: 'vote/requested'; id: string; vote: Vote }
