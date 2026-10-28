@@ -23,7 +23,7 @@ export function initialState(path: string, search = ''): ListingState {
   return {
     subreddit, kind, sort: sort as Sort, time: sort === 'top' || sort === 'controversial' ? timeOf(search) : null,
     path, search, page: pageOf(search),
-    posts: [], after: null, before: null, status: 'loading', error: null,
+    posts: [], after: null, before: null, beyond: null, status: 'loading', error: null,
     about: kind === 'subreddit' ? { status: 'loading' } : null,
     filters: kind === 'all' ? { status: 'loading' } : null,
     filterError: null,
@@ -55,6 +55,8 @@ export function listingReducer(state: ListingState, action: ListingAction): List
   switch (action.type) {
     case 'page/loaded':
       return { ...state, ...action.listing, status: 'idle' };
+    case 'beyond/loaded':
+      return { ...state, beyond: action.beyond };
     case 'page/failed':
       return { ...state, status: 'failed', error: action.error };
     case 'vote/requested':

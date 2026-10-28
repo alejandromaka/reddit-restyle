@@ -15,7 +15,7 @@ export function initialState(path: string, search = ''): ProfileState {
   const time = sort === 'top' || sort === 'controversial' ? TIMES.find((each) => each === query.get('t')) ?? 'all' : null;
   return {
     name, tab, sort, time, path, search, page: pageOf(search),
-    items: [], after: null, before: null, status: 'loading', error: null,
+    items: [], after: null, before: null, beyond: null, status: 'loading', error: null,
     user: { status: 'loading' },
     ...initialChrome(),
     ...initialOverflow(),
@@ -34,6 +34,8 @@ export function profileReducer(state: ProfileState, action: ProfileAction): Prof
   switch (action.type) {
     case 'page/loaded':
       return { ...state, ...action.items, status: 'idle' };
+    case 'beyond/loaded':
+      return { ...state, beyond: action.beyond };
     case 'page/failed':
       return { ...state, status: 'failed', error: action.error };
     case 'user/loaded':

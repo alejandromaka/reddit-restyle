@@ -6,6 +6,7 @@
 import { render } from 'preact';
 import { block, hide, report, vote } from '../../account/contract';
 import { sites } from '../../core/domains';
+import { pageSearch } from '../../core/paging';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
 import { fetchRules } from '../../overflow/contract';
@@ -32,7 +33,16 @@ export function setUpProfile(shell: Shell) {
     chrome(store);
     shell.reveal();
     first.then(
-      (items) => store.dispatch({ type: 'page/loaded', items }),
+      (items) => {
+        store.dispatch({ type: 'page/loaded', items });
+        // Page 1: page 2 asked for too, after it, for where page 3 starts (its number in the pages; none if it fails)
+        if (initial.page === 1 && items.after) {
+          fetchItems(pathname, pageSearch(search, 2, { after: items.after })).then(
+            (second) => store.dispatch({ type: 'beyond/loaded', beyond: second.after }),
+            () => {},
+          );
+        }
+      },
       (error) => store.dispatch({ type: 'page/failed', error: String(error) }),
     );
     user.then(

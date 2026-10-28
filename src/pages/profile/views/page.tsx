@@ -118,6 +118,7 @@ export function ProfilePage({ state, dispatch }: ProfilePageProps) {
             page={state.page}
             after={state.after}
             before={state.before}
+            beyond={state.beyond}
           />
         )}
       </Frame>
