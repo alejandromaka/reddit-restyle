@@ -30,6 +30,7 @@ export interface PostState extends ChromeState, OverflowState {
 
 export type PostAction =
   | { type: 'page/loaded'; thread: Thread }
+  | { type: 'page/refreshed'; thread: Thread }  // back to the page as you left it: its fresh copy
   | { type: 'page/failed'; error: string }
   | { type: 'about/loaded'; about: About }
   | { type: 'about/failed'; error: string }

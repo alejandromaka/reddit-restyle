@@ -23,6 +23,18 @@ describe('postReducer', () => {
     expect(postReducer(loaded, { type: 'vote/requested', id: 't3_1q2c001', vote: -1 }).post).toMatchObject({ vote: -1, score: 1203 });
   });
 
+  it('back to the page as you left it: the fresh copy’s scores and votes, for the post and each comment, nothing added', () => {
+    const fresh = readThread(fixture('thread'));
+    fresh.post = { ...fresh.post, score: 2000, comments: 99 };
+    const reply = findReply(fresh.comments, 't1_c2') as Comment;
+    Object.assign(reply, { score: 50, vote: 1 });
+    fresh.comments = [...fresh.comments, { ...reply, id: 't1_since' }];
+    const refreshed = postReducer(loaded, { type: 'page/refreshed', thread: fresh });
+    expect(refreshed.post).toMatchObject({ score: 2000, comments: 99 });
+    expect(findReply(refreshed.comments, 't1_c2')).toMatchObject({ score: 50, vote: 1 });
+    expect(findReply(refreshed.comments, 't1_since')).toBeUndefined();
+  });
+
   it('folding: yours, over reddit’s', () => {
     expect(postReducer(loaded, { type: 'fold/toggled', id: 't1_c3', folded: false }).folded).toEqual({ t1_c3: false });
   });

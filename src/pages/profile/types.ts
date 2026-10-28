@@ -39,6 +39,7 @@ export interface ProfileState extends ChromeState, OverflowState {
 
 export type ProfileAction =
   | { type: 'page/loaded'; items: Items }
+  | { type: 'page/refreshed'; items: Items }  // back to the page as you left it: its fresh copy
   | { type: 'page/failed'; error: string }
   | { type: 'user/loaded'; user: User }
   | { type: 'user/failed'; error: string }

@@ -2,6 +2,7 @@ import type { Vote } from '../../account/contract';
 import { pageOf } from '../../core/paging';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
 import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
+import { refreshedPost } from '../listing/reducer';
 import { TIMES } from '../listing/types';
 import type { Item } from './contract';
 import { SORTED, SORTS, TABS, type ProfileAction, type ProfileState } from './types';
@@ -30,10 +31,23 @@ const voted = (items: Item[], id: string, vote: Vote) => items.map((item): Item 
   return item.comment.id === id ? { kind: 'comment', comment: rescored(item.comment, vote) } : item;
 });
 
+// The page as you left it, refreshed: each post's and comment's score and your vote as reddit has them now (none added, gone or moved)
+function refreshed(items: Item[], fresh: Item[]) {
+  const idOf = (item: Item) => (item.kind === 'post' ? item.post.id : item.comment.id);
+  const now = new Map(fresh.map((item): [string, Item] => [idOf(item), item]));
+  return items.map((item): Item => {
+    const it = now.get(idOf(item));
+    if (item.kind === 'post') return { kind: 'post', post: refreshedPost(item.post, it?.kind === 'post' ? it.post : undefined) };
+    return it?.kind === 'comment' ? { kind: 'comment', comment: { ...item.comment, score: it.comment.score, vote: it.comment.vote } } : item;
+  });
+}
+
 export function profileReducer(state: ProfileState, action: ProfileAction): ProfileState {
   switch (action.type) {
     case 'page/loaded':
       return { ...state, ...action.items, status: 'idle' };
+    case 'page/refreshed':
+      return { ...state, items: refreshed(state.items, action.items.items) };
     case 'page/failed':
       return { ...state, status: 'failed', error: action.error };
     case 'user/loaded':
