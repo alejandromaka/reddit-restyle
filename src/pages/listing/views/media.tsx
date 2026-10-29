@@ -2,9 +2,10 @@
    (reddit's own, or a gif) plays where it is; pictures (one, or a gallery to
    swipe through; with a mouse, ‹ › too) open big when tapped; a link's card
    opens the link (an outside video: ▶). Nothing of a video loads until it's
-   played. */
+   played, and it plays muted if you muted the last one (core/sound). */
 
 import { useRef, useState } from 'preact/hooks';
+import { isMuted, rememberSound } from '../../../core/sound';
 import { Icon } from '../../../components/icon';
 import { Lightbox } from '../../../components/lightbox';
 import { cx, ui } from '../../../components/ui';
@@ -23,7 +24,10 @@ export function MediaView({ media }: { media: Media }) {
         playsInline
         preload="none"
         loop={media.loop}
-        muted={media.loop}  // a gif: no sound to begin with
+        muted={media.loop || isMuted()}  // a gif: no sound to begin with
+        // As the last video was left, even one drawn before that changed; and remember this one's
+        onPlay={media.loop ? undefined : (event) => { event.currentTarget.muted = isMuted(); }}
+        onVolumeChange={media.loop ? undefined : (event) => rememberSound(event.currentTarget)}
       />
     );
   }

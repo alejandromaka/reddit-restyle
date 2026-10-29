@@ -1,6 +1,6 @@
 {
   "name": "reddit-restyle",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "old.reddit.com rebuilt for iPhone mini, as a userscript. Installed once as a loader that updates only when asked.",
   "type": "module",
