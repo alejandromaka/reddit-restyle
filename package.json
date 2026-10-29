@@ -2,7 +2,7 @@
   "name": "reddit-restyle",
   "version": "0.2.0",
   "private": true,
-  "description": "old.reddit.com rebuilt for iPhone mini, as a userscript. Installed once as a loader that updates only when asked.",
+  "description": "old.reddit.com rebuilt for iPhone mini, as a userscript that updates only when you tap Update in the Userscripts app.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "test": "vitest run",
     "mock": "node scripts/mock.mjs",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

@@ -14,6 +14,80 @@ obvious what's missing.
 
 This is a personal project, shared as is. It isn't affiliated with reddit.
 
+## Screenshots
+
+Taken on the mock (`npm run screenshots`): made-up posts, people and
+pictures from test/fixtures, signed in as a made-up u/you.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/feed.png" width="250" alt="The front page"></td>
+    <td><img src="docs/screenshots/subreddit.png" width="250" alt="A subreddit, with its banner and Join"></td>
+    <td><img src="docs/screenshots/post.png" width="250" alt="A post and its comments"></td>
+  </tr>
+  <tr>
+    <td align="center">Front page</td>
+    <td align="center">Subreddit</td>
+    <td align="center">Post and comments</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/menu.png" width="250" alt="The menu: Home, Popular, All and your communities"></td>
+    <td><img src="docs/screenshots/account.png" width="250" alt="Your account: profile, settings, dark mode, blocked domains, log out"></td>
+    <td><img src="docs/screenshots/profile.png" width="250" alt="Someone's profile"></td>
+  </tr>
+  <tr>
+    <td align="center">Menu</td>
+    <td align="center">Account</td>
+    <td align="center">Profile</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/dark.png" width="250" alt="A post in dark mode"></td>
+    <td colspan="2"><img src="docs/screenshots/wide.png" width="520" alt="The front page on a computer, with the sidebar"></td>
+  </tr>
+  <tr>
+    <td align="center">Dark mode</td>
+    <td colspan="2" align="center">A computer's window (1280px)</td>
+  </tr>
+</table>
+
+## What works
+
+Everything here is old reddit's own JSON and API, called as you with your
+cookies (no API key, no OAuth).
+
+| Feature | Status | Reddit endpoint |
+| --- | --- | --- |
+| Front page, Popular, All, subreddits (one or several: r/pics+funny) | Works | `/[r/name/][sort/].json` |
+| Sorts: Best, Hot, New, Top (with its span), Rising | Works | same, with `?t=` |
+| More posts (next page in place) | Works | same, with `?after=` |
+| Subreddit header: banner, icon, members | Works | `/r/name/about.json` |
+| Join, leave | Works | `POST /api/subscribe` |
+| Your communities (strip, menu, sidebar) | Works | `/subreddits/mine/subscriber.json` |
+| Media in the feed: pictures, galleries, reddit videos, gifs, link cards | Works | from the listing |
+| A post and its comments, a comment's thread | Works | `/comments/id/….json` |
+| Comment sorts: Best, Top, New, Controversial, Old, Q&A | Works | same, with `?sort=` |
+| "N more replies" | Works | `/api/morechildren.json` |
+| Search comments (the ones loaded) | Works | none: on the page |
+| Pictures and gifs in comments | Works | from the comment's links |
+| Vote | Works | `POST /api/vote` |
+| Comment, reply | Works | `POST /api/comment` |
+| Hide, unhide a post | Works | `POST /api/hide`, `/api/unhide` |
+| Report (by the subreddit's rules) | Works | `/r/name/about/rules.json`, `POST /api/report` |
+| Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
+| Block a site (this device only) | Works | none: reddit keeps no such list |
+| r/all filters: add, remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
+| Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
+| Share | Works | none: the phone's share sheet |
+| Dark mode | Works | none: this device, or your system's |
+| Your account (name, avatar), log out | Works | `/api/me.json`, `POST /logout` |
+| Save, unsave | Not yet | |
+| Edit or delete your posts and comments | Not yet | |
+| Posting (submit) | Not yet | |
+| Search | Not yet (old reddit's page, broken) | |
+| Messages, inbox, notifications | Not yet (old reddit's page, broken) | |
+| Settings | Not yet (old reddit's page, broken) | |
+| Moderation | Not planned | |
+
 ## Install
 
 You need the free [Userscripts](https://github.com/quoid/userscripts)
@@ -50,6 +124,8 @@ npm run bundle     # the build, plus what's published (dist/): reddit-restyle.us
                    # reddit-blocker.user.js (with update URLs), index.html
 npm run mock [path] # a WebKit iPhone mini on a mock old.reddit.com (fixtures), reloading on every build;
                     # MOCK_WIDTH=1280: a computer's window
+npm run screenshots # the README's pictures (docs/screenshots/), on the mock; after a build
+                    # (MOCK_BROWSER=chromium where there's no WebKit)
 ```
 
 The build writes `Reddit Restyle.user.js`, which carries its own stylesheet,
