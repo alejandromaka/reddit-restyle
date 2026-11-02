@@ -48,7 +48,7 @@ export interface RedditPost {
   media_metadata?: Record<string, RedditMedia>;
   crosspost_parent_list?: RedditPost[];  // a crosspost: the post it shares
   sr_detail?: { community_icon?: string; icon_img?: string };
-  secure_media?: { reddit_video?: { hls_url: string } } | null;  // a video reddit hosts: HLS (Safari plays it, with sound)
+  secure_media?: { reddit_video?: { hls_url: string; fallback_url?: string } } | null;  // a video reddit hosts: HLS (Safari plays it, with sound)
   selftext_html?: string | null;  // its text, rendered
   locked?: boolean;
   archived?: boolean;
@@ -64,7 +64,8 @@ export interface Image { url: string; width: number; height: number }
 // (one, or a gallery; each also big, to open), or a link's card (an outside
 // video: playable, where it's from)
 export type Media =
-  | { kind: 'video'; url: string; poster: Image | null; loop: boolean }
+  // stream: url is HLS (reddit's own video); fallback: its MP4, without sound
+  | { kind: 'video'; url: string; poster: Image | null; loop: boolean; stream?: { fallback: string | null } }
   | { kind: 'pictures'; pictures: Image[]; big: Image[] }
   | { kind: 'link'; card: Image; url: string; playable: boolean };
 
@@ -155,8 +156,8 @@ const offReddit = (post: RedditPost) => !post.is_self && !/(^|\.)(redd\.it|reddi
 
 function mediaOf(post: RedditPost, wide: number): Media | null {
   const poster = imageOf(post, wide);
-  const hls = post.secure_media?.reddit_video?.hls_url;
-  if (hls) return { kind: 'video', url: hls, poster, loop: false };
+  const video = post.secure_media?.reddit_video;
+  if (video?.hls_url) return { kind: 'video', url: video.hls_url, poster, loop: false, stream: { fallback: video.fallback_url ?? null } };
   const gif = post.preview?.images?.[0]?.variants?.mp4;
   const clip = gif && pick([...gif.resolutions, gif.source], wide);
   if (clip) return { kind: 'video', url: clip.url, poster, loop: true };

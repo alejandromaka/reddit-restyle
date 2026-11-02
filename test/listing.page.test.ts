@@ -27,6 +27,9 @@ const second = JSON.stringify({ kind: 'Listing', data: { after: null, before: 't
   { kind: 't3', data: { ...JSON.parse(fixture).data.children[2].data, name: 't3_next', title: 'From the next page' } },
 ] } });
 
+// Safari's: it plays reddit's HLS itself (Brave's: test/hls.test.ts)
+HTMLMediaElement.prototype.canPlayType = () => 'maybe';
+
 const shell: Shell = {
   page: 'listing',
   ready: (callback) => callback(),
