@@ -76,7 +76,9 @@ export function takeOver(page: PageName): Shell {
   function onParsed() {
     block(document.querySelectorAll('script, style, link'));
     fitViewport();
-    for (const callback of waiting.splice(0)) callback();
+    // Both arguments: reddit-init.js (run before us on a computer) brings
+    // es5-shim, whose splice with one argument removes nothing
+    for (const callback of waiting.splice(0, waiting.length)) callback();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onParsed, { once: true });
   else queueMicrotask(onParsed);
