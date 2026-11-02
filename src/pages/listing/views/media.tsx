@@ -4,7 +4,8 @@
    opens the link (an outside video: ▶). Nothing of a video loads until it's
    played, and it plays muted if you muted the last one (core/sound). */
 
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { attachHls, playsHls } from '../../../core/hls';
 import { isMuted, rememberSound } from '../../../core/sound';
 import { Icon } from '../../../components/icon';
 import { Lightbox } from '../../../components/lightbox';
@@ -12,25 +13,7 @@ import { cx, ui } from '../../../components/ui';
 import type { Image, Media } from '../contract';
 
 export function MediaView({ media }: { media: Media }) {
-  if (media.kind === 'video') {
-    return (
-      <video
-        class="rr-block rr-w-full rr-h-auto rr-max-h-[75vh] rr-rounded-media rr-bg-media-background"
-        src={media.url}
-        poster={media.poster?.url}
-        width={media.poster?.width}
-        height={media.poster?.height}
-        controls
-        playsInline
-        preload="none"
-        loop={media.loop}
-        muted={media.loop || isMuted()}  // a gif: no sound to begin with
-        // As the last video was left, even one drawn before that changed; and remember this one's
-        onPlay={media.loop ? undefined : (event) => { event.currentTarget.muted = isMuted(); }}
-        onVolumeChange={media.loop ? undefined : (event) => rememberSound(event.currentTarget)}
-      />
-    );
-  }
+  if (media.kind === 'video') return <Video video={media} />;
   if (media.kind === 'link') {
     return (
       <a
@@ -51,6 +34,39 @@ export function MediaView({ media }: { media: Media }) {
     <Pictures
       pictures={media.pictures}
       big={media.big}
+    />
+  );
+}
+
+type VideoMedia = Extract<Media, { kind: 'video' }>;
+
+// A video: plays where it is. An HLS stream where the browser can't play
+// HLS (Chrome, Brave): through hls.js (core/hls), or else its MP4
+function Video({ video }: { video: VideoMedia }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const viaHlsJs = Boolean(video.stream) && !playsHls();
+  const [src, setSrc] = useState(viaHlsJs ? undefined : video.url);
+  useEffect(() => {
+    const element = ref.current;
+    if (!viaHlsJs || !element) return;
+    return attachHls(element, video.url, () => setSrc(video.stream?.fallback ?? video.url));
+  }, [video.url, viaHlsJs]);
+  return (
+    <video
+      ref={ref}
+      class="rr-block rr-w-full rr-h-auto rr-max-h-[75vh] rr-rounded-media rr-bg-media-background"
+      src={src}
+      poster={video.poster?.url}
+      width={video.poster?.width}
+      height={video.poster?.height}
+      controls
+      playsInline
+      preload="none"
+      loop={video.loop}
+      muted={video.loop || isMuted()}  // a gif: no sound to begin with
+      // As the last video was left, even one drawn before that changed; and remember this one's
+      onPlay={video.loop ? undefined : (event) => { event.currentTarget.muted = isMuted(); }}
+      onVolumeChange={video.loop ? undefined : (event) => rememberSound(event.currentTarget)}
     />
   );
 }

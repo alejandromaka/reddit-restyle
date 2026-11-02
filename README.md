@@ -209,7 +209,9 @@ docs/
   the next page in place. Each post: its subreddit with its icon (a listing
   of several) or its author (one subreddit's), and its media, as
   reddit.com's feed: a video (reddit's own, or a gif) plays where it is
-  (nothing of it loads until played); pictures (one, or a gallery to swipe
+  (nothing of it loads until played; reddit's own are HLS, which Safari
+  plays itself, and Chrome or Brave through hls.js, fetched then from
+  jsDelivr, pinned and checked by its hash: core/hls.ts); pictures (one, or a gallery to swipe
   through) open big when tapped (components/lightbox.tsx); a link's card
   opens the link (an outside video: ▶). Else its text's opening. NSFW too;
   none for spoilers. Only its title and its comments open its page: a tap
