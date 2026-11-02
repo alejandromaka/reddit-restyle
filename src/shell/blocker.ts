@@ -30,6 +30,21 @@ function block(nodes: Iterable<Node>) {
   }
 }
 
+/* Reddit's code that ran before us: a userscript manager that starts us after
+   the head is parsed (Violentmonkey or Tampermonkey on a computer, where
+   there's no Reddit Blocker to keep it from loading) leaves reddit-init.js
+   already run. Its jQuery then starts reddit's code once the page is ready,
+   on our page and without reddit.js (blocked: "$.url is not a function"),
+   which breaks it. Hold jQuery's ready for good: none of that ever starts. */
+function holdReddits() {
+  const jquery = (window as { jQuery?: { holdReady?(hold: boolean): void } }).jQuery;
+  try {
+    jquery?.holdReady?.(true);
+  } catch {
+    // not jQuery after all: nothing of reddit's to hold
+  }
+}
+
 // old.reddit.com's viewport is a desktop's: the phone's width instead
 function fitViewport() {
   let meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
@@ -50,6 +65,7 @@ export function takeOver(page: PageName): Shell {
   setTimeout(show, SAFETY);
 
   // What's parsed already, then each element as the parser adds it
+  holdReddits();
   block(document.querySelectorAll('script, style, link'));
   const observer = new MutationObserver((records) => {
     for (const record of records) block(record.addedNodes);
