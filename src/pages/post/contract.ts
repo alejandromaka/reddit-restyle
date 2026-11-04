@@ -10,6 +10,7 @@ import { fetchJson } from '../../core/http';
 import { clean } from '../../core/html';
 import { plain } from '../../core/text';
 import { BIG_WIDTH, picturesOf, readPost, type Post, type RedditMedia, type RedditPost } from '../listing/contract';
+import { COMMENT_SORTS } from './types';
 
 // The parts of a t1 (comment) and a "more" we use, as reddit sends them
 interface RedditComment {
@@ -170,9 +171,13 @@ export function readMore(things: RedditThing[], thread: string): Reply[] {
   return top;
 }
 
-// The post's JSON address: its path and query (sort, context), plus .json
+// The post's JSON address: its path and query (sort, context), plus .json. Always
+// with a sort: without one reddit uses the subreddit's suggested sort (r/Brooklyn's
+// is New), while Sort by says Best
 export function threadUrl(path: string, search: string) {
   const query = new URLSearchParams(search);
+  const asked = query.get('sort');
+  if (!asked || !(asked in COMMENT_SORTS)) query.set('sort', 'confidence');
   query.set('raw_json', '1');
   query.set('sr_detail', '1');
   return `${path.replace(/\/$/, '')}/.json?${query}`;
