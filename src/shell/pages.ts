@@ -5,8 +5,8 @@
 const SORTS = 'best|hot|new|rising|controversial|top';
 
 const PAGES = {
-  // The front page, a subreddit (or several: r/pics+funny), each by sort
-  listing: new RegExp(`^/(r/[\\w+]+/?)?((${SORTS})/?)?$`),
+  // The front page, a subreddit (or several: r/pics+funny), each by sort; or a search's results (all of reddit, or a subreddit's)
+  listing: new RegExp(`^/(r/[\\w+]+/?)?((${SORTS}|search)/?)?$`),
   // A post and its comments (or one comment's thread: …/comments/abc/its_title/def/)
   post: /^\/(r\/[\w+]+\/)?comments\/\w+(\/[^/]*(\/\w+)?)?\/?$/,
   // Someone's profile, by tab (the overview: none)

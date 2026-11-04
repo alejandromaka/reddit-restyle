@@ -12,20 +12,23 @@ import { cx } from '../components/ui';
 import { Bar } from './bar';
 import type { ChromeAction, ChromeState } from './chrome';
 import { Sidebar } from './menu';
+import type { Searched } from './search';
 
 interface FrameProps {
   current: string | null;  // the subreddit on screen; null: home
   chrome: ChromeState;
   dispatch: (action: ChromeAction) => void;
+  searched?: Searched | null;  // a search's results: their words, in the bar's field
   post?: boolean;  // a post's page: its column wider by its padding
   children: ComponentChildren;
 }
 
-export function Frame({ current, chrome, dispatch, post = false, children }: FrameProps) {
+export function Frame({ current, chrome, dispatch, searched = null, post = false, children }: FrameProps) {
   return (
     <>
       <Bar
         current={current}
+        searched={searched}
         communities={chrome.communities}
         me={chrome.me}
         onLogOut={() => dispatch({ type: 'logout/requested' })}
