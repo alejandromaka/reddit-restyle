@@ -157,6 +157,12 @@ describe('addresses', () => {
     expect(threadUrl('/r/pics/comments/abc/title/', '?sort=new')).toBe('/r/pics/comments/abc/title/.json?sort=new&raw_json=1&sr_detail=1');
   });
 
+  it('the post’s JSON: Best when the address names no sort, not the subreddit’s suggested one', () => {
+    expect(threadUrl('/r/pics/comments/abc/title/', '')).toBe('/r/pics/comments/abc/title/.json?sort=confidence&raw_json=1&sr_detail=1');
+    expect(threadUrl('/r/pics/comments/abc/title/def/', '?context=3')).toBe('/r/pics/comments/abc/title/def/.json?context=3&sort=confidence&raw_json=1&sr_detail=1');
+    expect(threadUrl('/r/pics/comments/abc/title/', '?sort=nonsense')).toBe('/r/pics/comments/abc/title/.json?sort=confidence&raw_json=1&sr_detail=1');
+  });
+
   it('more comments: a hundred at most', () => {
     const children = Array.from({ length: 150 }, (_, i) => `c${i}`);
     const url = new URL(moreUrl('t3_abc', children, 'top'), 'https://old.reddit.com');

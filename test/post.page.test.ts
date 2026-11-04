@@ -56,7 +56,7 @@ describe('a post’s page', () => {
   });
 
   it('the post, all of it: its JSON asked for, its title, its text (a spoiler hidden until tapped)', () => {
-    expect(asked(PATH)).toEqual([`${PATH}.json?raw_json=1&sr_detail=1`]);
+    expect(asked(PATH)).toEqual([`${PATH}.json?sort=confidence&raw_json=1&sr_detail=1`]);
     expect(main().querySelector('h1')!.textContent).toBe('Welcome to r/pics: read the rules before posting');
     expect(main().textContent).toContain('Hi everyone! Read the rules.');
     const spoiler = main().querySelector<HTMLElement>('[data-spoiler]')!;
