@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/* Reading a post's page (test/fixtures/thread.json, morechildren.json: written
+/* Reading a post's page (test/fixtures/thread.json, more.json: written
    by hand in reddit's format; replace them with a saved post's .json) */
 
 import { readFileSync } from 'node:fs';
@@ -144,11 +144,22 @@ describe('readThread', () => {
   });
 });
 
-describe('readMore: morechildren’s flat answer, as a tree', () => {
-  it('each under its parent; the rest where the "more" was', () => {
-    const replies = readMore(fixture('morechildren').json.data.things, '/r/pics/comments/1q2c001/welcome_to_rpics/') as Comment[];
+describe('readMore: the "more"’s comments, from the page of the one they’re under', () => {
+  const more: More = { kind: 'more', id: 'm1', parent: 't1_c1', count: 3, children: ['c5', 'c6', 'c7'], depth: 1, continueAt: null };
+  const page = readThread(fixture('more')).comments;
+
+  it('those it stood for, with theirs; not those already shown', () => {
+    const replies = readMore(more, page) as Comment[];
     expect(replies.map(({ id }) => id)).toEqual(['t1_c5', 't1_c7']);
     expect(replies[0]!.replies.map(({ id }) => id)).toEqual(['t1_c6']);
+  });
+
+  it('any reddit didn’t send: still a "more"', () => {
+    expect(readMore({ ...more, children: ['c5', 'c6', 'c7', 'c99'], count: 4 }, page).at(-1)).toMatchObject({ kind: 'more', id: 'm1', children: ['c99'], count: 1 });
+  });
+
+  it('none of them: an error, not the same "more" again', () => {
+    expect(() => readMore({ ...more, children: ['c99'] }, page)).toThrow();
   });
 });
 
@@ -163,11 +174,9 @@ describe('addresses', () => {
     expect(threadUrl('/r/pics/comments/abc/title/', '?sort=nonsense')).toBe('/r/pics/comments/abc/title/.json?sort=confidence&raw_json=1&sr_detail=1');
   });
 
-  it('more comments: a hundred at most', () => {
-    const children = Array.from({ length: 150 }, (_, i) => `c${i}`);
-    const url = new URL(moreUrl('t3_abc', children, 'top'), 'https://old.reddit.com');
-    expect(url.pathname).toBe('/api/morechildren.json');
-    expect(url.searchParams.get('children')!.split(',')).toHaveLength(100);
-    expect([url.searchParams.get('link_id'), url.searchParams.get('sort'), url.searchParams.get('api_type')]).toEqual(['t3_abc', 'top', 'json']);
+  it('more comments: the page of the comment they’re under (the post’s, for the post’s), in the same order, 500', () => {
+    const more: More = { kind: 'more', id: 'm1', parent: 't1_c1', count: 3, children: ['c5'], depth: 1, continueAt: null };
+    expect(moreUrl(more, 'top', '/r/pics/comments/abc/title/')).toBe('/r/pics/comments/abc/title/c1/.json?sort=top&limit=500&raw_json=1&sr_detail=1');
+    expect(moreUrl({ ...more, parent: 't3_abc' }, 'new', '/r/pics/comments/abc/title/')).toBe('/r/pics/comments/abc/title/.json?sort=new&limit=500&raw_json=1&sr_detail=1');
   });
 });

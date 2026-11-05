@@ -4,14 +4,14 @@
 
 import type { Vote } from '../../account/contract';
 import type { Store } from '../../core/store';
-import type { Comment, Reply } from './contract';
+import type { Comment, More, Reply } from './contract';
 import { findReply } from './reducer';
 import type { PostAction, PostState } from './types';
 
 interface PostApi {
   vote: (id: string, dir: Vote) => Promise<void>;
   subscribe: (name: string, join: boolean) => Promise<void>;
-  more: (post: string, children: string[], sort: string, thread: string) => Promise<Reply[]>;
+  more: (more: More, sort: string, thread: string) => Promise<Reply[]>;
   comment: (parent: string, text: string) => Promise<Comment>;
 }
 
@@ -33,7 +33,7 @@ export function startEffects(store: Store<PostState, PostAction>, api: PostApi) 
     if (action.type === 'more/requested' && state.loading !== previous.loading && state.post) {
       const more = findReply(state.comments, action.id);
       if (more?.kind !== 'more') return;
-      api.more(state.post.id, more.children, state.sort, state.post.permalink).then(
+      api.more(more, state.sort, state.post.permalink).then(
         (replies) => store.dispatch({ type: 'more/loaded', id: action.id, replies }),
         (error: unknown) => store.dispatch({ type: 'more/failed', id: action.id, error: String(error) }),
       );

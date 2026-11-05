@@ -15,7 +15,7 @@ const PATH = '/r/pics/comments/1q2c001/welcome_to_rpics/';
 const answer = (url: string) => new Response(
   url === '/api/me.json?raw_json=1' ? '{"data":{"id":"y0u","name":"you","modhash":"MODHASH"}}'
     : url === '/api/comment' ? read('posted')
-      : url.startsWith('/api/morechildren.json') ? read('morechildren')
+      : url.startsWith(`${PATH}c1/.json`) ? read('more')
         : url.startsWith('/subreddits/') ? read('subscriptions')
           : url.includes('/about.json') ? read('about')
             : read('thread'),
@@ -203,8 +203,8 @@ describe('a post’s page', () => {
   it('more replies: asked for, each under its parent', async () => {
     button('3 more replies').click();
     await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'night_owl', 'early_riser', 'lurker', 'automod']));
-    const url = new URL(asked('/api/morechildren.json')[0]!, 'https://old.reddit.com');
-    expect([url.searchParams.get('link_id'), url.searchParams.get('children'), url.searchParams.get('sort')]).toEqual(['t3_1q2c001', 'c5,c6,c7', 'confidence']);
+    const url = new URL(asked(`${PATH}c1/.json`)[0]!, 'https://old.reddit.com');
+    expect([url.searchParams.get('sort'), url.searchParams.get('limit')]).toEqual(['confidence', '500']);
   });
 
   it('searching: the loaded comments that match, each with a way to its thread', async () => {

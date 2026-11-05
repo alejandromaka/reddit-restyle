@@ -1,9 +1,10 @@
 /* A post's page: its address with .json added (raw_json=1; sr_detail=1:
    its subreddit's icon; sort: the comments' order) answers [the post (a
    Listing of one t3), its comments (a Listing of t1s, each with its replies,
-   and "more" for those not sent)]. The ones not sent come from
-   /api/morechildren.json, a hundred at a time, flat (each names its parent).
-   Read into our types, only what we draw. */
+   and "more" for those not sent)]. The ones not sent come from the page of
+   the comment they're under (or the post's again), with a bigger limit:
+   reddit answers /api/morechildren with 403 now. Read into our types, only
+   what we draw. */
 
 import { voteOf, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
@@ -47,9 +48,6 @@ interface RedditListingOf<T> {
   data: { children: T[] };
 }
 type RedditThread = [RedditListingOf<{ kind: 't3'; data: RedditPost }>, RedditListingOf<RedditThing>];
-interface RedditMoreChildren {
-  json: { errors: string[][]; data?: { things: RedditThing[] } };
-}
 
 export interface Comment {
   kind: 'comment';
@@ -157,20 +155,6 @@ export function readThread([posts, comments]: RedditThread): Thread {
   };
 }
 
-// morechildren's answer, flat, as a tree: each under its parent, the rest where the "more" was
-export function readMore(things: RedditThing[], thread: string): Reply[] {
-  const top: Reply[] = [];
-  const byId = new Map<string, Comment>();
-  for (const thing of things) {
-    const [reply] = readReplies([thing], thread);
-    if (!reply) continue;
-    const parent = reply.kind === 'comment' ? (thing.data as RedditComment).parent_id : reply.parent;
-    (byId.get(parent)?.replies ?? top).push(reply);
-    if (reply.kind === 'comment') byId.set(reply.id, reply);
-  }
-  return top;
-}
-
 // The post's JSON address: its path and query (sort, context), plus .json. Always
 // with a sort: without one reddit uses the subreddit's suggested sort (r/Brooklyn's
 // is New), while Sort by says Best
@@ -185,16 +169,33 @@ export function threadUrl(path: string, search: string) {
 
 export const fetchThread = async (path: string, search: string) => readThread(await fetchJson<RedditThread>(threadUrl(path, search)));
 
-// The next comments of a "more": a hundred at most (reddit's limit)
-export const MORE_AT_ONCE = 100;
+// A "more"'s comments: the page of the comment they're under (the post's,
+// for the post's), as many as reddit sends (500), in the same order; those
+// of the "more" in its place, and a "more" for any still not sent
+export const MORE_LIMIT = 500;
 
-export function moreUrl(post: string, children: string[], sort: string) {
-  const query = new URLSearchParams({ api_type: 'json', raw_json: '1', link_id: post, children: children.slice(0, MORE_AT_ONCE).join(','), sort });
-  return `/api/morechildren.json?${query}`;
+export function moreUrl(more: More, sort: string, thread: string) {
+  const under = more.parent.startsWith('t1_') ? `${thread.replace(/\/$/, '')}/${more.parent.slice(3)}/` : thread;
+  return threadUrl(under, `?sort=${encodeURIComponent(sort)}&limit=${MORE_LIMIT}`);
 }
 
-export async function fetchMore(post: string, children: string[], sort: string, thread: string) {
-  const answer = await fetchJson<RedditMoreChildren>(moreUrl(post, children, sort));
-  if (answer.json.errors.length) throw new Error(answer.json.errors.map((error) => error[1] ?? error[0]).join('; '));
-  return readMore(answer.json.data?.things ?? [], thread);
+// Of the replies on the page, those the "more" stood for (with theirs), and a "more" for the rest
+export function readMore(more: More, page: Reply[]): Reply[] {
+  const replies = more.parent.startsWith('t1_') ? (page.find((reply) => reply.id === more.parent) as Comment | undefined)?.replies ?? [] : page;
+  const wanted = new Set(more.children);
+  const found = replies.filter((reply): reply is Comment => reply.kind === 'comment' && wanted.has(reply.id.slice(3)));
+  const sent = new Set<string>();
+  const count = (reply: Reply) => {
+    if (reply.kind === 'more') reply.children.forEach((id) => sent.add(id));
+    else { sent.add(reply.id.slice(3)); reply.replies.forEach(count); }
+  };
+  found.forEach(count);
+  const left = more.children.filter((id) => !sent.has(id));
+  if (left.length === more.children.length) throw new Error('reddit didn’t send them');
+  return [...found, ...(left.length ? [{ ...more, children: left, count: Math.max(more.count - sent.size, left.length) }] : [])];
+}
+
+export async function fetchMore(more: More, sort: string, thread: string) {
+  const page = readThread(await fetchJson<RedditThread>(moreUrl(more, sort, thread)));
+  return readMore(more, page.comments);
 }
