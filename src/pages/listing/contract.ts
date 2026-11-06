@@ -198,7 +198,9 @@ export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
   };
 }
 
-export function readListing(answer: RedditListing): Listing {
+// A search's answer can be two Listings (subreddits it matched, then posts): the one with posts
+export function readListing(answer: RedditListing | RedditListing[]): Listing {
+  if (Array.isArray(answer)) answer = answer.find(({ data }) => data.children.some(({ kind }) => kind === 't3')) ?? answer[0]!;
   return {
     posts: answer.data.children.filter(({ kind }) => kind === 't3').map(({ data }) => readPost(data)),
     after: answer.data.after,
@@ -207,16 +209,22 @@ export function readListing(answer: RedditListing): Listing {
 }
 
 // The listing's JSON address: the page's path and query (where it starts: count, after or before), plus .json, a page's worth
+// (a search's: search.json, its words and the rest in its query; posts only)
 export function listingUrl(path: string, search: string) {
   const query = new URLSearchParams(search);
   query.set('raw_json', '1');
   query.set('sr_detail', '1');
   query.set('limit', String(PAGE_SIZE));
-  return `${path.replace(/\/$/, '')}/.json?${query}`;
+  const bare = path.replace(/\/$/, '');
+  if (/(^|\/)search$/.test(bare)) {
+    query.set('type', 'link');
+    return `${bare}.json?${query}`;
+  }
+  return `${bare}/.json?${query}`;
 }
 
 export const fetchListing = async (path: string, search: string) =>
-  readListing(await fetchJson<RedditListing>(listingUrl(path, search)));
+  readListing(await fetchJson<RedditListing | RedditListing[]>(listingUrl(path, search)));
 
 
 // A subreddit's about.json: a t5 thing

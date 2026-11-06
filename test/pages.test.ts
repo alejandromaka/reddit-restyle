@@ -8,6 +8,12 @@ describe('pageOf', () => {
     }
   });
 
+  it('a search’s results: all of reddit’s, or a subreddit’s', () => {
+    for (const path of ['/search', '/search/', '/r/pics/search', '/r/pics/search/', '/r/pics+funny/search/']) {
+      expect(pageOf(path), path).toBe('listing');
+    }
+  });
+
   it('a post and its comments, or one comment’s thread', () => {
     for (const path of ['/r/pics/comments/abc/title/', '/r/pics/comments/abc/title', '/r/pics/comments/abc/title/def/', '/comments/abc/', '/r/pics/comments/abc/']) {
       expect(pageOf(path), path).toBe('post');

@@ -3,7 +3,7 @@ import { chromeReducer, initialChrome } from '../../nav/chrome';
 import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
 import { pageOf } from '../../core/paging';
 import type { Post } from './contract';
-import { TIMES, type Kind, type ListingAction, type ListingState, type Sort, type Time } from './types';
+import { SEARCH_SORTS, TIMES, type Kind, type ListingAction, type ListingState, type Sort, type Time } from './types';
 
 export function kindOf(subreddit: string | null): Kind {
   if (subreddit === null) return 'home';
@@ -13,15 +13,27 @@ export function kindOf(subreddit: string | null): Kind {
 }
 
 // Top's span from the address (?t=), day unless it says
-const timeOf = (search: string): Time => TIMES.find((time) => time === new URLSearchParams(search).get('t')) ?? 'day';
+const timeOf = (search: string, otherwise: Time = 'day'): Time => TIMES.find((time) => time === new URLSearchParams(search).get('t')) ?? otherwise;
 
-// The subreddit and sort a listing's path names: /r/pics/top/ → pics, top; / → the front page, best (a subreddit: hot)
+// A search, from its address (/search/?q=…, /r/pics/search/?q=…&restrict_sr=on): its words,
+// whether it's in the subreddit only, its sort (?sort=, by relevance unless it says) and span (all time unless it says)
+function searchOf(search: string) {
+  const query = new URLSearchParams(search);
+  const sort: Sort = SEARCH_SORTS.find((name) => name === query.get('sort')) ?? 'relevance';
+  return { query: query.get('q') ?? '', restricted: ['on', 'true', '1'].includes(query.get('restrict_sr') ?? ''), sort, time: timeOf(search, 'all') };
+}
+
+// The subreddit and sort a listing's path names: /r/pics/top/ → pics, top; / → the front page, best (a subreddit: hot);
+// …/search/: a search's results
 export function initialState(path: string, search = ''): ListingState {
   const [, subreddit = null, named] = /^\/(?:r\/([\w+]+)\/?)?(?:(\w+)\/?)?$/.exec(path) ?? [];
-  const sort = named ?? (subreddit === null ? 'best' : 'hot');
-  const kind = kindOf(subreddit);
+  const found = named === 'search' ? searchOf(search) : null;
+  const sort = found?.sort ?? named ?? (subreddit === null ? 'best' : 'hot');
+  const kind = found ? 'search' : kindOf(subreddit);
+  const time = found ? found.time : sort === 'top' || sort === 'controversial' ? timeOf(search) : null;
   return {
-    subreddit, kind, sort: sort as Sort, time: sort === 'top' || sort === 'controversial' ? timeOf(search) : null,
+    subreddit, kind, sort: sort as Sort, time,
+    query: found?.query ?? null, restricted: Boolean(found?.restricted && subreddit),
     path, search, page: pageOf(search),
     posts: [], after: null, before: null, beyond: null, status: 'loading', error: null,
     about: kind === 'subreddit' ? { status: 'loading' } : null,

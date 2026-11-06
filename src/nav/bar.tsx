@@ -1,8 +1,8 @@
 /* What every page has on top: the strip (Home, Popular, All, your
    communities), then the bar that stays as you scroll, as reddit.com's: the
    menu (it opens under the bar, which stays; ☰ again closes it), reddit's
-   wordmark (home), and you: your account (in the bar, so on a wide screen its
-   dropdown sits under your avatar) */
+   wordmark (home), search (nav/search.tsx), and you: your account (in the
+   bar, so on a wide screen its dropdown sits under your avatar) */
 
 import { useCallback, useRef, useState } from 'preact/hooks';
 import type { Me } from '../account/contract';
@@ -14,17 +14,19 @@ import type { Load } from '../core/store';
 import { Account } from './account';
 import type { Community } from './contract';
 import { Menu } from './menu';
+import { Search, type Searched } from './search';
 import { Strip } from './strip';
 
 interface BarProps {
   current: string | null;            // the subreddit on screen; null: home
+  searched: Searched | null;         // a search's results on screen: its words
   communities: Load<Community[]>;
   me: Load<Me>;
   onLogOut: () => void;
 }
 
-export function Bar({ current, communities, me, onLogOut }: BarProps) {
-  const [open, setOpen] = useState<'menu' | 'account' | null>(null);
+export function Bar({ current, searched, communities, me, onLogOut }: BarProps) {
+  const [open, setOpen] = useState<'menu' | 'account' | 'search' | null>(null);
   const [barEnd, setBarEnd] = useState(0);
   const bar = useRef<HTMLElement>(null);
   const close = useCallback(() => setOpen(null), []);
@@ -57,10 +59,17 @@ export function Bar({ current, communities, me, onLogOut }: BarProps) {
         >
           <Wordmark />
         </a>
+        <Search
+          current={current}
+          searched={searched}
+          open={open === 'search'}
+          onOpen={() => setOpen('search')}
+          onClose={close}
+        />
         {me.status === 'loaded' && (
           <button
             type="button"
-            class="rr-ml-auto rr-flex-none rr-rounded-full"
+            class="rr-ml-3 rr-flex-none rr-rounded-full"
             aria-label="Account"
             aria-expanded={open === 'account'}
             onClick={() => setOpen('account')}
