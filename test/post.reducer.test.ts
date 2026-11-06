@@ -43,17 +43,12 @@ describe('postReducer', () => {
     const asked = postReducer(loaded, { type: 'more/requested', id: 'm1' });
     expect(asked.loading).toEqual({ m1: '' });
     expect(postReducer(asked, { type: 'more/requested', id: 'm1' })).toBe(asked);
-    const replies = readMore(fixture('morechildren').json.data.things, '/r/pics/comments/1q2c001/welcome_to_rpics/');
+    const replies = readMore(findReply(loaded.comments, 'm1') as More, readThread(fixture('more')).comments);
     const done = postReducer(asked, { type: 'more/loaded', id: 'm1', replies });
     expect((findReply(done.comments, 't1_c1') as Comment).replies.map(({ id }) => id)).toEqual(['t1_c2', 't1_c5', 't1_c7']);
     expect(done.loading).toEqual({});
   });
 
-  it('more than reddit sends at once: the rest stays a "more"', () => {
-    const many = { ...loaded, comments: [{ kind: 'more', id: 'm9', parent: 't3_x', count: 150, children: Array.from({ length: 150 }, (_, i) => `c${i}`), depth: 0, continueAt: null } as More] };
-    const done = postReducer(many, { type: 'more/loaded', id: 'm9', replies: [] });
-    expect(done.comments).toEqual([{ ...many.comments[0], count: 50, children: many.comments[0]!.children.slice(100) }]);
-  });
 
   it('a comment made: the post’s first, a reply its comment’s first; the boxes reset', () => {
     const made = (findReply(loaded.comments, 't1_c2') as Comment);

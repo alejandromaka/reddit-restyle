@@ -66,7 +66,7 @@ cookies (no API key, no OAuth).
 | Media in the feed: pictures, galleries, reddit videos, gifs, link cards | Works | from the listing |
 | A post and its comments, a comment's thread | Works | `/comments/id/….json` |
 | Comment sorts: Best, Top, New, Controversial, Old, Q&A | Works | same, with `?sort=` |
-| "N more replies" | Works | `/api/morechildren.json` |
+| "N more replies" | Works | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
 | Search comments (the ones loaded) | Works | none: on the page |
 | Pictures and gifs in comments | Works | from the comment's links |
 | Vote | Works | `POST /api/vote` |

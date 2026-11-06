@@ -2,7 +2,7 @@ import type { Vote } from '../../account/contract';
 import { chromeReducer, initialChrome } from '../../nav/chrome';
 import { initialOverflow, isOverflowAction, overflowReducer } from '../../overflow/state';
 import { refreshedPost } from '../listing/reducer';
-import { MORE_AT_ONCE, type Comment, type More, type Reply } from './contract';
+import type { Comment, Reply } from './contract';
 import { COMMENT_SORTS, type CommentSort, type PostAction, type PostState } from './types';
 
 // A post's path: /r/pics/comments/abc/its_title/ (and a comment's: …/def/), or /comments/abc/
@@ -69,12 +69,8 @@ function joined(state: PostState, join: boolean): PostState {
   return { ...state, about: { status: 'loaded', data: { ...data, joined: join, members: data.members + (join ? 1 : -1) } } };
 }
 
-// A "more", loaded: what came in its place, and a "more" for the rest (reddit sends a hundred at a time)
-const loadedMore = (replies: Reply[]) => (reply: Reply): Reply[] => {
-  const more = reply as More;
-  const rest = more.children.slice(MORE_AT_ONCE);
-  return [...replies, ...(rest.length ? [{ ...more, children: rest, count: Math.max(more.count - MORE_AT_ONCE, rest.length) }] : [])];
-};
+// A "more", loaded: what came in its place (a "more" for any reddit didn't send among them)
+const loadedMore = (replies: Reply[]) => (): Reply[] => replies;
 
 function posted(state: PostState, parent: string, comment: Comment): PostState {
   const done = { ...state, sending: null, sendError: null, replyingTo: null, sent: state.sent + 1 };

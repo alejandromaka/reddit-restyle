@@ -10,7 +10,7 @@
 // old reddit page (its own scripts and CSS refused, as Reddit Blocker does),
 // every listing is test/fixtures/listing.json (its next page, after=: the
 // same posts under new ids, the last page), every post's page
-// test/fixtures/thread.json (more comments: morechildren.json; your comment:
+// test/fixtures/thread.json (more comments: more.json, a comment's page; your comment:
 // posted.json, with your words), every profile test/fixtures/user.json and
 // user-listing.json, every subreddit's about test/fixtures/about.json (under
 // its own name) and its rules rules.json, your communities
@@ -101,7 +101,7 @@ async function answer(route) {
   const url = new URL(request.url());
   const json = (body) => route.fulfill({ contentType: 'application/json', body });
   if (url.hostname === 'old.reddit.com') {
-    if (url.pathname === '/api/morechildren.json') return json(await fixture('morechildren'));
+    if (/\/comments\/[^/]+\/[^/]+\/[^/]+\/\.json$/.test(url.pathname)) return json(await fixture('more'));
     if (url.pathname === '/api/comment' && request.method() === 'POST') {
       const text = new URLSearchParams(request.postData() ?? '').get('text') ?? '';
       console.log(`(you) /api/comment ${request.postData()}`);
