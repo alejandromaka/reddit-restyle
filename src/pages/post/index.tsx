@@ -6,6 +6,7 @@
 import { render } from 'preact';
 import { block, comment, hide, report, subscribe, vote } from '../../account/contract';
 import { sites } from '../../core/domains';
+import { words } from '../../core/words';
 import { goTo, keepPlace, placeOf } from '../../core/place';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
@@ -42,7 +43,7 @@ export function setUpPost(shell: Shell) {
       more: fetchMore,
       comment: async (parent, text) => readPosted(await comment(parent, text)),
     });
-    startOverflow(store, { hide, report, rules: fetchRules, block, sites });
+    startOverflow(store, { hide, report, rules: fetchRules, block, sites, words });
     chrome(store);
     if (place?.state) goTo(place.spot);  // before it shows: no jump
     shell.reveal();
