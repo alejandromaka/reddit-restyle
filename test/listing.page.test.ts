@@ -42,7 +42,7 @@ const shell: Shell = {
 };
 
 const titles = () => [...document.querySelectorAll('article > a:first-of-type')].map((a) => a.textContent);
-const pages = () => [...document.querySelectorAll('nav[aria-label="Pages"] > *')].map((page) => [page.textContent, page.getAttribute('href')]);
+const pages = (label = 'Pages') => [...document.querySelectorAll(`nav[aria-label="${label}"] > *`)].map((page) => [page.textContent, page.getAttribute('href')]);
 
 describe('listing page', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -115,6 +115,13 @@ describe('listing page', () => {
     expect(document.querySelector('[aria-current="page"]')!.textContent).toBe('1');
   });
 
+  it('the pages at the top too, at the right of the sorts: just the numbers', async () => {
+    const next = '/r/pics/top/?t=week&count=25&after=t3_1q2c007';
+    await vi.waitFor(() => expect(pages('Pages, at the top')).toEqual([['1', null], ['2', next]]));
+    const row = document.querySelector('select[aria-label="Sort"]')!.closest('label')!.parentElement!;
+    expect(row.contains(document.querySelector('nav[aria-label="Pages, at the top"]'))).toBe(true);
+  });
+
   it('page 1: page 2 asked for after it, for where page 3 starts; 1, 2, 3', async () => {
     const ending = JSON.stringify({ kind: 'Listing', data: { ...JSON.parse(second).data, after: 't3_third' } });
     fetchMock.mockImplementation(async (url: string) => (url.includes('after=') ? new Response(ending) : answer(url)));
@@ -131,6 +138,7 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(titles()).toEqual(['From the next page']));
     const before = '/r/pics/top/?t=week&count=51&before=t3_next';
     expect(pages()).toEqual([['‹ Prev', before], ['1', '/r/pics/top/?t=week'], ['2', before], ['3', null]]);
+    expect(pages('Pages, at the top')).toEqual([['2', before], ['3', null]]);
   });
 
   // The page's menu (in jsdom both the phone's sheet and the wider dropdown are there: the sheet's first)
