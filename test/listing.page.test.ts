@@ -207,6 +207,35 @@ describe('listing page', () => {
     localStorage.removeItem(KEY);
   });
 
+  it('muting a word in your account: posts with it in their title or text leave at once (no line); Unmute brings them back', async () => {
+    const KEY = 'reddit-restyle:words';
+    localStorage.removeItem(KEY);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    document.querySelector<HTMLButtonElement>('header button[aria-label="Account"]')!.click();
+    const sheet = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Account"]')!;
+    const muted = [...sheet.querySelectorAll('details')].find((d) => d.querySelector('summary')!.textContent!.startsWith('Muted Words'))!;
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words0');
+    const field = muted.querySelector<HTMLInputElement>('input[name="word"]')!;
+    const mute = (word: string) => {
+      field.value = word;
+      muted.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    };
+    mute('  Lisbon ');  // a title's
+    await vi.waitFor(() => expect(titles()).not.toContain('Three days in Lisbon'));
+    expect(titles()).toHaveLength(6);
+    expect([...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo')).toBeUndefined();
+    mute('please READ');  // a phrase, from the pinned post's text
+    await vi.waitFor(() => expect(titles()).toHaveLength(5));
+    expect(localStorage.getItem(KEY)).toBe('["lisbon","please read"]');
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words2');
+    expect([...muted.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['lisbonUnmute', 'please readUnmute']);
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toEqual([]);  // reddit's not told: this device's
+    for (const button of [...muted.querySelectorAll('li button')] as HTMLButtonElement[]) button.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    expect(localStorage.getItem(KEY)).toBe('[]');
+    localStorage.removeItem(KEY);
+  });
+
   it('Hide beside a post’s comments: the same hide as its "…" (a line with Undo, reddit told)', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     const pill = [...document.querySelectorAll<HTMLButtonElement>('article button')].find((b) => b.textContent === 'Hide')!;

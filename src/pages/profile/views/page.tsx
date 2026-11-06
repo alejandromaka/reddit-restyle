@@ -1,14 +1,15 @@
 /* Someone's profile, in the frame: their header (Block or Unblock, not
    yours) and About, their tabs (and sorts), a page of their posts (one you
    hid here, someone else's you blocked, or from a site you blocked here: a
-   line, Undo; from a site you blocked before: none) and comments, the pages
+   line, Undo; from a site you blocked before, or with a word you muted:
+   none) and comments, the pages
    around it; the page's "…" menu, report and block, outside the frame (the
    menu's dropdown is placed on the page) */
 
 import { Loader } from '../../../components/busy';
 import { Pager } from '../../../components/pager';
 import { Frame } from '../../../nav/frame';
-import { commentThing, isBlocked, postThing, siteBlock, siteOf } from '../../../overflow/state';
+import { commentThing, isBlocked, mutedBy, postThing, siteBlock, siteOf } from '../../../overflow/state';
 import { HiddenPost, Overflow } from '../../../overflow/views';
 import { PostCard } from '../../listing/views/post';
 import type { ProfileAction, ProfileState } from '../types';
@@ -27,8 +28,9 @@ export function ProfilePage({ state, dispatch }: ProfilePageProps) {
   const blocked = state.me.status === 'loaded' && !mine && state.user.status === 'loaded' ? isBlocked(state, state.name, state.user.data.blocked) : null;
   // A post someone else wrote (your saved, hidden, voted on), whose author you blocked
   const gone = (author: string) => author.toLowerCase() !== state.name.toLowerCase() && isBlocked(state, author);
-  // A site you blocked before: its posts left out (blocked here: a line, Undo)
-  const items = state.items.filter((item) => item.kind === 'comment' || siteBlock(state, siteOf(item.post))?.here !== false);
+  // A site you blocked before: its posts left out (blocked here: a line, Undo); so are those with a muted word
+  const muted = mutedBy(state);
+  const items = state.items.filter((item) => item.kind === 'comment' || (siteBlock(state, siteOf(item.post))?.here !== false && !muted(item.post)));
   return (
     <>
       <Frame
