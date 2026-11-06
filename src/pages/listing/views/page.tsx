@@ -1,7 +1,7 @@
 /* A listing, in the frame: where you are and its sorts, a page of its posts
    (one you hid here, or by someone or from a site you blocked here: a line,
    Undo; from a site you blocked before: none), the pages around it; the
-   page's "…" menu, report and block, outside the frame (the menu's dropdown
+   page's "…" menu (r/all: Filter r/name from r/all too), report and block, outside the frame (the menu's dropdown
    is placed on the page) */
 
 import { Loader } from '../../../components/busy';
@@ -130,6 +130,7 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
       <Overflow
         state={state}
         dispatch={dispatch}
+        onFilter={filters?.status === 'loaded' ? (subreddit) => onFilter(subreddit, true) : undefined}
       />
     </>
   );
