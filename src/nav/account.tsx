@@ -2,7 +2,8 @@
    wide screen a dropdown under your avatar (so it goes in the bar). View
    Profile, Settings (old reddit's pages: not ours yet, so they break), Dark
    Mode, Blocked Domains (folded: the sites this device blocks, each with
-   Unblock), Log Out. */
+   Unblock), Muted Words (folded: a field to mute one, then each with
+   Unmute), Log Out. */
 
 import { useEffect, useState } from 'preact/hooks';
 import type { Me } from '../account/contract';
@@ -13,6 +14,7 @@ import { Sheet } from '../components/sheet';
 import { cx, ui } from '../components/ui';
 import { blockDomain, blockedDomains, followDomains } from '../core/domains';
 import { chooseTheme, isDark } from '../core/theme';
+import { followWords, mutedWords, muteWord } from '../core/words';
 
 interface AccountProps {
   open: boolean;
@@ -102,6 +104,7 @@ function AccountItems({ me, onLogOut }: AccountItemsProps) {
         </span>
       </button>
       <BlockedDomains />
+      <MutedWords />
       <button
         type="button"
         class={ui.row}
@@ -156,6 +159,81 @@ function BlockedDomains() {
         </ul>
       ) : (
         <p class="rr-px-4 rr-pb-2 rr-text-xs rr-text-neutral-content-weak">None yet. A link post’s “…” blocks its site.</p>
+      )}
+    </details>
+  );
+}
+
+// The words this device mutes, folded under their row: a field to add one
+// (a word or a phrase), then each with Unmute; a post with one in its title
+// or text is left out of listings. Taps in it don't close the menu
+function MutedWords() {
+  const [words, setWords] = useState(mutedWords);
+  useEffect(() => followWords(setWords), []);
+  return (
+    <details
+      class="rr-group"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <summary class={cx(ui.row, 'rr-cursor-pointer')}>
+        <Icon name="hide" large />
+        Muted Words
+        <span class="rr-flex rr-items-center rr-gap-2 rr-ml-auto rr-text-neutral-content-weak">
+          {words.length}
+          <span class="group-open:rr-rotate-180">
+            <Icon name="chevron" />
+          </span>
+        </span>
+      </summary>
+      <form
+        class="rr-flex rr-items-center rr-gap-2 rr-h-10 rr-mx-4 rr-mb-2 rr-px-3 rr-rounded-full rr-border rr-border-neutral-border-medium rr-bg-neutral-background"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const field = event.currentTarget.elements.namedItem('word') as HTMLInputElement;
+          if (!field.value.trim()) return;
+          muteWord(field.value, true);
+          field.value = '';
+        }}
+      >
+        <input
+          name="word"
+          class="rr-flex-1 rr-min-w-0 rr-text-base rr-outline-none"
+          placeholder="Mute a word"
+          aria-label="Word to mute"
+          autocapitalize="off"
+          autocomplete="off"
+          spellcheck={false}
+          enterKeyHint="done"
+        />
+        <button
+          type="submit"
+          class="rr-grid rr-flex-none rr-place-items-center rr-w-6 rr-h-6 rr-rounded-full"
+          aria-label="Mute it"
+        >
+          <Icon name="plus" />
+        </button>
+      </form>
+      {words.length ? (
+        <ul>
+          {words.map((word) => (
+            <li
+              key={word}
+              class="rr-flex rr-items-center rr-gap-4 rr-h-12 rr-px-4"
+            >
+              <span class="rr-flex-none rr-w-5" />
+              <span class="rr-flex-1 rr-min-w-0 rr-truncate">{word}</span>
+              <button
+                type="button"
+                class={ui.action}
+                onClick={() => muteWord(word, false)}
+              >
+                Unmute
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="rr-px-4 rr-pb-2 rr-text-xs rr-text-neutral-content-weak">None yet. Posts with a muted word in their title or text don’t show.</p>
       )}
     </details>
   );

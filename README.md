@@ -75,6 +75,7 @@ cookies (no API key, no OAuth).
 | Report (by the subreddit's rules) | Works | `/r/name/about/rules.json`, `POST /api/report` |
 | Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
+| Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
 | r/all filters: add (there, or a post's "…" on r/all), remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
 | Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
 | Share | Works | none: the phone's share sheet |
@@ -111,7 +112,7 @@ you tap **Update**.
 There are no analytics, no API key and no server of ours. The script talks
 only to reddit (as you, with your own cookies). The Userscripts app itself
 checks GitHub Pages for updates when you open its popup. What you block or choose on this device (blocked sites,
-dark mode) stays in Safari's storage for old.reddit.com. So do the last few
+muted words, dark mode) stays in Safari's storage for old.reddit.com. So do the last few
 pages you left, for going back to them: in that tab only, gone when it's
 closed.
 
@@ -168,7 +169,8 @@ src/
                      the viewport fixed, our root in place of reddit's markup
   core/
     store.ts         createStore: a page's state (Preact draws from it)
-    http.ts, text.ts, theme.ts (light or dark), domains.ts (sites you block)
+    http.ts, text.ts, theme.ts (light or dark), domains.ts (sites you block),
+                     words.ts (words you mute)
     html.ts          reddit's rendered markdown, rebuilt safe, with our classes
   pages/<page>/      listing (the front page, subreddits), post (a post and its comments)
     contract.ts      reddit's requests and answers (its JSON), read into our
@@ -227,7 +229,11 @@ their posts into a line with Undo and folds their comments, marked Blocked
 site.com in a link post's "…") is this device's (core/domains.ts: reddit
 keeps no such list): its posts, and its subdomains', turn into a line with
 Undo, and from then on are left out; your account's Blocked Domains lists
-them, each with Unblock.
+them, each with Unblock. Muted words are this device's too
+(core/words.ts): in your account's Muted Words you add a word or a phrase,
+and a post with it in its title or text, as a whole word in any case
+(cat, not category), is left out of listings and profiles, with no line;
+each is listed with Unmute. A post you open still shows.
 
 - **post**: a post and its comments (or one comment's thread), as
   reddit.com's: where, when, who, Join; its title, tags and all of it (text,
@@ -254,7 +260,7 @@ closes it), our wordmark ("restyle", not reddit's logo) goes home, and your avat
 (a sheet from the bottom on a phone, a dropdown on a wide screen): View
 Profile and Settings (old reddit's pages, which break until we build them),
 Dark Mode (this device remembers it; else your system's), Blocked Domains,
-Log Out. The page
+Muted Words, Log Out. The page
 is a column (732px, as reddit.com's) centered in the window; on a screen
 1024px and up (an iPad mini across, 1133px) the menu is also a sidebar,
 always there, at the left edge: from 1280px over the column's margin, and
