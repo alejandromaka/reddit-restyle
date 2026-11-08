@@ -85,6 +85,7 @@ export interface Post {
   // Its preview (a crosspost's from the post it shares; none for spoilers):
   media: Media | null;     // wide enough for a phone
   text: string | null;     // with no media: a text post's opening, plain
+  body: string;            // all its text, plain ('' when none): what muted words are looked for in
   nsfw: boolean;
   spoiler: boolean;
   pinned: boolean;
@@ -190,6 +191,7 @@ export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
     link: offReddit(shared) ? shared.url : null,
     media,
     text: post.spoiler || media ? null : plain(shared.selftext).slice(0, TEXT_LENGTH) || null,
+    body: plain(shared.selftext),
     nsfw: post.over_18,
     spoiler: post.spoiler,
     pinned: post.stickied,

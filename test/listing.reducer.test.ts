@@ -4,7 +4,7 @@ import { initialState, kindOf, listingReducer } from '../src/pages/listing/reduc
 
 const post = (id: string): Post => ({
   id, title: id, subreddit: 'pics', subredditIcon: null, author: 'a', score: 1, vote: 0, comments: 0, created: 0, permalink: `/r/pics/comments/${id}/`,
-  domain: 'self.pics', link: null, media: null, text: null, nsfw: false, spoiler: false, pinned: false, hidden: false, flair: null,
+  domain: 'self.pics', link: null, media: null, text: null, body: '', nsfw: false, spoiler: false, pinned: false, hidden: false, flair: null,
 });
 const listing = (ids: string[], after: string | null, before: string | null = null): Listing => ({ posts: ids.map(post), after, before });
 
