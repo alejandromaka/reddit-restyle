@@ -448,4 +448,20 @@ describe('r/all', () => {
     await vi.waitFor(() => expect(listed()).toEqual(['r/gaming', 'r/memes', 'r/pics']));
     await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/funny', 'MODHASH', null]]));
   });
+
+  it('a post’s "…": Filter r/name from r/all, once its filters are in: listed, reddit told, its posts gone, the menu closed', async () => {
+    const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+    const labels = () => [...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    await vi.waitFor(() => expect(show()).toBeTruthy());
+    document.querySelector<HTMLButtonElement>('article button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    expect(labels()).toEqual(['Hide', 'Report', 'Block u/pics-mod', 'Filter r/pics from r/all']);
+    [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Filter r/pics from r/all')!.click();
+    await vi.waitFor(() => expect(titles()).toEqual([]));  // every post here is r/pics'
+    expect(menu().hasAttribute('inert')).toBe(true);
+    show().click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/funny', 'r/gaming', 'r/memes', 'r/pics']));
+    await vi.waitFor(() => expect(changed('PUT')).toEqual([['/api/filter/user/you/f/all/r/pics', 'MODHASH', { model: '{"name":"pics"}' }]]));
+  });
 });

@@ -76,7 +76,7 @@ cookies (no API key, no OAuth).
 | Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
 | Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
-| r/all filters: add, remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
+| r/all filters: add (there, or a post's "…" on r/all), remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
 | Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
 | Share | Works | none: the phone's share sheet |
 | Dark mode | Works | none: this device, or your system's |

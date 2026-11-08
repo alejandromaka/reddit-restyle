@@ -2,7 +2,7 @@
    comment), and the page's one menu it opens (on a phone a sheet from the
    bottom, wider a dropdown under the "…"): Hide or Unhide (a post), Report,
    Block u/name (or Unblock; not yours), Block site.com (a post linking off
-   reddit; or Unblock). Report: the subreddit's rules for it and reddit's, one
+   reddit; or Unblock), Filter r/name from r/all (on r/all, its filters in). Report: the subreddit's rules for it and reddit's, one
    chosen, Report; Block u/name: are you sure? (each a sheet; wider, a dialog
    in the middle). A post you hid, or whose author or site you blocked here,
    in a listing: a line saying so, Undo. */
@@ -55,10 +55,11 @@ export function HiddenPost({ blocked, onUndo }: { blocked?: string; onUndo: () =
 interface OverflowProps {
   state: OverflowState & Pick<ChromeState, 'me'>;  // you: no blocking yourself
   dispatch: (action: OverflowAction) => void;
+  onFilter?: (subreddit: string) => void;  // r/all, its filters in: a post's subreddit kept out of it
 }
 
 // The page's menu, report and block, always there (each slides or fades as it opens and closes)
-export function Overflow({ state, dispatch }: OverflowProps) {
+export function Overflow({ state, dispatch, onFilter }: OverflowProps) {
   const { menu, report, block } = state;
   const closeMenu = useCallback(() => dispatch({ type: 'menu/closed' }), [dispatch]);
   const closeReport = useCallback(() => dispatch({ type: 'report/closed' }), [dispatch]);
@@ -72,6 +73,10 @@ export function Overflow({ state, dispatch }: OverflowProps) {
       site={siteBlock(state, menu.thing.domain)?.domain ?? null}
       me={state.me.status === 'loaded' ? state.me.data.name : null}
       dispatch={dispatch}
+      onFilter={onFilter && ((subreddit) => {
+        dispatch({ type: 'menu/closed' });
+        onFilter(subreddit);
+      })}
     />
   );
   const form = () => report && (
@@ -152,9 +157,10 @@ interface MenuItemsProps {
   site: string | null;   // the blocked site its link falls under (itself or a subdomain's)
   me: string | null;     // your name (null: not known yet)
   dispatch: (action: OverflowAction) => void;
+  onFilter?: (subreddit: string) => void;  // r/all's: kept out of it (its posts leave the page)
 }
 
-function MenuItems({ thing, hidden, blocked, site, me, dispatch }: MenuItemsProps) {
+function MenuItems({ thing, hidden, blocked, site, me, dispatch, onFilter }: MenuItemsProps) {
   const { author, domain } = thing;
   const blockable = author !== '[deleted]' && author.toLowerCase() !== me?.toLowerCase();
   return (
@@ -197,6 +203,16 @@ function MenuItems({ thing, hidden, blocked, site, me, dispatch }: MenuItemsProp
         >
           <Icon name="block" large />
           <span class="rr-truncate">{site ? `Unblock ${site}` : `Block ${domain}`}</span>
+        </button>
+      )}
+      {onFilter && thing.kind === 'post' && (
+        <button
+          type="button"
+          class={ui.row}
+          onClick={() => onFilter(thing.subreddit)}
+        >
+          <Icon name="filter" large />
+          <span class="rr-truncate">Filter r/{thing.subreddit} from r/all</span>
         </button>
       )}
     </>
