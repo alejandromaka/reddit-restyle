@@ -115,6 +115,7 @@
   .rr-ml-3 { margin-left: var(--s3); }  /* a thread's line, in the middle of its tap area */
   .rr-mr-2 { margin-right: var(--s2); }
   .rr-mt-2 { margin-top: var(--s2); }
+  .rr-mb-2 { margin-bottom: var(--s2); }
   .-rr-mt-12 { margin-top: calc(var(--s12) * -1); }  /* someone's avatar (96px with its ring), centered on their banner's edge */
   .rr-p-0\.5 { padding: var(--s0_5); }
   .rr-p-2 { padding: var(--s2); }

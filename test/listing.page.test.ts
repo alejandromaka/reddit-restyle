@@ -215,6 +215,35 @@ describe('listing page', () => {
     localStorage.removeItem(KEY);
   });
 
+  it('muting a word in your account: posts with it in their title or text leave at once (no line); Unmute brings them back', async () => {
+    const KEY = 'reddit-restyle:words';
+    localStorage.removeItem(KEY);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    document.querySelector<HTMLButtonElement>('header button[aria-label="Account"]')!.click();
+    const sheet = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Account"]')!;
+    const muted = [...sheet.querySelectorAll('details')].find((d) => d.querySelector('summary')!.textContent!.startsWith('Muted Words'))!;
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words0');
+    const field = muted.querySelector<HTMLInputElement>('input[name="word"]')!;
+    const mute = (word: string) => {
+      field.value = word;
+      muted.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    };
+    mute('  Lisbon ');  // a title's
+    await vi.waitFor(() => expect(titles()).not.toContain('Three days in Lisbon'));
+    expect(titles()).toHaveLength(6);
+    expect([...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo')).toBeUndefined();
+    mute('please READ');  // a phrase, from the pinned post's text
+    await vi.waitFor(() => expect(titles()).toHaveLength(5));
+    expect(localStorage.getItem(KEY)).toBe('["lisbon","please read"]');
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words2');
+    expect([...muted.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['lisbonUnmute', 'please readUnmute']);
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toEqual([]);  // reddit's not told: this device's
+    for (const button of [...muted.querySelectorAll('li button')] as HTMLButtonElement[]) button.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    expect(localStorage.getItem(KEY)).toBe('[]');
+    localStorage.removeItem(KEY);
+  });
+
   it('Hide beside a post’s comments: the same hide as its "…" (a line with Undo, reddit told)', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     const pill = [...document.querySelectorAll<HTMLButtonElement>('article button')].find((b) => b.textContent === 'Hide')!;
@@ -426,5 +455,21 @@ describe('r/all', () => {
     rail().querySelector<HTMLButtonElement>('button[aria-label="Let r/funny back into r/all"]')!.click();
     await vi.waitFor(() => expect(listed()).toEqual(['r/gaming', 'r/memes', 'r/pics']));
     await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/funny', 'MODHASH', null]]));
+  });
+
+  it('a post’s "…": Filter r/name from r/all, once its filters are in: listed, reddit told, its posts gone, the menu closed', async () => {
+    const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+    const labels = () => [...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    await vi.waitFor(() => expect(show()).toBeTruthy());
+    document.querySelector<HTMLButtonElement>('article button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    expect(labels()).toEqual(['Hide', 'Report', 'Block u/pics-mod', 'Filter r/pics from r/all']);
+    [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Filter r/pics from r/all')!.click();
+    await vi.waitFor(() => expect(titles()).toEqual([]));  // every post here is r/pics'
+    expect(menu().hasAttribute('inert')).toBe(true);
+    show().click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/funny', 'r/gaming', 'r/memes', 'r/pics']));
+    await vi.waitFor(() => expect(changed('PUT')).toEqual([['/api/filter/user/you/f/all/r/pics', 'MODHASH', { model: '{"name":"pics"}' }]]));
   });
 });

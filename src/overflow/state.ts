@@ -8,6 +8,7 @@
    startOverflow does its network. */
 
 import { domainOf } from '../core/domains';
+import { mutes, wordsPattern } from '../core/words';
 import type { Load, Store } from '../core/store';
 import type { Rules } from './contract';
 
@@ -48,6 +49,7 @@ export interface OverflowState {
   block: { name: string; open: boolean } | null;  // blocking someone: are you sure?
   domains: Record<string, boolean>;    // sites you blocked here (true; a post from one: a line, Undo; else left out)
   savedDomains: string[];              // the ones this device blocks, as last read
+  mutedWords: string[];                // the words this device mutes (core/words.ts), as last read
 }
 
 // Whether you blocked them: as you left it here, else as reddit says (said)
@@ -60,6 +62,12 @@ const under = (domain: string, blocked: string) => domain === blocked || domain.
 export function siteBlock(state: Pick<OverflowState, 'domains' | 'savedDomains'>, domain: string | null) {
   const blocked = domain && state.savedDomains.find((each) => under(domain, each));
   return blocked ? { domain: blocked, here: Boolean(state.domains[blocked]) } : null;
+}
+
+// Which posts have a word this device mutes in their title or text (left out, no line)
+export function mutedBy(state: Pick<OverflowState, 'mutedWords'>) {
+  const pattern = wordsPattern(state.mutedWords);
+  return (post: { title: string; body: string }) => mutes(pattern, post.title, post.body);
 }
 
 export type OverflowAction =
@@ -80,17 +88,19 @@ export type OverflowAction =
   | { type: 'block/requested'; name: string; blocked: boolean }  // blocked, or unblocked
   | { type: 'block/failed'; name: string; blocked: boolean }     // back to before
   | { type: 'domain/requested'; domain: string; blocked: boolean }  // a site blocked, or unblocked (saved, then read again)
-  | { type: 'domains/loaded'; domains: string[] };                  // this device's
+  | { type: 'domains/loaded'; domains: string[] }                   // this device's
+  | { type: 'words/loaded'; words: string[] };                      // this device's muted words
 
 const TYPES = new Set<string>([
   'menu/opened', 'menu/closed', 'hide/requested', 'hide/failed', 'report/opened', 'report/chosen',
   'report/requested', 'report/sent', 'report/failed', 'report/closed', 'rules/loaded', 'rules/failed',
   'block/opened', 'block/closed', 'block/requested', 'block/failed', 'domain/requested', 'domains/loaded',
+  'words/loaded',
 ]);
 
 export const isOverflowAction = (action: { type: string }): action is OverflowAction => TYPES.has(action.type);
 
-export const initialOverflow = (): OverflowState => ({ menu: null, hidden: {}, report: null, rules: {}, blocked: {}, block: null, domains: {}, savedDomains: [] });
+export const initialOverflow = (): OverflowState => ({ menu: null, hidden: {}, report: null, rules: {}, blocked: {}, block: null, domains: {}, savedDomains: [], mutedWords: [] });
 
 // As a page is kept when you leave it (core/place.ts): no menu, report or block open
 export const settledOverflow = <S extends OverflowState>(state: S): S => ({ ...state, menu: null, report: null, block: null });
@@ -146,6 +156,8 @@ export function overflowReducer<S extends OverflowState>(state: S, action: Overf
       return { ...state, menu: closed(state.menu), domains: { ...state.domains, [domainOf(action.domain)]: action.blocked } };
     case 'domains/loaded':
       return { ...state, savedDomains: action.domains };
+    case 'words/loaded':
+      return { ...state, mutedWords: action.words };
   }
 }
 
@@ -159,16 +171,23 @@ interface OverflowApi {
     block: (domain: string, blocked: boolean) => void;
     follow: (listener: (domains: string[]) => void) => void;
   };
+  words: {                                 // this device's muted words (core/words.ts)
+    read: () => string[];
+    follow: (listener: (words: string[]) => void) => void;
+  };
 }
 
 // Network → actions: a hide or a block sent (on screen already; refused, back
 // again and the console says why), a subreddit's rules when a report starts,
 // the report. And this device's blocked sites: read now, again whenever they
-// change (here, or in your account menu); a site blocked here, saved
+// change (here, or in your account menu); a site blocked here, saved. And
+// the words it mutes, the same way
 export function startOverflow<S extends OverflowState, A extends { type: string }>(store: Store<S, A | OverflowAction>, api: OverflowApi) {
   const dispatch = (action: OverflowAction) => store.dispatch(action);
   dispatch({ type: 'domains/loaded', domains: api.sites.read() });
   api.sites.follow((domains) => dispatch({ type: 'domains/loaded', domains }));
+  dispatch({ type: 'words/loaded', words: api.words.read() });
+  api.words.follow((words) => dispatch({ type: 'words/loaded', words }));
   store.subscribe((state, previous, action) => {
     if (!isOverflowAction(action)) return;
     if (action.type === 'domain/requested') api.sites.block(action.domain, action.blocked);
