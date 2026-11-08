@@ -1,4 +1,4 @@
-/* A listing, in the frame: where you are and its sorts, a page of its posts
+/* A listing, in the frame: where you are, its sorts and pages, a page of its posts
    (one you hid here, or by someone or from a site you blocked here: a line,
    Undo; from a site you blocked before, or with a word you muted: none), the pages around it; the
    page's "…" menu (r/all: Filter r/name from r/all too), report and block, outside the frame (the menu's dropdown
@@ -57,6 +57,17 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
               filters={filters}
               error={state.filterError}
               onFilter={onFilter}
+            />
+          )}
+          {state.status === 'idle' && (
+            <Pager
+              path={state.path}
+              search={state.search}
+              page={state.page}
+              after={state.after}
+              before={state.before}
+              beyond={state.beyond}
+              top
             />
           )}
         </Sorts>

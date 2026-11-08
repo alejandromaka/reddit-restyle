@@ -160,6 +160,7 @@
   .rr-break-words { overflow-wrap: anywhere; }  /* a long address in a post or comment */
   .rr-text-center { text-align: center; }
   .rr-uppercase { text-transform: uppercase; }
+  .rr-whitespace-nowrap { white-space: nowrap; }  /* a row that swipes rather than wrap its words */
   .rr-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rr-line-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 
