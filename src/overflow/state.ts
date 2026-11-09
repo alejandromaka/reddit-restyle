@@ -1,8 +1,8 @@
 /* A post's or comment's "…" (views.tsx), on every page that has them: one
    menu per page (Hide or Unhide for a post, Report, Block its author, Block
    the site it links to), the posts you hid or showed again, a report on its
-   way: the subreddit's rules to choose from (asked for when a report
-   starts), the reason chosen, sent; the people you blocked or unblocked (a
+   way: the subreddit's rules and reddit's steps to choose through (asked
+   for when a report starts; contract.ts), each choice, a note, sent; the people you blocked or unblocked (a
    block asked first), and the sites (this device's, core/domains.ts). Each page's
    store carries it (OverflowState) and hands its actions to overflowReducer;
    startOverflow does its network. */
@@ -10,7 +10,7 @@
 import { domainOf } from '../core/domains';
 import { mutes, wordsPattern } from '../core/words';
 import type { Load, Store } from '../core/store';
-import type { Rules } from './contract';
+import type { ReportReason, Rules } from './contract';
 
 export interface Thing {
   id: string;                    // t3_… or t1_…
@@ -39,7 +39,9 @@ export interface OverflowState {
   hidden: Record<string, boolean>;                          // posts you hid or showed again (else reddit's say)
   report: {
     thing: Thing;
-    reason: string | null;       // the one chosen
+    trail: number[];             // the steps gone through (Next), by place in each list
+    choice: number | null;       // the one chosen on this step
+    notes: string;               // more, in your words (where reddit asks)
     status: 'choosing' | 'sending' | 'sent' | 'failed';
     error: string | null;        // why it didn't go
     open: boolean;
@@ -76,8 +78,11 @@ export type OverflowAction =
   | { type: 'hide/requested'; id: string; hidden: boolean }
   | { type: 'hide/failed'; id: string; hidden: boolean }    // back to before
   | { type: 'report/opened'; thing: Thing }
-  | { type: 'report/chosen'; reason: string }
-  | { type: 'report/requested' }
+  | { type: 'report/chosen'; choice: number }
+  | { type: 'report/next' }                                  // into the choice's questions
+  | { type: 'report/back' }
+  | { type: 'report/noted'; notes: string }
+  | { type: 'report/requested'; reason: ReportReason }
   | { type: 'report/sent' }
   | { type: 'report/failed'; error: string }
   | { type: 'report/closed' }
@@ -93,7 +98,7 @@ export type OverflowAction =
 
 const TYPES = new Set<string>([
   'menu/opened', 'menu/closed', 'hide/requested', 'hide/failed', 'report/opened', 'report/chosen',
-  'report/requested', 'report/sent', 'report/failed', 'report/closed', 'rules/loaded', 'rules/failed',
+  'report/next', 'report/back', 'report/noted', 'report/requested', 'report/sent', 'report/failed', 'report/closed', 'rules/loaded', 'rules/failed',
   'block/opened', 'block/closed', 'block/requested', 'block/failed', 'domain/requested', 'domains/loaded',
   'words/loaded',
 ]);
@@ -104,6 +109,10 @@ export const initialOverflow = (): OverflowState => ({ menu: null, hidden: {}, r
 
 // As a page is kept when you leave it (core/place.ts): no menu, report or block open
 export const settledOverflow = <S extends OverflowState>(state: S): S => ({ ...state, menu: null, report: null, block: null });
+
+// A report you can still change (not on its way, not sent)
+const choosing = (report: OverflowState['report']): report is NonNullable<OverflowState['report']> =>
+  Boolean(report && report.status !== 'sending' && report.status !== 'sent');
 
 const closed = <T extends { open: boolean } | null>(it: T): T => (it ? { ...it, open: false } : it);
 
@@ -122,16 +131,26 @@ export function overflowReducer<S extends OverflowState>(state: S, action: Overf
       return {
         ...state,
         menu: closed(state.menu),
-        report: { thing: action.thing, reason: null, status: 'choosing', error: null, open: true },
+        report: { thing: action.thing, trail: [], choice: null, notes: '', status: 'choosing', error: null, open: true },
         rules: state.rules[subreddit] ? state.rules : { ...state.rules, [subreddit]: { status: 'loading' } },
       };
     }
     case 'report/chosen':
-      return state.report && state.report.status !== 'sending' && state.report.status !== 'sent'
-        ? { ...state, report: { ...state.report, reason: action.reason, status: 'choosing', error: null } }
+      return choosing(state.report)
+        ? { ...state, report: { ...state.report, choice: action.choice, notes: action.choice === state.report.choice ? state.report.notes : '', status: 'choosing', error: null } }
         : state;
+    case 'report/next':
+      return choosing(state.report) && state.report.choice !== null
+        ? { ...state, report: { ...state.report, trail: [...state.report.trail, state.report.choice], choice: null, notes: '', status: 'choosing', error: null } }
+        : state;
+    case 'report/back':
+      return choosing(state.report) && state.report.trail.length
+        ? { ...state, report: { ...state.report, trail: state.report.trail.slice(0, -1), choice: state.report.trail.at(-1)!, notes: '', status: 'choosing', error: null } }
+        : state;
+    case 'report/noted':
+      return choosing(state.report) ? { ...state, report: { ...state.report, notes: action.notes } } : state;
     case 'report/requested':
-      return state.report?.reason && (state.report.status === 'choosing' || state.report.status === 'failed')
+      return choosing(state.report) && state.report.choice !== null
         ? { ...state, report: { ...state.report, status: 'sending', error: null } }
         : state;
     case 'report/sent':
@@ -163,7 +182,7 @@ export function overflowReducer<S extends OverflowState>(state: S, action: Overf
 
 interface OverflowApi {
   hide: (id: string, hidden: boolean) => Promise<void>;
-  report: (id: string, reason: string) => Promise<void>;
+  report: (id: string, reason: ReportReason) => Promise<void>;
   rules: (subreddit: string) => Promise<Rules>;
   block: (name: string, blocked: boolean) => Promise<void>;
   sites: {                                 // this device's blocked sites (core/domains.ts)
@@ -210,8 +229,8 @@ export function startOverflow<S extends OverflowState, A extends { type: string 
         (error) => dispatch({ type: 'rules/failed', subreddit, error: String(error) }),
       );
     }
-    if (action.type === 'report/requested' && state.report?.status === 'sending' && state.report.reason && previous.report?.status !== 'sending') {
-      api.report(state.report.thing.id, state.report.reason).then(
+    if (action.type === 'report/requested' && state.report?.status === 'sending' && previous.report?.status !== 'sending') {
+      api.report(state.report.thing.id, action.reason).then(
         () => dispatch({ type: 'report/sent' }),
         (error) => dispatch({ type: 'report/failed', error: String(error) }),
       );

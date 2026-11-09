@@ -2,8 +2,8 @@
    comment), and the page's one menu it opens (on a phone a sheet from the
    bottom, wider a dropdown under the "…"): Hide or Unhide (a post), Report,
    Block u/name (or Unblock; not yours), Block site.com (a post linking off
-   reddit; or Unblock), Filter r/name from r/all (on r/all, its filters in). Report: the subreddit's rules for it and reddit's, one
-   chosen, Report; Block u/name: are you sure? (each a sheet; wider, a dialog
+   reddit; or Unblock), Filter r/name from r/all (on r/all, its filters in). Report: reddit.com's steps (its rules or reddit's
+   reasons, and their questions), Submit report, thanks (block them there too); Block u/name: are you sure? (each a sheet; wider, a dialog
    in the middle). A post you hid, or whose author or site you blocked here,
    in a listing: a line saying so, Undo. */
 
@@ -15,7 +15,7 @@ import { Sheet } from '../components/sheet';
 import { cx, ui } from '../components/ui';
 import type { Load } from '../core/store';
 import type { ChromeState } from '../nav/chrome';
-import type { Rules } from './contract';
+import { complaintUrl, reportFlow, stepsAt, type ReportReason, type Rules, type Step } from './contract';
 import { isBlocked, siteBlock, type OverflowAction, type OverflowState, type Spot, type Thing } from './state';
 
 // "…": the page's menu for it, under it
@@ -83,6 +83,8 @@ export function Overflow({ state, dispatch, onFilter }: OverflowProps) {
     <ReportForm
       report={report}
       rules={state.rules[report.thing.subreddit] ?? { status: 'loading' }}
+      blockable={canBlock(report.thing.author, state.me.status === 'loaded' ? state.me.data.name : null)}
+      blocked={isBlocked(state, report.thing.author)}
       dispatch={dispatch}
     />
   );
@@ -160,9 +162,12 @@ interface MenuItemsProps {
   onFilter?: (subreddit: string) => void;  // r/all's: kept out of it (its posts leave the page)
 }
 
+// Whether you can block someone: not you, not a deleted account
+const canBlock = (author: string, me: string | null) => author !== '[deleted]' && author.toLowerCase() !== me?.toLowerCase();
+
 function MenuItems({ thing, hidden, blocked, site, me, dispatch, onFilter }: MenuItemsProps) {
   const { author, domain } = thing;
-  const blockable = author !== '[deleted]' && author.toLowerCase() !== me?.toLowerCase();
+  const blockable = canBlock(author, me);
   return (
     <>
       {thing.kind === 'post' && (
@@ -249,20 +254,39 @@ function BlockForm({ name, dispatch }: { name: string; dispatch: (action: Overfl
 interface ReportFormProps {
   report: NonNullable<OverflowState['report']>;
   rules: Load<Rules>;
+  blockable: boolean;    // its author: not you, not deleted
+  blocked: boolean;
   dispatch: (action: OverflowAction) => void;
 }
 
-// Taps in it choose, they don't close it (the sheet closes on a tap in it)
-function ReportForm({ report, rules, dispatch }: ReportFormProps) {
-  const { thing, reason, status, error } = report;
+// A report, as reddit.com's: "Submit a report", what's happening (a reason,
+// Next for its questions, Back), Submit report; thanks, and blocking its
+// author there. Taps in it choose, they don't close it (the sheet closes on a tap in it)
+function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormProps) {
+  const { thing, trail, choice, notes, status, error } = report;
+  const stop = (event: Event) => event.stopPropagation();
   if (status === 'sent') {
     return (
       <div
         class="rr-grid rr-gap-4 rr-px-4"
-        onClick={(event) => event.stopPropagation()}
+        onClick={stop}
       >
         <h2 class="rr-text-lg rr-font-bold">Thanks for your report</h2>
-        <p class="rr-text-neutral-content-weak">r/{thing.subreddit}’s moderators will look at it.</p>
+        <p class="rr-text-neutral-content-weak">Thanks for looking out for yourself and your fellow redditors. We’ll look into it.</p>
+        {blockable && (
+          <button
+            type="button"
+            class="rr-flex rr-items-center rr-gap-3 rr-w-full rr-py-2 rr-text-left"
+            aria-pressed={blocked}
+            onClick={() => dispatch({ type: 'block/requested', name: thing.author, blocked: !blocked })}
+          >
+            <Icon name="block" large />
+            <span class="rr-grid rr-flex-1 rr-min-w-0">
+              <span class="rr-font-semibold rr-break-words">{blocked ? 'Blocked' : 'Block'} u/{thing.author}</span>
+              <span class="rr-text-xs rr-text-neutral-content-weak">You won’t see their posts or comments.{blocked && ' Tap to unblock.'}</span>
+            </span>
+          </button>
+        )}
         <button
           type="button"
           class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-secondary-background"
@@ -273,69 +297,140 @@ function ReportForm({ report, rules, dispatch }: ReportFormProps) {
       </div>
     );
   }
+  if (rules.status !== 'loaded') {
+    return (
+      <div
+        class="rr-grid rr-gap-4 rr-px-4"
+        onClick={stop}
+      >
+        <h2 class="rr-text-lg rr-font-bold">Submit a report</h2>
+        {rules.status === 'loading' ? <Loader /> : <p class="rr-text-xs rr-text-danger-content">{rules.error}</p>}
+      </div>
+    );
+  }
+  const { steps, choices } = stepsAt(reportFlow(rules.data, thing), trail);
+  const asking = steps.at(-1);  // the step whose question this is (none: the first)
+  const chosen = choice === null ? null : choices[choice] ?? null;
+  const reason: ReportReason | null = chosen?.reason
+    ? chosen.reason.kind === 'rule'
+      ? { kind: 'rule', text: chosen.reason.text }
+      : { kind: 'site', text: chosen.reason.text, notes: notes.trim(), usernames: chosen.reason.usernames && thing.author !== '[deleted]' ? thing.author : null }
+    : null;
   return (
     <div
       class="rr-grid rr-gap-4 rr-px-4"
-      onClick={(event) => event.stopPropagation()}
+      onClick={stop}
     >
-      <h2 class="rr-text-lg rr-font-bold">Report this {thing.kind}</h2>
-      {rules.status === 'loading' && <Loader />}
-      {rules.status === 'failed' && <p class="rr-text-xs rr-text-danger-content">{rules.error}</p>}
-      {rules.status === 'loaded' && (
+      {asking ? (
+        <div class="rr-flex rr-items-center rr-gap-2">
+          <button
+            type="button"
+            class={ui.icon}
+            aria-label="Back"
+            onClick={() => dispatch({ type: 'report/back' })}
+          >
+            <Icon name="back" large />
+          </button>
+          <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">{asking.question}</h2>
+        </div>
+      ) : (
         <>
-          <Reasons
-            title={`r/${thing.subreddit} rules`}
-            reasons={rules.data.subreddit.filter(({ on }) => on === 'all' || on === thing.kind).map((rule) => [rule.reason, rule.label] as const)}
-            chosen={reason}
-            dispatch={dispatch}
-          />
-          <Reasons
-            title="Reddit rules"
-            reasons={rules.data.reddit.map((rule) => [rule, rule] as const)}
-            chosen={reason}
-            dispatch={dispatch}
-          />
+          <h2 class="rr-text-lg rr-font-bold">Submit a report</h2>
+          <p class="rr-text-neutral-content-weak">Thanks for looking out for yourself and your fellow redditors by reporting things that break the rules. Let us know what’s happening, and we’ll look into it.</p>
         </>
       )}
+      {asking
+        ? <Choices choices={choices} chosen={choice} dispatch={dispatch} />
+        : <Pills choices={choices} chosen={choice} dispatch={dispatch} />}
+      {chosen?.notes && (
+        <label class="rr-grid rr-gap-2">
+          <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{chosen.notes.title}</span>
+          <textarea
+            class="rr-block rr-w-full rr-min-h-24 rr-p-2 rr-text-base rr-rounded-media rr-border rr-border-neutral-border-medium rr-outline-none"
+            maxLength={chosen.notes.limit}
+            value={notes}
+            onInput={(event) => dispatch({ type: 'report/noted', notes: event.currentTarget.value })}
+          />
+        </label>
+      )}
+      {chosen?.complaint && chosen.complaint.prompt && <p class="rr-text-neutral-content-weak">{chosen.complaint.prompt}</p>}
       {error && <p class="rr-text-xs rr-text-danger-content">{error}</p>}
-      <BusyButton
-        busy={status === 'sending'}
-        disabled={!reason}
-        class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled"
-        onClick={() => dispatch({ type: 'report/requested' })}
-      >
-        Report
-      </BusyButton>
+      {chosen?.complaint ? (
+        // Not a report: reddit.com's form for it, in a new tab
+        <a
+          class="rr-grid rr-place-items-center rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground"
+          href={complaintUrl(chosen.complaint.url, thing.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {chosen.complaint.button}
+        </a>
+      ) : chosen?.next.length ? (
+        <button
+          type="button"
+          class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground"
+          onClick={() => dispatch({ type: 'report/next' })}
+        >
+          Next
+        </button>
+      ) : (
+        <BusyButton
+          busy={status === 'sending'}
+          disabled={!reason}
+          class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled"
+          onClick={() => reason && dispatch({ type: 'report/requested', reason })}
+        >
+          Submit report
+        </BusyButton>
+      )}
     </div>
   );
 }
 
-interface ReasonsProps {
-  title: string;
-  reasons: (readonly [string, string])[];  // each: what the report says, its name
-  chosen: string | null;
+interface ChoicesProps {
+  choices: Step[];
+  chosen: number | null;
   dispatch: (action: OverflowAction) => void;
 }
 
-// A list of reasons as reddit.com's: pills, the chosen one filled
-function Reasons({ title, reasons, chosen, dispatch }: ReasonsProps) {
-  if (!reasons.length) return null;
+// The first step's choices, as reddit.com's: pills, the chosen one filled
+function Pills({ choices, chosen, dispatch }: ChoicesProps) {
   return (
-    <section class="rr-grid rr-gap-2">
-      <h3 class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{title}</h3>
-      <div class="rr-flex rr-flex-wrap rr-gap-2">
-        {reasons.map(([reason, name]) => (
-          <button
-            key={reason}
-            type="button"
-            class={cx(ui.plain, reason === chosen ? 'rr-bg-primary-background rr-text-primary-onBackground' : 'rr-bg-secondary-background')}
-            aria-pressed={reason === chosen}
-            onClick={() => dispatch({ type: 'report/chosen', reason })}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
-    </section>
+    <div class="rr-flex rr-flex-wrap rr-gap-2">
+      {choices.map((choice, at) => (
+        <button
+          key={choice.label}
+          type="button"
+          class={cx(ui.plain, at === chosen ? 'rr-bg-primary-background rr-text-primary-onBackground' : 'rr-bg-secondary-background')}
+          aria-pressed={at === chosen}
+          onClick={() => dispatch({ type: 'report/chosen', choice: at })}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// A question's choices: a list, one picked (a rule: what it means, under it)
+function Choices({ choices, chosen, dispatch }: ChoicesProps) {
+  return (
+    <div class="rr-grid">
+      {choices.map((choice, at) => (
+        <button
+          key={choice.label}
+          type="button"
+          class="rr-flex rr-items-start rr-gap-3 rr-w-full rr-py-3 rr-text-left rr-border-b rr-border-neutral-border-weak"
+          aria-pressed={at === chosen}
+          onClick={() => dispatch({ type: 'report/chosen', choice: at })}
+        >
+          <span class={cx('rr-flex-none rr-w-5 rr-h-5 rr-rounded-full rr-border rr-border-neutral-border-medium', at === chosen && 'rr-bg-primary-background')} />
+          <span class="rr-grid rr-gap-1 rr-flex-1 rr-min-w-0">
+            <span class="rr-font-semibold rr-break-words">{choice.label}</span>
+            {at === chosen && choice.about && <span class="rr-text-xs rr-text-neutral-content-weak rr-break-words">{choice.about}</span>}
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }

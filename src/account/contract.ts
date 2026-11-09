@@ -5,6 +5,7 @@
    /api/me.json, asked for once per page (again after a failure). */
 
 import { change, fetchJson, postForm, postJson } from '../core/http';
+import type { ReportReason } from '../overflow/contract';
 
 interface RedditMe {
   data?: { id: string; name: string; modhash: string; snoovatar_img?: string; icon_img?: string };  // none when you're signed out (id: without t2_)
@@ -65,10 +66,15 @@ export async function block(name: string, blocked: boolean) {
 // What reddit says went wrong, from an api_type=json answer's errors ([code, message, field])
 const wrong = (errors: string[][]) => errors.map((error) => error[1] ?? error[0]).join('; ');
 
-// Reporting a post or comment (t3_… or t1_…) to its subreddit's moderators, for
-// a reason: one of its rules, or one of reddit's, in their words
-export async function report(id: string, reason: string) {
-  const answer = await postJson<{ json?: { errors: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, reason, uh: (await myData()).modhash });
+// Reporting a post or comment (t3_… or t1_…), as reddit.com does: by one of
+// its subreddit's rules, or one of reddit's reasons (a note, who it's about)
+export async function report(id: string, reason: ReportReason) {
+  const why: Record<string, string> = reason.kind === 'rule'
+    ? { reason: 'rule_reason_selected', rule_reason: reason.text }
+    : { reason: 'site_reason_selected', site_reason: reason.text };
+  if (reason.kind === 'site' && reason.notes) why.custom_text = reason.notes;
+  if (reason.kind === 'site' && reason.usernames) why.usernames = reason.usernames;
+  const answer = await postJson<{ json?: { errors: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, ...why, uh: (await myData()).modhash });
   if (answer.json?.errors.length) throw new Error(wrong(answer.json.errors));
 }
 

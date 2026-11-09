@@ -159,6 +159,7 @@
   .rr-list-decimal { list-style-type: decimal; }
   .rr-break-words { overflow-wrap: anywhere; }  /* a long address in a post or comment */
   .rr-text-center { text-align: center; }
+  .rr-text-left { text-align: left; }  /* a report's choices (buttons center theirs) */
   .rr-uppercase { text-transform: uppercase; }
   .rr-whitespace-nowrap { white-space: nowrap; }  /* a row that swipes rather than wrap its words */
   .rr-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

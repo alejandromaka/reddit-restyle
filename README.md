@@ -72,7 +72,7 @@ cookies (no API key, no OAuth).
 | Vote | Works | `POST /api/vote` |
 | Comment, reply | Works | `POST /api/comment` |
 | Hide, unhide a post | Works | `POST /api/hide`, `/api/unhide` |
-| Report (by the subreddit's rules) | Works | `/r/name/about/rules.json`, `POST /api/report` |
+| Report, as reddit.com's steps (the subreddit's rules, reddit's reasons and their questions; block them after) | Works | `/r/name/about/rules.json`, `POST /api/report` |
 | Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
 | Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
