@@ -103,7 +103,7 @@ describe('a post’s page', () => {
     comment('early_riser').querySelector<HTMLButtonElement>('button[aria-label="More options"]')!.click();
     await vi.waitFor(() => expect(items()).toEqual(['Report', 'Block u/early_riser']));
     [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Report')!.click();
-    await vi.waitFor(() => expect(document.querySelector('[role="dialog"][aria-label="Report"]')!.textContent).toContain('Report this comment'));
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"][aria-label="Report"]')!.textContent).toContain('Submit a report'));
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
   });
 

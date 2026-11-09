@@ -253,24 +253,66 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(posted(fetchMock, '/api/hide')).toEqual([{ id: 't3_1q2c001', uh: 'MODHASH' }]));
   });
 
-  it('reporting a post: its subreddit’s rules for posts and reddit’s, one chosen, sent; thanks', async () => {
+  it('reporting a post, as reddit.com: what’s happening (its subreddit’s rules first), Next, which rule, Submit report; thanks, block them there', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     more(0).click();
     inMenu('Report').click();
     await vi.waitFor(() => expect(report().hasAttribute('inert')).toBe(false));
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
-    const reasons = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
-    await vi.waitFor(() => expect(reasons().map((b) => b.textContent)).toEqual([
-      'No screenshots', 'Be civil', 'Spam', 'Personal and confidential information', 'Threatening, harassing, or inciting violence',
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices().map((b) => b.textContent)).toEqual(['Breaks r/pics rules', 'Harassment', 'Spam', 'Copyright violation']));
+    expect(report().querySelector('h2')!.textContent).toBe('Submit a report');
+    expect(button('Submit report')!.disabled).toBe(true);
+    choices()[0]!.click();
+    await vi.waitFor(() => expect(button('Next')).toBeDefined());
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Which community rule does this violate?'));
+    expect(choices().map((b) => b.querySelector('span span')!.textContent)).toEqual(['No screenshots', 'Be civil']);  // for posts
+    choices()[1]!.click();
+    await vi.waitFor(() => expect(choices()[1]!.textContent).toContain('No insults.'));  // what it means
+    report().querySelector<HTMLButtonElement>('button[aria-label="Back"]')!.click();  // and back again: still chosen
+    await vi.waitFor(() => expect(choices()[0]!.getAttribute('aria-pressed')).toBe('true'));
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Which community rule does this violate?'));
+    choices()[1]!.click();
+    await vi.waitFor(() => expect(button('Submit report')!.disabled).toBe(false));
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([
+      { api_type: 'json', thing_id: 't3_1q2c001', reason: 'rule_reason_selected', rule_reason: 'Be civil', uh: 'MODHASH' },
     ]));
-    const send = [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Report')!;
-    expect(send.disabled).toBe(true);
-    reasons()[1]!.click();
-    await vi.waitFor(() => expect(reasons()[1]!.getAttribute('aria-pressed')).toBe('true'));
-    expect(send.disabled).toBe(false);
-    send.click();
-    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([{ api_type: 'json', thing_id: 't3_1q2c001', reason: 'Incivility', uh: 'MODHASH' }]));
     await vi.waitFor(() => expect(report().textContent).toContain('Thanks for your report'));
+    const block = choices().find((b) => b.textContent!.startsWith('Block u/'))!;
+    const author = block.querySelector('.rr-font-semibold')!.textContent!.replace('Block u/', '');
+    block.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/block_user')).toEqual([{ name: author, uh: 'MODHASH' }]));
+  });
+
+  it('reporting by reddit’s reasons: its question, a note where it asks, who it’s about; a form on reddit.com instead, where it says', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(0).click();
+    inMenu('Report').click();
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices()).toHaveLength(4));
+    choices()[3]!.click();  // Copyright violation
+    await vi.waitFor(() => expect(report().querySelector('a')?.textContent).toBe('Go to the form'));
+    expect(report().querySelector('a')!.href).toBe('https://www.reddithelp.com/hc/en-us/requests/new?ticket_form_id=73933&thing=t3_1q2c001');
+    expect(button('Submit report')).toBeUndefined();
+    choices()[1]!.click();  // Harassment
+    await vi.waitFor(() => expect(button('Next')).toBeDefined());
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Who is being harassed?'));
+    choices()[0]!.click();  // You
+    await vi.waitFor(() => expect(report().querySelector('textarea')).not.toBeNull());
+    const note = report().querySelector('textarea')!;
+    note.value = 'Again and again';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(button('Submit report')!.disabled).toBe(false));
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([expect.objectContaining({
+      reason: 'site_reason_selected', site_reason: "It's targeted harassment at me", custom_text: 'Again and again', usernames: expect.any(String),
+    })]));
   });
 
   it('top: its span, a dropdown on the week as the address says, each option an address', async () => {
