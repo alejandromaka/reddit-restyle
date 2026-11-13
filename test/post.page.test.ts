@@ -4,7 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setUpPost } from '../src/pages/post';
 import type { Shell } from '../src/shell/blocker';
 
@@ -53,6 +53,10 @@ describe('a post’s page', () => {
     vi.stubGlobal('fetch', fetchMock);
     setUpPost(shell);
     await vi.waitFor(() => expect(main().querySelector('h1')).not.toBeNull());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('the post, all of it: its JSON asked for, its title, its text (a spoiler hidden until tapped)', () => {
@@ -186,8 +190,10 @@ describe('a post’s page', () => {
     expect(box.getAttribute('placeholder')).toBe('Reply to u/early_riser');
     type(box, 'Nice one');
     button('Comment', comment('early_riser')).click();
-    await vi.waitFor(() => expect(sent('/api/comment')).toEqual([{ api_type: 'json', thing_id: 't1_c1', text: 'Nice one', uh: 'MODHASH' }]));
+    await vi.waitFor(() => expect(sent('/api/comment')).toEqual([{ api_type: 'json', raw_json: '1', thing_id: 't1_c1', text: 'Nice one', uh: 'MODHASH' }]));
     await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'you', 'pics-mod', 'automod']));
+    expect(comment('you').textContent).toContain('Nice one');  // reddit's answer has no body: its contentHTML
+    expect(main().textContent).not.toContain('TypeError');
     expect(comment('early_riser').querySelector('textarea')).toBeNull();  // the box, closed
   });
 
@@ -213,6 +219,28 @@ describe('a post’s page', () => {
     expect(main().querySelector('#comments a[href="/r/pics/comments/1q2c001/welcome_to_rpics/c1/"]')!.textContent).toBe('Go to thread');
     button('Clear search').click();
     await vi.waitFor(() => expect(authors()).toEqual(['early_riser', 'pics-mod', 'automod']));
+  });
+
+  it('Share: the phone’s share sheet, with the post’s link', async () => {
+    const share = vi.fn(async () => {});
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { share }));
+    button('Share').click();
+    await vi.waitFor(() => expect(share).toHaveBeenCalledWith({ title: 'Welcome to r/pics: read the rules before posting', url: `https://www.reddit.com${PATH}` }));
+    expect(main().querySelector('[role="dialog"][aria-label="Share"]')!.hasAttribute('inert')).toBe(true);  // ours stays closed
+  });
+
+  it('Share, refused by Safari (or missing): never nothing; our sheet, the link, Copy link', async () => {
+    const writeText = vi.fn(async () => {});
+    const share = vi.fn(async () => { throw Object.assign(new Error('not allowed'), { name: 'NotAllowedError' }); });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { share, clipboard: { writeText } }));
+    button('Share').click();
+    const sheet = main().querySelector<HTMLElement>('[role="dialog"][aria-label="Share"]')!;
+    await vi.waitFor(() => expect(sheet.hasAttribute('inert')).toBe(false));
+    expect(sheet.querySelector('input')!.value).toBe(`https://www.reddit.com${PATH}`);
+    button('Copy link', sheet).click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith(`https://www.reddit.com${PATH}`));
+    await vi.waitFor(() => expect(button('Copied', sheet)).toBeTruthy());
   });
 
   it('sort by: a dropdown of reddit’s orders, Best chosen', () => {

@@ -55,32 +55,41 @@ pictures from test/fixtures, signed in as a made-up u/you.
 Everything here is old reddit's own JSON and API, called as you with your
 cookies (no API key, no OAuth).
 
+What the statuses mean. **Works**: reads or draws something, in daily use
+on the phone with nothing reported broken. **Untested
+live**: the request matches old reddit's own code (reddit's open-source r2)
+or reddit's API docs, and the automated tests pass, but those tests run
+against hand-written copies of reddit's answers, not reddit itself, so it
+hasn't been confirmed on reddit. Comment posting passed those tests while
+broken on reddit (its copy of reddit's answer was wrong), which is why
+nothing that sends something is marked Works until it's been tried.
+
 | Feature | Status | Reddit endpoint |
 | --- | --- | --- |
 | Front page, Popular, All, subreddits (one or several: r/pics+funny) | Works | `/[r/name/][sort/].json` |
 | Sorts: Best, Hot, New, Top (with its span), Rising | Works | same, with `?t=` |
 | More posts (next page in place) | Works | same, with `?after=` |
 | Subreddit header: banner, icon, members | Works | `/r/name/about.json` |
-| Join, leave | Works | `POST /api/subscribe` |
+| Join, leave | Untested live | `POST /api/subscribe` |
 | Your communities (strip, menu, sidebar) | Works | `/subreddits/mine/subscriber.json` |
 | Media in the feed: pictures, galleries, reddit videos, gifs, link cards | Works | from the listing |
 | A post and its comments, a comment's thread | Works | `/comments/id/….json` |
 | Comment sorts: Best, Top, New, Controversial, Old, Q&A | Works | same, with `?sort=` |
-| "N more replies" | Works | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
+| "N more replies" | Untested live | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
 | Search comments (the ones loaded) | Works | none: on the page |
 | Pictures and gifs in comments | Works | from the comment's links |
-| Vote | Works | `POST /api/vote` |
-| Comment, reply | Works | `POST /api/comment` |
-| Hide, unhide a post | Works | `POST /api/hide`, `/api/unhide` |
-| Report, as reddit.com's steps (the subreddit's rules, reddit's reasons and their questions; block them after) | Works | `/r/name/about/rules.json`, `POST /api/report` |
-| Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
+| Vote | Untested live | `POST /api/vote` |
+| Comment, reply | Fixed in 0.3.4, untested live (reddit's answer has no body or author: they come from what you sent) | `POST /api/comment` |
+| Hide, unhide a post | Untested live | `POST /api/hide`, `/api/unhide` |
+| Report, as reddit.com's steps (the subreddit's rules, reddit's reasons and their questions; block them after) | Untested live | `/r/name/about/rules.json`, `POST /api/report` |
+| Block, unblock someone | Untested live | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
 | Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
-| r/all filters: add (there, or a post's "…" on r/all), remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
+| r/all filters: add (there, or a post's "…" on r/all), remove | Untested live | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
 | Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
-| Share | Works | none: the phone's share sheet |
+| Share | Fixed in 0.3.4, untested live: the phone's share sheet; if Safari won't open it, a sheet with the link and Copy link | none |
 | Dark mode | Works | none: this device, or your system's |
-| Your account (name, avatar), log out | Works | `/api/me.json`, `POST /logout` |
+| Your account (name, avatar), log out | Untested live | `/api/me.json`, `POST /logout` |
 | Save, unsave | Not yet | |
 | Edit or delete your posts and comments | Not yet | |
 | Posting (submit) | Not yet | |
