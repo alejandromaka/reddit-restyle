@@ -263,7 +263,7 @@ interface ReportFormProps {
 // Next for its questions, Back), Submit report; thanks, and blocking its
 // author there. Taps in it choose, they don't close it (the sheet closes on a tap in it)
 function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormProps) {
-  const { thing, trail, choice, notes, status, error } = report;
+  const { thing, trail, choice, notes, reviewing, status, error } = report;
   const stop = (event: Event) => event.stopPropagation();
   if (status === 'sent') {
     return (
@@ -272,7 +272,14 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
         onClick={stop}
       >
         <h2 class="rr-text-lg rr-font-bold">Thanks for your report</h2>
-        <p class="rr-text-neutral-content-weak">Thanks for looking out for yourself and your fellow redditors. We’ll look into it.</p>
+        <p
+          class="rr-flex rr-items-center rr-gap-2 rr-font-semibold rr-text-tags-moderator-content"
+          role="status"
+        >
+          <Icon name="check" />
+          reddit accepted the report
+        </p>
+        <p class="rr-text-xs rr-text-neutral-content-weak">It answered your report with no errors. Thanks for looking out for yourself and your fellow redditors.</p>
         {blockable && (
           <button
             type="button"
@@ -316,6 +323,69 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
       ? { kind: 'rule', text: chosen.reason.text }
       : { kind: 'site', text: chosen.reason.text, notes: notes.trim(), usernames: chosen.reason.usernames && thing.author !== '[deleted]' ? thing.author : null }
     : null;
+  const primary = 'rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled';
+  const back = (
+    <button
+      type="button"
+      class={ui.icon}
+      aria-label="Back"
+      onClick={() => dispatch({ type: 'report/back' })}
+    >
+      <Icon name="back" large />
+    </button>
+  );
+
+  // The second step, as reddit.com's: what you're reporting and why, a note where reddit asks, Submit report
+  if (reviewing && chosen && reason) {
+    const sending = status === 'sending';
+    return (
+      <div
+        class="rr-grid rr-gap-4 rr-px-4"
+        onClick={stop}
+      >
+        <div class="rr-flex rr-items-center rr-gap-2">
+          {back}
+          <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">Submit a report</h2>
+        </div>
+        <div class="rr-grid rr-gap-1">
+          <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">Reporting this {thing.kind}{thing.author !== '[deleted]' && ` by u/${thing.author}`} for</span>
+          <span class="rr-font-semibold rr-break-words">{[...steps, chosen].map((step) => step.label).join(' › ')}</span>
+          {chosen.about && <span class="rr-text-xs rr-text-neutral-content-weak rr-break-words">{chosen.about}</span>}
+          {reason.kind === 'site' && reason.usernames && <span class="rr-text-xs rr-text-neutral-content-weak">About u/{reason.usernames}</span>}
+        </div>
+        {chosen.notes && (
+          <label class="rr-grid rr-gap-2">
+            <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{chosen.notes.title}</span>
+            <textarea
+              class="rr-block rr-w-full rr-min-h-24 rr-p-2 rr-text-base rr-rounded-media rr-border rr-border-neutral-border-medium rr-outline-none"
+              maxLength={chosen.notes.limit}
+              value={notes}
+              disabled={sending}
+              onInput={(event) => dispatch({ type: 'report/noted', notes: event.currentTarget.value })}
+            />
+          </label>
+        )}
+        {sending && <p class="rr-text-xs rr-text-neutral-content-weak" role="status">Sending to reddit…</p>}
+        {error && (
+          <p
+            class="rr-text-xs rr-text-danger-content"
+            role="alert"
+          >
+            reddit didn’t accept the report: {error.replace(/^Error: /, '')}
+          </p>
+        )}
+        <BusyButton
+          busy={sending}
+          class={primary}
+          onClick={() => dispatch({ type: 'report/requested', reason })}
+        >
+          {error ? 'Try again' : 'Submit report'}
+        </BusyButton>
+      </div>
+    );
+  }
+
+  // The first step (what's happening), and its questions: a choice, then Next
   return (
     <div
       class="rr-grid rr-gap-4 rr-px-4"
@@ -323,14 +393,7 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
     >
       {asking ? (
         <div class="rr-flex rr-items-center rr-gap-2">
-          <button
-            type="button"
-            class={ui.icon}
-            aria-label="Back"
-            onClick={() => dispatch({ type: 'report/back' })}
-          >
-            <Icon name="back" large />
-          </button>
+          {back}
           <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">{asking.question}</h2>
         </div>
       ) : (
@@ -342,19 +405,7 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
       {asking
         ? <Choices choices={choices} chosen={choice} dispatch={dispatch} />
         : <Pills choices={choices} chosen={choice} dispatch={dispatch} />}
-      {chosen?.notes && (
-        <label class="rr-grid rr-gap-2">
-          <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{chosen.notes.title}</span>
-          <textarea
-            class="rr-block rr-w-full rr-min-h-24 rr-p-2 rr-text-base rr-rounded-media rr-border rr-border-neutral-border-medium rr-outline-none"
-            maxLength={chosen.notes.limit}
-            value={notes}
-            onInput={(event) => dispatch({ type: 'report/noted', notes: event.currentTarget.value })}
-          />
-        </label>
-      )}
       {chosen?.complaint && chosen.complaint.prompt && <p class="rr-text-neutral-content-weak">{chosen.complaint.prompt}</p>}
-      {error && <p class="rr-text-xs rr-text-danger-content">{error}</p>}
       {chosen?.complaint ? (
         // Not a report: reddit.com's form for it, in a new tab
         <a
@@ -365,23 +416,15 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
         >
           {chosen.complaint.button}
         </a>
-      ) : chosen?.next.length ? (
+      ) : (
         <button
           type="button"
-          class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground"
-          onClick={() => dispatch({ type: 'report/next' })}
+          class={primary}
+          disabled={!chosen || (!chosen.next.length && !reason)}
+          onClick={() => dispatch({ type: chosen?.next.length ? 'report/next' : 'report/review' })}
         >
           Next
         </button>
-      ) : (
-        <BusyButton
-          busy={status === 'sending'}
-          disabled={!reason}
-          class="rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled"
-          onClick={() => reason && dispatch({ type: 'report/requested', reason })}
-        >
-          Submit report
-        </BusyButton>
       )}
     </div>
   );
