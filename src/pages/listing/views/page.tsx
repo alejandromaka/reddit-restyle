@@ -13,6 +13,7 @@ import type { ListingAction, ListingState } from '../types';
 import { FiltersButton, FiltersRail } from './filters';
 import { Heading } from './heading';
 import { PostCard } from './post';
+import { SearchHeading } from './searched';
 import { Sorts } from './sorts';
 
 interface ListingPageProps {
@@ -35,8 +36,17 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
         current={state.subreddit}
         chrome={state}
         dispatch={dispatch}
+        searched={state.query === null ? null : { query: state.query, restricted: state.restricted }}
       >
-        {state.kind === 'subreddit' && state.subreddit ? (
+        {state.query !== null ? (
+          <SearchHeading
+            query={state.query}
+            subreddit={state.subreddit}
+            restricted={state.restricted}
+            sort={state.sort}
+            time={state.time}
+          />
+        ) : state.kind === 'subreddit' && state.subreddit ? (
           <Heading
             subreddit={state.subreddit}
             about={state.about}
@@ -51,6 +61,8 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
           kind={state.kind}
           sort={state.sort}
           time={state.time}
+          path={state.path}
+          search={state.search}
         >
           {filters && (
             <FiltersButton
@@ -86,7 +98,7 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
           </div>
         )}
         {state.status === 'idle' && posts.length === 0 && (
-          <p class="rr-py-12 rr-text-center rr-text-neutral-content-weak">No posts here</p>
+          <p class="rr-py-12 rr-text-center rr-text-neutral-content-weak">{state.kind === 'search' ? 'No results' : 'No posts here'}</p>
         )}
         {posts.map((post) => {
           if (state.hidden[post.id]) {

@@ -9,7 +9,7 @@ You keep old reddit's speed and your account, and lose its desktop layout,
 ads and trackers. Listings, posts and comments, and profiles are drawn from
 reddit's own JSON, fetched as you. Voting, joining, commenting, hiding,
 reporting and blocking all go through old reddit's API. Pages it doesn't
-draw yet (settings, messages, search…) come up broken on purpose, so it's
+draw yet (settings, messages…) come up broken on purpose, so it's
 obvious what's missing.
 
 This is a personal project, shared as is. It isn't affiliated with reddit.
@@ -76,6 +76,7 @@ nothing that sends something is marked Works until it's been tried.
 | A post and its comments, a comment's thread | Works | `/comments/id/….json` |
 | Comment sorts: Best, Top, New, Controversial, Old, Q&A | Works | same, with `?sort=` |
 | "N more replies" | Untested live | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
+| Search posts: all of reddit, or in a subreddit; by Relevance, Hot, Top, New, Comments, with a span | Untested live | `/search.json`, `/r/name/search.json?restrict_sr=on` |
 | Search comments (the ones loaded) | Works | none: on the page |
 | Pictures and gifs in comments | Works | from the comment's links |
 | Vote | Untested live | `POST /api/vote` |
@@ -93,7 +94,6 @@ nothing that sends something is marked Works until it's been tried.
 | Save, unsave | Not yet | |
 | Edit or delete your posts and comments | Not yet | |
 | Posting (submit) | Not yet | |
-| Search | Not yet (old reddit's page, broken) | |
 | Messages, inbox, notifications | Not yet (old reddit's page, broken) | |
 | Settings | Not yet (old reddit's page, broken) | |
 | Moderation | Not planned | |
@@ -192,7 +192,7 @@ src/
                      classes); DOM events → actions
   account/           you on reddit (me.json: name, avatar, modhash); vote,
                      join, leave, comment, block, log out
-  nav/               what every page shares: its frame (strip, bar, sidebar,
+  nav/               what every page shares: its frame (strip, bar, search, sidebar,
                      column), the menu, your account, your communities, and
                      their data (chrome.ts)
   components/        ours, reused anywhere (Preact): busy (the one loader),
@@ -216,7 +216,11 @@ docs/
   as reddit.com has it: banner, icon, name and members (its about.json),
   with Join or Joined (tap to leave); wider than a phone, a taller rounded
   banner with a big icon over its edge and the name large; the front page,
-  Popular, All and several subreddits at once have none. More posts loads
+  Popular, All and several subreddits at once have none. A search's
+  results (/search/?q=…, /r/name/search/?q=…&restrict_sr=on: reddit's
+  search.json) are a listing too, under their words and where they looked
+  (all of reddit, or the subreddit only, the other a tap away), by
+  Relevance, Hot, Top, New or Comments, with a span. More posts loads
   the next page in place. Each post: its subreddit with its icon (a listing
   of several) or its author (one subreddit's), and its media, as
   reddit.com's feed: a video (reddit's own, or a gif) plays where it is
@@ -265,7 +269,10 @@ On top, as old reddit has it, a strip: Home, Popular, All, then your
 communities (favorites first, A–Z, fetched alongside the page's posts), side
 by side, swiped for more; it scrolls away. Under it the bar, which stays, as
 reddit.com's: ☰ slides in the menu under it (the same, as a list; ☰ again
-closes it), our wordmark ("restyle", not reddit's logo) goes home, and your avatar opens your account
+closes it), our wordmark ("restyle", not reddit's logo) goes home, search
+(on a phone 🔍 opens the field over the bar, with Cancel; wider, it's always
+there; in a subreddit it starts in it, a chip whose × or ⌫ makes it all of
+reddit's; Enter goes to the results), and your avatar opens your account
 (a sheet from the bottom on a phone, a dropdown on a wide screen): View
 Profile and Settings (old reddit's pages, which break until we build them),
 Dark Mode (this device remembers it; else your system's), Blocked Domains,

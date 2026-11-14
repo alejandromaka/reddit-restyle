@@ -26,6 +26,16 @@ describe('initialState', () => {
   });
 });
 
+describe('initialState: a search', () => {
+  it('its words, where, its sort (relevance unless it says) and span (all time unless it says)', () => {
+    expect(initialState('/search/', '?q=grand+canyon')).toMatchObject({ kind: 'search', subreddit: null, query: 'grand canyon', restricted: false, sort: 'relevance', time: 'all', about: null, filters: null });
+    expect(initialState('/r/pics/search/', '?q=sunrise&restrict_sr=on&sort=top&t=week')).toMatchObject({ kind: 'search', subreddit: 'pics', restricted: true, sort: 'top', time: 'week', about: null });
+    expect(initialState('/r/pics/search', '?q=sunrise&sort=nonsense')).toMatchObject({ subreddit: 'pics', restricted: false, sort: 'relevance' });
+    expect(initialState('/search/', '?q=x&restrict_sr=on').restricted).toBe(false);  // nowhere to be in
+    expect(initialState('/r/pics/').query).toBeNull();
+  });
+});
+
 describe('kindOf', () => {
   it('the front page, reddit’s two, several subreddits, one', () => {
     expect([null, 'popular', 'All', 'pics+funny', 'pics'].map(kindOf)).toEqual(['home', 'popular', 'all', 'multi', 'subreddit']);

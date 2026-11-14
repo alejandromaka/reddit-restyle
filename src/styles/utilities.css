@@ -97,6 +97,7 @@
   .rr-w-\[32rem\] { width: 32rem; }          /* a dialog in the middle: a report */
   .rr-max-w-\[calc\(100\%-2rem\)\] { max-width: calc(100% - 2rem); }  /* …never wider than the window */
   .rr-h-\[calc\(100dvh-3\.5rem\)\] { height: calc(100dvh - 3.5rem); }  /* the sidebar: the screen under the bar */
+  .rr-max-w-\[8rem\] { max-width: 8rem; }  /* a search's subreddit, its chip */
   .rr-max-w-\[85\%\] { max-width: 85%; }      /* the menu, on a narrow phone */
   .rr-max-h-\[85\%\] { max-height: 85%; }     /* a sheet from the bottom */
   .rr-max-w-\[732px\] { max-width: 732px; }  /* the feed's column, as reddit.com's (its padding inside); centered when the window is wider */
@@ -245,6 +246,14 @@
   /* --- Wider than a phone (Tailwind's sm): a subreddit's header, as reddit.com's on a computer --- */
   @media (min-width: 640px) {
     .sm\:rr-flex { display: flex; }
+    .sm\:rr-hidden { display: none; }             /* the bar's 🔍: wider, the field's always there */
+    .sm\:rr-static { position: static; }
+    .sm\:rr-flex-1 { flex: 1 1 0%; }
+    .sm\:rr-max-w-\[36rem\] { max-width: 36rem; }  /* the bar's search field, centered in it */
+    .sm\:rr-mx-auto { margin-left: auto; margin-right: auto; }
+    .sm\:rr-px-4 { padding-left: var(--s4); padding-right: var(--s4); }
+    .sm\:rr-opacity-100 { opacity: 1; }
+    .sm\:rr-pointer-events-auto { pointer-events: auto; }
     .sm\:rr-items-start { align-items: flex-start; }
     .sm\:rr-items-end { align-items: flex-end; }
     .sm\:rr-min-w-0 { min-width: 0; }

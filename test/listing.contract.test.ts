@@ -83,6 +83,16 @@ describe('listingUrl', () => {
     expect(listingUrl('/r/pics/top/', '?t=week')).toBe('/r/pics/top/.json?t=week&raw_json=1&sr_detail=1&limit=25');
     expect(listingUrl('/r/pics', '?count=25&after=t3_x&limit=100')).toBe('/r/pics/.json?count=25&after=t3_x&limit=25&raw_json=1&sr_detail=1');
   });
+
+  it('a search’s: search.json, its words and the rest kept, posts only', () => {
+    expect(listingUrl('/search/', '?q=grand+canyon')).toBe('/search.json?q=grand+canyon&raw_json=1&sr_detail=1&limit=25&type=link');
+    expect(listingUrl('/r/pics/search', '?q=x&restrict_sr=on&sort=top&t=week')).toBe('/r/pics/search.json?q=x&restrict_sr=on&sort=top&t=week&raw_json=1&sr_detail=1&limit=25&type=link');
+  });
+
+  it('a search answered with two Listings (subreddits, then posts): the posts', () => {
+    const subreddits = { kind: 'Listing' as const, data: { after: null, before: null, children: [{ kind: 't5', data: answer.data.children[0].data }] } };
+    expect(readListing([subreddits, answer]).posts).toHaveLength(readListing(answer).posts.length);
+  });
 });
 
 describe('pages, as old reddit’s', () => {

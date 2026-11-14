@@ -5,18 +5,22 @@ import type { OverflowAction, OverflowState } from '../../overflow/state';
 import type { About, Listing, Post } from './contract';
 
 export const SORTS = ['hot', 'new', 'top', 'rising'] as const;  // the ones we offer, in order (the front page: Best first)
-export type Sort = (typeof SORTS)[number] | 'best' | 'controversial';
+export type Sort = (typeof SORTS)[number] | 'best' | 'controversial' | SearchSort;
+export const SEARCH_SORTS = ['relevance', 'hot', 'top', 'new', 'comments'] as const;  // search's (?sort=), in order
+export type SearchSort = (typeof SEARCH_SORTS)[number];
 export const TIMES = ['hour', 'day', 'week', 'month', 'year', 'all'] as const;  // top's (and controversial's) span: ?t=
 export type Time = (typeof TIMES)[number];
 
-// What a listing is of: the front page, reddit's two, several subreddits at once, or one
-export type Kind = 'home' | 'popular' | 'all' | 'multi' | 'subreddit';
+// What a listing is of: the front page, reddit's two, several subreddits at once, one, or a search's results
+export type Kind = 'home' | 'popular' | 'all' | 'multi' | 'subreddit' | 'search';
 
 export interface ListingState extends ChromeState, OverflowState {
-  subreddit: string | null;  // null: the front page
+  subreddit: string | null;  // null: the front page (a search: all of reddit's)
+  query: string | null;      // a search's words; null: not a search
+  restricted: boolean;       // a search: in its subreddit only (restrict_sr=on)
   kind: Kind;
   sort: Sort;
-  time: Time | null;         // top's span (day unless the address says); null: a sort without one
+  time: Time | null;         // top's span (day unless the address says; a search's: all time); null: a sort without one
   path: string;              // its address (its pages' links: the same, starting elsewhere)
   search: string;
   page: number;              // which page, from 1 (old reddit's count=)
