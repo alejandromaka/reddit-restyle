@@ -116,6 +116,7 @@
   .rr-ml-3 { margin-left: var(--s3); }  /* a thread's line, in the middle of its tap area */
   .rr-mr-2 { margin-right: var(--s2); }
   .rr-mt-2 { margin-top: var(--s2); }
+  .rr-mb-2 { margin-bottom: var(--s2); }
   .-rr-mt-12 { margin-top: calc(var(--s12) * -1); }  /* someone's avatar (96px with its ring), centered on their banner's edge */
   .rr-p-0\.5 { padding: var(--s0_5); }
   .rr-p-2 { padding: var(--s2); }
@@ -159,7 +160,9 @@
   .rr-list-decimal { list-style-type: decimal; }
   .rr-break-words { overflow-wrap: anywhere; }  /* a long address in a post or comment */
   .rr-text-center { text-align: center; }
+  .rr-text-left { text-align: left; }  /* a report's choices (buttons center theirs) */
   .rr-uppercase { text-transform: uppercase; }
+  .rr-whitespace-nowrap { white-space: nowrap; }  /* a row that swipes rather than wrap its words */
   .rr-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rr-line-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 

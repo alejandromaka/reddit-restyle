@@ -106,14 +106,14 @@ async function answer(route) {
       const text = new URLSearchParams(request.postData() ?? '').get('text') ?? '';
       console.log(`(you) /api/comment ${request.postData()}`);
       const posted = JSON.parse(await fixture('posted'));
-      Object.assign(posted.json.data.things[0].data, { body: text, body_html: `<div class="md"><p>${escape(text)}</p></div>` });
+      Object.assign(posted.json.data.things[0].data, { contentText: text, contentHTML: `<div class="md"><p>${escape(text)}</p></div>` });  // reddit's answer: no body (account/contract.ts)
       return json(JSON.stringify(posted));
     }
     if (url.pathname === '/api/me.json') return json('{"data":{"id":"y0u","name":"you","modhash":"MOCK","snoovatar_img":"https://i.redd.it/snoovatar/mock.png"}}');
     if (url.pathname.startsWith('/api/filter/') && request.method() === 'GET') return json(await fixture('filters'));
     if ((url.pathname.startsWith('/api/') || url.pathname === '/logout') && request.method() !== 'GET') {
       console.log(`(you) ${request.method()} ${url.pathname} ${request.postData() ?? ''}`);
-      return json('{}');
+      return json(url.pathname === '/api/report' ? '{"json":{"errors":[]}}' : '{}');  // a report's yes: api_type=json
     }
     if (request.resourceType() === 'document') {
       const js = (await readFile(JS, 'utf8')).replace(/<\/script/gi, '<\\/script');

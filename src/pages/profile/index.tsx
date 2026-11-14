@@ -6,6 +6,7 @@
 import { render } from 'preact';
 import { block, hide, report, vote } from '../../account/contract';
 import { sites } from '../../core/domains';
+import { words } from '../../core/words';
 import { pageSearch } from '../../core/paging';
 import { goTo, keepPlace, placeOf } from '../../core/place';
 import { createStore, follow } from '../../core/store';
@@ -36,7 +37,7 @@ export function setUpProfile(shell: Shell) {
       return state.status === 'idle' ? settledOverflow(state) : null;
     });
     startEffects(store, { vote });
-    startOverflow(store, { hide, report, rules: fetchRules, block, sites });
+    startOverflow(store, { hide, report, rules: fetchRules, block, sites, words });
     chrome(store);
     if (place?.state) goTo(place.spot);  // before it shows: no jump
     shell.reveal();

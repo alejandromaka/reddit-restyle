@@ -17,6 +17,7 @@ const filters = readFileSync(resolve(__dirname, 'fixtures/filters.json'), 'utf8'
 const answer = (url: string) => new Response(
   url === '/api/me.json?raw_json=1' ? '{"data":{"id":"y0u","name":"you","modhash":"MODHASH","snoovatar_img":"https://i.redd.it/snoovatar/you.png"}}'
     : url.startsWith('/api/filter/') && !url.includes('/r/') ? filters
+      : url === '/api/report' ? '{"json":{"errors":[]}}'
       : url.startsWith('/api/') || url === '/logout' ? '{}'
       : url.startsWith('/subreddits/') ? subscriptions : url.includes('/about.json') ? about : url.includes('/about/rules.json') ? rules
         : url.includes('after=') ? second : fixture,
@@ -42,7 +43,7 @@ const shell: Shell = {
 };
 
 const titles = () => [...document.querySelectorAll('article > a:first-of-type')].map((a) => a.textContent);
-const pages = () => [...document.querySelectorAll('nav[aria-label="Pages"] > *')].map((page) => [page.textContent, page.getAttribute('href')]);
+const pages = (label = 'Pages') => [...document.querySelectorAll(`nav[aria-label="${label}"] > *`)].map((page) => [page.textContent, page.getAttribute('href')]);
 
 describe('listing page', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -115,6 +116,13 @@ describe('listing page', () => {
     expect(document.querySelector('[aria-current="page"]')!.textContent).toBe('1');
   });
 
+  it('the pages at the top too, at the right of the sorts: just the numbers', async () => {
+    const next = '/r/pics/top/?t=week&count=25&after=t3_1q2c007';
+    await vi.waitFor(() => expect(pages('Pages, at the top')).toEqual([['1', null], ['2', next]]));
+    const row = document.querySelector('select[aria-label="Sort"]')!.closest('label')!.parentElement!;
+    expect(row.contains(document.querySelector('nav[aria-label="Pages, at the top"]'))).toBe(true);
+  });
+
   it('page 1: page 2 asked for after it, for where page 3 starts; 1, 2, 3', async () => {
     const ending = JSON.stringify({ kind: 'Listing', data: { ...JSON.parse(second).data, after: 't3_third' } });
     fetchMock.mockImplementation(async (url: string) => (url.includes('after=') ? new Response(ending) : answer(url)));
@@ -131,6 +139,7 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(titles()).toEqual(['From the next page']));
     const before = '/r/pics/top/?t=week&count=51&before=t3_next';
     expect(pages()).toEqual([['‹ Prev', before], ['1', '/r/pics/top/?t=week'], ['2', before], ['3', null]]);
+    expect(pages('Pages, at the top')).toEqual([['2', before], ['3', null]]);
   });
 
   // The page's menu (in jsdom both the phone's sheet and the wider dropdown are there: the sheet's first)
@@ -207,6 +216,35 @@ describe('listing page', () => {
     localStorage.removeItem(KEY);
   });
 
+  it('muting a word in your account: posts with it in their title or text leave at once (no line); Unmute brings them back', async () => {
+    const KEY = 'reddit-restyle:words';
+    localStorage.removeItem(KEY);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    document.querySelector<HTMLButtonElement>('header button[aria-label="Account"]')!.click();
+    const sheet = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Account"]')!;
+    const muted = [...sheet.querySelectorAll('details')].find((d) => d.querySelector('summary')!.textContent!.startsWith('Muted Words'))!;
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words0');
+    const field = muted.querySelector<HTMLInputElement>('input[name="word"]')!;
+    const mute = (word: string) => {
+      field.value = word;
+      muted.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    };
+    mute('  Lisbon ');  // a title's
+    await vi.waitFor(() => expect(titles()).not.toContain('Three days in Lisbon'));
+    expect(titles()).toHaveLength(6);
+    expect([...document.querySelectorAll('button')].find((b) => b.textContent === 'Undo')).toBeUndefined();
+    mute('please READ');  // a phrase, from the pinned post's text
+    await vi.waitFor(() => expect(titles()).toHaveLength(5));
+    expect(localStorage.getItem(KEY)).toBe('["lisbon","please read"]');
+    expect(muted.querySelector('summary')!.textContent).toBe('Muted Words2');
+    expect([...muted.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['lisbonUnmute', 'please readUnmute']);
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toEqual([]);  // reddit's not told: this device's
+    for (const button of [...muted.querySelectorAll('li button')] as HTMLButtonElement[]) button.click();
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    expect(localStorage.getItem(KEY)).toBe('[]');
+    localStorage.removeItem(KEY);
+  });
+
   it('Hide beside a post’s comments: the same hide as its "…" (a line with Undo, reddit told)', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     const pill = [...document.querySelectorAll<HTMLButtonElement>('article button')].find((b) => b.textContent === 'Hide')!;
@@ -216,24 +254,97 @@ describe('listing page', () => {
     await vi.waitFor(() => expect(posted(fetchMock, '/api/hide')).toEqual([{ id: 't3_1q2c001', uh: 'MODHASH' }]));
   });
 
-  it('reporting a post: its subreddit’s rules for posts and reddit’s, one chosen, sent; thanks', async () => {
+  it('reporting a post, as reddit.com: what’s happening (its subreddit’s rules first), Next, which rule, Submit report; thanks, block them there', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     more(0).click();
     inMenu('Report').click();
     await vi.waitFor(() => expect(report().hasAttribute('inert')).toBe(false));
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/r/pics/about/rules.json?raw_json=1');
-    const reasons = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
-    await vi.waitFor(() => expect(reasons().map((b) => b.textContent)).toEqual([
-      'No screenshots', 'Be civil', 'Spam', 'Personal and confidential information', 'Threatening, harassing, or inciting violence',
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices().map((b) => b.textContent)).toEqual(['Breaks r/pics rules', 'Harassment', 'Spam', 'Copyright violation']));
+    expect(report().querySelector('h2')!.textContent).toBe('Submit a report');
+    expect(button('Next')!.disabled).toBe(true);  // nothing chosen
+    expect(button('Submit report')).toBeUndefined();  // not before the second step
+    choices()[0]!.click();
+    await vi.waitFor(() => expect(button('Next')).toBeDefined());
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Which community rule does this violate?'));
+    expect(choices().map((b) => b.querySelector('span span')!.textContent)).toEqual(['No screenshots', 'Be civil']);  // for posts
+    choices()[1]!.click();
+    await vi.waitFor(() => expect(choices()[1]!.textContent).toContain('No insults.'));  // what it means
+    report().querySelector<HTMLButtonElement>('button[aria-label="Back"]')!.click();  // and back again: still chosen
+    await vi.waitFor(() => expect(choices()[0]!.getAttribute('aria-pressed')).toBe('true'));
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Which community rule does this violate?'));
+    choices()[1]!.click();
+    await vi.waitFor(() => expect(button('Next')!.disabled).toBe(false));
+    button('Next')!.click();  // the second step: what you chose, Submit report
+    await vi.waitFor(() => expect(button('Submit report')).toBeDefined());
+    expect(report().textContent).toContain('Breaks r/pics rules › Be civil');
+    expect(posted(fetchMock, '/api/report')).toEqual([]);  // nothing sent yet
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([
+      { api_type: 'json', thing_id: 't3_1q2c001', reason: 'rule_reason_selected', rule_reason: 'Be civil', uh: 'MODHASH' },
     ]));
-    const send = [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Report')!;
-    expect(send.disabled).toBe(true);
-    reasons()[1]!.click();
-    await vi.waitFor(() => expect(reasons()[1]!.getAttribute('aria-pressed')).toBe('true'));
-    expect(send.disabled).toBe(false);
-    send.click();
-    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([{ api_type: 'json', thing_id: 't3_1q2c001', reason: 'Incivility', uh: 'MODHASH' }]));
-    await vi.waitFor(() => expect(report().textContent).toContain('Thanks for your report'));
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit accepted the report'));
+    const block = choices().find((b) => b.textContent!.startsWith('Block u/'))!;
+    const author = block.querySelector('.rr-font-semibold')!.textContent!.replace('Block u/', '');
+    block.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/block_user')).toEqual([{ name: author, uh: 'MODHASH' }]));
+  });
+
+  it('a report reddit refuses (or answers with anything but a report’s answer): why, on the second step, Try again; never “accepted”', async () => {
+    let reply = '{"json":{"errors":[["RATELIMIT","you are doing that too much","ratelimit"]]}}';
+    fetchMock.mockImplementation(async (url: string) => (url === '/api/report' ? new Response(reply) : answer(url)));
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(0).click();
+    inMenu('Report').click();
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices()).toHaveLength(4));
+    choices()[2]!.click();  // Spam: no question under it, still two steps
+    button('Next')!.click();
+    await vi.waitFor(() => expect(button('Submit report')).toBeDefined());
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit didn’t accept the report: you are doing that too much'));
+    expect(report().textContent).not.toContain('accepted the report.');
+    reply = '{}';
+    button('Try again')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit’s answer wasn’t a report’s: {}'));
+    reply = '{"json":{"errors":[]}}';
+    button('Try again')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit accepted the report'));
+    expect(posted(fetchMock, '/api/report')).toHaveLength(3);
+  });
+
+  it('reporting by reddit’s reasons: its question, a note where it asks, who it’s about; a form on reddit.com instead, where it says', async () => {
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(0).click();
+    inMenu('Report').click();
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices()).toHaveLength(4));
+    choices()[3]!.click();  // Copyright violation
+    await vi.waitFor(() => expect(report().querySelector('a')?.textContent).toBe('Go to the form'));
+    expect(report().querySelector('a')!.href).toBe('https://www.reddithelp.com/hc/en-us/requests/new?ticket_form_id=73933&thing=t3_1q2c001');
+    expect(button('Submit report')).toBeUndefined();
+    choices()[1]!.click();  // Harassment
+    await vi.waitFor(() => expect(button('Next')).toBeDefined());
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Who is being harassed?'));
+    choices()[0]!.click();  // You
+    await vi.waitFor(() => expect(button('Next')!.disabled).toBe(false));
+    button('Next')!.click();
+    await vi.waitFor(() => expect(report().querySelector('textarea')).not.toBeNull());
+    const note = report().querySelector('textarea')!;
+    note.value = 'Again and again';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(button('Submit report')!.disabled).toBe(false));
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([expect.objectContaining({
+      reason: 'site_reason_selected', site_reason: "It's targeted harassment at me", custom_text: 'Again and again', usernames: expect.any(String),
+    })]));
   });
 
   it('top: its span, a dropdown on the week as the address says, each option an address', async () => {
@@ -418,5 +529,21 @@ describe('r/all', () => {
     rail().querySelector<HTMLButtonElement>('button[aria-label="Let r/funny back into r/all"]')!.click();
     await vi.waitFor(() => expect(listed()).toEqual(['r/gaming', 'r/memes', 'r/pics']));
     await vi.waitFor(() => expect(changed('DELETE')).toEqual([['/api/filter/user/you/f/all/r/funny', 'MODHASH', null]]));
+  });
+
+  it('a post’s "…": Filter r/name from r/all, once its filters are in: listed, reddit told, its posts gone, the menu closed', async () => {
+    const menu = () => document.querySelector('[role="dialog"][aria-label="More options"]')!;
+    const labels = () => [...menu().querySelectorAll('button')].map((b) => b.textContent).filter(Boolean);
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    await vi.waitFor(() => expect(show()).toBeTruthy());
+    document.querySelector<HTMLButtonElement>('article button[aria-label="More options"]')!.click();
+    await vi.waitFor(() => expect(menu().hasAttribute('inert')).toBe(false));
+    expect(labels()).toEqual(['Hide', 'Report', 'Block u/pics-mod', 'Filter r/pics from r/all']);
+    [...menu().querySelectorAll('button')].find((b) => b.textContent === 'Filter r/pics from r/all')!.click();
+    await vi.waitFor(() => expect(titles()).toEqual([]));  // every post here is r/pics'
+    expect(menu().hasAttribute('inert')).toBe(true);
+    show().click();
+    await vi.waitFor(() => expect(listed()).toEqual(['r/funny', 'r/gaming', 'r/memes', 'r/pics']));
+    await vi.waitFor(() => expect(changed('PUT')).toEqual([['/api/filter/user/you/f/all/r/pics', 'MODHASH', { model: '{"name":"pics"}' }]]));
   });
 });

@@ -5,6 +5,7 @@
    /api/me.json, asked for once per page (again after a failure). */
 
 import { change, fetchJson, postForm, postJson } from '../core/http';
+import type { ReportReason } from '../overflow/contract';
 
 interface RedditMe {
   data?: { id: string; name: string; modhash: string; snoovatar_img?: string; icon_img?: string };  // none when you're signed out (id: without t2_)
@@ -65,11 +66,19 @@ export async function block(name: string, blocked: boolean) {
 // What reddit says went wrong, from an api_type=json answer's errors ([code, message, field])
 const wrong = (errors: string[][]) => errors.map((error) => error[1] ?? error[0]).join('; ');
 
-// Reporting a post or comment (t3_… or t1_…) to its subreddit's moderators, for
-// a reason: one of its rules, or one of reddit's, in their words
-export async function report(id: string, reason: string) {
-  const answer = await postJson<{ json?: { errors: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, reason, uh: (await myData()).modhash });
-  if (answer.json?.errors.length) throw new Error(wrong(answer.json.errors));
+// Reporting a post or comment (t3_… or t1_…), as reddit.com does: by one of
+// its subreddit's rules, or one of reddit's reasons (a note, who it's about)
+export async function report(id: string, reason: ReportReason) {
+  // reddit refuses a reason over 100 characters, a note over 2000 (r2's VLength; RedReader cuts them the same)
+  const why: Record<string, string> = reason.kind === 'rule'
+    ? { reason: 'rule_reason_selected', rule_reason: reason.text.slice(0, 100) }
+    : { reason: 'site_reason_selected', site_reason: reason.text.slice(0, 100) };
+  if (reason.kind === 'site' && reason.notes) why.custom_text = reason.notes.slice(0, 2000);
+  if (reason.kind === 'site' && reason.usernames) why.usernames = reason.usernames;
+  const answer = await postJson<{ json?: { errors?: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, ...why, uh: (await myData()).modhash });
+  // Accepted: reddit's answer to a report, {"json": {"errors": []}}; anything else isn't a yes
+  if (!answer || typeof answer !== 'object' || !answer.json) throw new Error(`reddit’s answer wasn’t a report’s: ${JSON.stringify(answer).slice(0, 200)}`);
+  if (answer.json.errors?.length) throw new Error(wrong(answer.json.errors));
 }
 
 // r/all's filter: the subreddits you keep out of it, A–Z (/api/filter/user/you/f/all: a multi of them)
@@ -96,17 +105,39 @@ export async function logOut() {
   await postForm('/logout', { uh: (await myData()).modhash, top: 'off' });
 }
 
-// reddit's answer to a comment: what went wrong, else the comment (a t1)
-interface RedditPosted {
-  json: { errors: string[][]; data?: { things: { kind: string; data: unknown }[] } };
+// reddit's answer to a comment (api_type=json, as you, on old.reddit):
+// what went wrong, else the comment, not as a t1's JSON but as old reddit's
+// own page inserts it (r2's CommentJsonTemplate.get_rendered): its fullname
+// (id: t1_…), its markdown (contentText) and that markdown as HTML
+// (contentHTML), its post (link) and parent. No author, score or body: those
+// come from who you are and what you sent (post/contract.ts: postedComment)
+export interface Posted {
+  id: string;           // t1_…
+  text: string;         // its markdown
+  html: string;         // its markdown, as HTML (reddit's <div class="md">)
+  parent: string;       // t3_… or t1_…
+  author: string;       // you
 }
 
-// A comment on a post or a reply to a comment (parent: t3_… or t1_…); the
-// comment as reddit made it (its t1's data: the post page reads it)
-export async function comment(parent: string, text: string): Promise<unknown> {
-  const answer = await postJson<RedditPosted>('/api/comment', { api_type: 'json', thing_id: parent, text, uh: (await myData()).modhash });
-  if (answer.json.errors.length) throw new Error(wrong(answer.json.errors));
-  const made = answer.json.data?.things[0];
-  if (!made) throw new Error('/api/comment: no comment in reddit’s answer');
-  return made.data;
+interface RedditPosted {
+  json?: { errors?: string[][]; data?: { things?: { kind: string; data: { id?: string; contentText?: string; contentHTML?: string; parent?: string } }[] } };
+}
+
+// A comment on a post or a reply to a comment (parent: t3_… or t1_…). Once
+// reddit has it, nothing here throws: the comment is made, and a failure
+// after that would have you send it twice
+export async function comment(parent: string, text: string): Promise<Posted> {
+  const { name, modhash } = await myData();
+  const answer = await postJson<RedditPosted>('/api/comment', { api_type: 'json', raw_json: '1', thing_id: parent, text, uh: modhash });
+  const errors = answer.json?.errors ?? [];
+  if (errors.length) throw new Error(wrong(errors));
+  const made = answer.json?.data?.things?.[0]?.data;
+  if (!made?.id) throw new Error('reddit didn’t say whether it posted. Reload to check before sending again.');
+  return {
+    id: made.id,
+    text: typeof made.contentText === 'string' ? made.contentText : text,
+    html: typeof made.contentHTML === 'string' ? made.contentHTML : '',
+    parent: made.parent ?? parent,
+    author: name,
+  };
 }

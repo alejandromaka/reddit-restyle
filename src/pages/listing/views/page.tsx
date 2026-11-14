@@ -1,13 +1,13 @@
-/* A listing, in the frame: where you are and its sorts, a page of its posts
+/* A listing, in the frame: where you are, its sorts and pages, a page of its posts
    (one you hid here, or by someone or from a site you blocked here: a line,
-   Undo; from a site you blocked before: none), the pages around it; the
-   page's "…" menu, report and block, outside the frame (the menu's dropdown
+   Undo; from a site you blocked before, or with a word you muted: none), the pages around it; the
+   page's "…" menu (r/all: Filter r/name from r/all too), report and block, outside the frame (the menu's dropdown
    is placed on the page) */
 
 import { Loader } from '../../../components/busy';
 import { Pager } from '../../../components/pager';
 import { Frame } from '../../../nav/frame';
-import { isBlocked, postThing, siteBlock, siteOf } from '../../../overflow/state';
+import { isBlocked, mutedBy, postThing, siteBlock, siteOf } from '../../../overflow/state';
 import { HiddenPost, Overflow } from '../../../overflow/views';
 import type { ListingAction, ListingState } from '../types';
 import { FiltersButton, FiltersRail } from './filters';
@@ -27,8 +27,9 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
   // r/all: a subreddit you just filtered out leaves the page at once (reddit leaves it out of the next)
   const out = filters?.status === 'loaded' ? new Set(filters.data.map((name) => name.toLowerCase())) : null;
   const kept = out ? state.posts.filter((post) => !out.has(post.subreddit.toLowerCase())) : state.posts;
-  // A site you blocked before: its posts left out (blocked here: a line, Undo)
-  const posts = kept.filter((post) => siteBlock(state, siteOf(post))?.here !== false);
+  // A site you blocked before: its posts left out (blocked here: a line, Undo); so are those with a muted word
+  const muted = mutedBy(state);
+  const posts = kept.filter((post) => siteBlock(state, siteOf(post))?.here !== false && !muted(post));
   return (
     <>
       <Frame
@@ -68,6 +69,17 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
               filters={filters}
               error={state.filterError}
               onFilter={onFilter}
+            />
+          )}
+          {state.status === 'idle' && (
+            <Pager
+              path={state.path}
+              search={state.search}
+              page={state.page}
+              after={state.after}
+              before={state.before}
+              beyond={state.beyond}
+              top
             />
           )}
         </Sorts>
@@ -142,6 +154,7 @@ export function ListingPage({ state, dispatch }: ListingPageProps) {
       <Overflow
         state={state}
         dispatch={dispatch}
+        onFilter={filters?.status === 'loaded' ? (subreddit) => onFilter(subreddit, true) : undefined}
       />
     </>
   );

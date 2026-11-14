@@ -53,10 +53,10 @@ describe('postReducer', () => {
   it('a comment made: the post’s first, a reply its comment’s first; the boxes reset', () => {
     const made = (findReply(loaded.comments, 't1_c2') as Comment);
     const sent = postReducer(postReducer(loaded, { type: 'comment/requested', parent: 't1_c1', text: 'hi' }), { type: 'comment/posted', parent: 't1_c1', comment: made });
-    expect((findReply(sent.comments, 't1_c1') as Comment).replies[0]).toBe(made);
+    expect((findReply(sent.comments, 't1_c1') as Comment).replies[0]).toMatchObject({ id: made.id, depth: 1 });
     expect(sent).toMatchObject({ sending: null, replyingTo: null, sent: 1 });
     const top = postReducer(loaded, { type: 'comment/posted', parent: 't3_1q2c001', comment: made });
-    expect(top.comments[0]).toBe(made);
+    expect(top.comments[0]).toMatchObject({ id: made.id, depth: 0 });
   });
 
   it('a comment reddit refused: why, for its box', () => {

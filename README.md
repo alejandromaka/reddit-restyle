@@ -55,32 +55,42 @@ pictures from test/fixtures, signed in as a made-up u/you.
 Everything here is old reddit's own JSON and API, called as you with your
 cookies (no API key, no OAuth).
 
+What the statuses mean. **Works**: reads or draws something, in daily use
+on the phone with nothing reported broken. **Untested
+live**: the request matches old reddit's own code (reddit's open-source r2)
+or reddit's API docs, and the automated tests pass, but those tests run
+against hand-written copies of reddit's answers, not reddit itself, so it
+hasn't been confirmed on reddit. Comment posting passed those tests while
+broken on reddit (its copy of reddit's answer was wrong), which is why
+nothing that sends something is marked Works until it's been tried.
+
 | Feature | Status | Reddit endpoint |
 | --- | --- | --- |
 | Front page, Popular, All, subreddits (one or several: r/pics+funny) | Works | `/[r/name/][sort/].json` |
 | Sorts: Best, Hot, New, Top (with its span), Rising | Works | same, with `?t=` |
 | More posts (next page in place) | Works | same, with `?after=` |
 | Subreddit header: banner, icon, members | Works | `/r/name/about.json` |
-| Join, leave | Works | `POST /api/subscribe` |
+| Join, leave | Untested live | `POST /api/subscribe` |
 | Your communities (strip, menu, sidebar) | Works | `/subreddits/mine/subscriber.json` |
 | Media in the feed: pictures, galleries, reddit videos, gifs, link cards | Works | from the listing |
 | A post and its comments, a comment's thread | Works | `/comments/id/….json` |
 | Comment sorts: Best, Top, New, Controversial, Old, Q&A | Works | same, with `?sort=` |
-| "N more replies" | Works | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
-| Search posts: all of reddit, or in a subreddit; by Relevance, Hot, Top, New, Comments, with a span | Works | `/search.json`, `/r/name/search.json?restrict_sr=on` |
+| "N more replies" | Untested live | the page of the comment they're under, `.json` (`/api/morechildren` answers 403) |
+| Search posts: all of reddit, or in a subreddit; by Relevance, Hot, Top, New, Comments, with a span | Untested live | `/search.json`, `/r/name/search.json?restrict_sr=on` |
 | Search comments (the ones loaded) | Works | none: on the page |
 | Pictures and gifs in comments | Works | from the comment's links |
-| Vote | Works | `POST /api/vote` |
-| Comment, reply | Works | `POST /api/comment` |
-| Hide, unhide a post | Works | `POST /api/hide`, `/api/unhide` |
-| Report (by the subreddit's rules) | Works | `/r/name/about/rules.json`, `POST /api/report` |
-| Block, unblock someone | Works | `POST /api/block_user`, `/api/unfriend` |
+| Vote | Untested live | `POST /api/vote` |
+| Comment, reply | Fixed in 0.3.4, untested live (reddit's answer has no body or author: they come from what you sent) | `POST /api/comment` |
+| Hide, unhide a post | Untested live | `POST /api/hide`, `/api/unhide` |
+| Report, as reddit.com's steps (what's happening, its questions, then a second step: what you chose, a note, Submit report; reddit's answer shown: accepted, or why not; block them after) | Untested live | `/r/name/about/rules.json`, `POST /api/report` |
+| Block, unblock someone | Untested live | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
-| r/all filters: add, remove | Works | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
+| Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
+| r/all filters: add (there, or a post's "…" on r/all), remove | Untested live | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
 | Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
-| Share | Works | none: the phone's share sheet |
+| Share | Fixed in 0.3.4, untested live: the phone's share sheet; if Safari won't open it, a sheet with the link and Copy link | none |
 | Dark mode | Works | none: this device, or your system's |
-| Your account (name, avatar), log out | Works | `/api/me.json`, `POST /logout` |
+| Your account (name, avatar), log out | Untested live | `/api/me.json`, `POST /logout` |
 | Save, unsave | Not yet | |
 | Edit or delete your posts and comments | Not yet | |
 | Posting (submit) | Not yet | |
@@ -111,7 +121,7 @@ you tap **Update**.
 There are no analytics, no API key and no server of ours. The script talks
 only to reddit (as you, with your own cookies). The Userscripts app itself
 checks GitHub Pages for updates when you open its popup. What you block or choose on this device (blocked sites,
-dark mode) stays in Safari's storage for old.reddit.com. So do the last few
+muted words, dark mode) stays in Safari's storage for old.reddit.com. So do the last few
 pages you left, for going back to them: in that tab only, gone when it's
 closed.
 
@@ -168,7 +178,8 @@ src/
                      the viewport fixed, our root in place of reddit's markup
   core/
     store.ts         createStore: a page's state (Preact draws from it)
-    http.ts, text.ts, theme.ts (light or dark), domains.ts (sites you block)
+    http.ts, text.ts, theme.ts (light or dark), domains.ts (sites you block),
+                     words.ts (words you mute)
     html.ts          reddit's rendered markdown, rebuilt safe, with our classes
   pages/<page>/      listing (the front page, subreddits), post (a post and its comments)
     contract.ts      reddit's requests and answers (its JSON), read into our
@@ -231,7 +242,11 @@ their posts into a line with Undo and folds their comments, marked Blocked
 site.com in a link post's "…") is this device's (core/domains.ts: reddit
 keeps no such list): its posts, and its subdomains', turn into a line with
 Undo, and from then on are left out; your account's Blocked Domains lists
-them, each with Unblock.
+them, each with Unblock. Muted words are this device's too
+(core/words.ts): in your account's Muted Words you add a word or a phrase,
+and a post with it in its title or text, as a whole word in any case
+(cat, not category), is left out of listings and profiles, with no line;
+each is listed with Unmute. A post you open still shows.
 
 - **post**: a post and its comments (or one comment's thread), as
   reddit.com's: where, when, who, Join; its title, tags and all of it (text,
@@ -261,7 +276,7 @@ reddit's; Enter goes to the results), and your avatar opens your account
 (a sheet from the bottom on a phone, a dropdown on a wide screen): View
 Profile and Settings (old reddit's pages, which break until we build them),
 Dark Mode (this device remembers it; else your system's), Blocked Domains,
-Log Out. The page
+Muted Words, Log Out. The page
 is a column (732px, as reddit.com's) centered in the window; on a screen
 1024px and up (an iPad mini across, 1133px) the menu is also a sidebar,
 always there, at the left edge: from 1280px over the column's margin, and

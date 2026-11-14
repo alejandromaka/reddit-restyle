@@ -6,7 +6,7 @@
    reddit answers /api/morechildren with 403 now. Read into our types, only
    what we draw. */
 
-import { voteOf, type Vote } from '../../account/contract';
+import { voteOf, type Posted, type Vote } from '../../account/contract';
 import { fetchJson } from '../../core/http';
 import { clean } from '../../core/html';
 import { plain } from '../../core/text';
@@ -117,8 +117,34 @@ export function readComment(data: RedditComment): Comment {
   };
 }
 
-// A comment you just made, as reddit answered (account/contract.ts: comment)
-export const readPosted = (data: unknown) => readComment(data as RedditComment);
+// A comment you just made, from reddit's answer (account/contract.ts: comment):
+// yours, upvoted by you (score 1), now; its own thread under the post's
+// (thread: the post's permalink). Its depth and OP mark: the page's reducer
+// (comment/posted), which knows its parent and the post
+export function postedComment(posted: Posted, thread: string): Comment {
+  const escaped = posted.html.trimStart().startsWith('&lt;');  // old reddit's escaping, if raw_json was ignored
+  const html = escaped ? posted.html.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : posted.html;
+  return {
+    kind: 'comment',
+    id: posted.id,
+    author: posted.author,
+    html: clean(html || `<p>${posted.text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`),
+    text: plain(posted.text),
+    score: 1,
+    scoreHidden: false,
+    vote: 1,
+    created: Math.floor(Date.now() / 1000),
+    op: false,
+    mod: false,
+    pinned: false,
+    flair: null,
+    folded: false,
+    blocked: false,
+    depth: 0,
+    permalink: `${thread.replace(/\/$/, '')}/${posted.id.replace(/^t1_/, '')}/`,
+    replies: [],
+  };
+}
 
 // thread: the comment (or post) they're under: its permalink, where "continue this thread" goes (a
 // comment's own page shows its thread)

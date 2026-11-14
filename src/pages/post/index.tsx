@@ -6,6 +6,7 @@
 import { render } from 'preact';
 import { block, comment, hide, report, subscribe, vote } from '../../account/contract';
 import { sites } from '../../core/domains';
+import { words } from '../../core/words';
 import { goTo, keepPlace, placeOf } from '../../core/place';
 import { createStore, follow } from '../../core/store';
 import { requestChrome } from '../../nav/chrome';
@@ -13,7 +14,7 @@ import { fetchRules } from '../../overflow/contract';
 import { settledOverflow, startOverflow } from '../../overflow/state';
 import type { Shell } from '../../shell/blocker';
 import { fetchAbout } from '../listing/contract';
-import { fetchMore, fetchThread, readPosted } from './contract';
+import { fetchMore, fetchThread, postedComment } from './contract';
 import { startEffects } from './effects';
 import { initialState, postReducer } from './reducer';
 import type { PostState } from './types';
@@ -40,9 +41,9 @@ export function setUpPost(shell: Shell) {
       vote,
       subscribe,
       more: fetchMore,
-      comment: async (parent, text) => readPosted(await comment(parent, text)),
+      comment: async (parent, text) => postedComment(await comment(parent, text), store.getState().post?.permalink ?? initial.path),
     });
-    startOverflow(store, { hide, report, rules: fetchRules, block, sites });
+    startOverflow(store, { hide, report, rules: fetchRules, block, sites, words });
     chrome(store);
     if (place?.state) goTo(place.spot);  // before it shows: no jump
     shell.reveal();

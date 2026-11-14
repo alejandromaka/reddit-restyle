@@ -32,5 +32,40 @@
     "Personal and confidential information",
     "Threatening, harassing, or inciting violence"
   ],
-  "site_rules_flow": []
+  "site_rules_flow": [
+    {
+      "reasonTextToShow": "Harassment",
+      "reasonText": "",
+      "nextStepHeader": "Who is being harassed?",
+      "nextStepReasons": [
+        {
+          "reasonTextToShow": "You",
+          "reasonText": "It's targeted harassment at me",
+          "canWriteNotes": true,
+          "notesInputTitle": "Additional information (optional)",
+          "canSpecifyUsernames": true,
+          "usernamesInputTitle": "Username"
+        },
+        {
+          "reasonTextToShow": "Someone else",
+          "reasonText": "It's targeted harassment at someone else",
+          "canSpecifyUsernames": true,
+          "usernamesInputTitle": "Username"
+        }
+      ]
+    },
+    {
+      "reasonTextToShow": "Spam",
+      "reasonText": "This is spam"
+    },
+    {
+      "reasonTextToShow": "Copyright violation",
+      "reasonText": "",
+      "fileComplaint": true,
+      "complaintPrompt": "Copyright reports go through a form on reddit.com.",
+      "complaintButtonText": "Go to the form",
+      "complaintUrl": "https://www.reddithelp.com/hc/en-us/requests/new?ticket_form_id=73933&thing=%28thing%29",
+      "complaintPageTitle": "Copyright"
+    }
+  ]
 }

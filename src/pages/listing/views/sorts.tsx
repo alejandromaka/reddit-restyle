@@ -1,8 +1,10 @@
 /* A listing's sorts, as reddit.com's: a dropdown of them (Best on the front
    page, then Hot, New, Top, Rising; a search's: Relevance, Hot, Top, New,
    Comments), and with Top a second, its span (Now … All time; a search's,
-   with any sort); then anything else the listing has there (r/all: its
-   filters). A line under them. */
+   with any sort); then, at the right, anything else the listing has there
+   (r/all: its filters; its pages). Its words don't wrap: when it's all wider
+   than the screen (r/all, Top, its filters), the row swipes sideways. A line
+   under them. */
 
 import type { ComponentChildren } from 'preact';
 
@@ -41,7 +43,7 @@ export function Sorts({ subreddit, kind, sort, time, path = '', search = '', chi
   const sorted = (name: Sort) => (searching ? searchPath(path, search, name, time) : sortPath(subreddit, name));
   const spanPath = (span: Time) => (searching ? searchPath(path, search, sort, span) : `${sortPath(subreddit, sort)}?t=${span}`);
   return (
-    <div class="rr-flex rr-items-center rr-gap-5 rr-h-12 rr-px-4 rr-border-b rr-border-neutral-border-weak">
+    <div class="rr-flex rr-items-center rr-gap-5 rr-h-12 rr-px-4 rr-overflow-x-auto rr-whitespace-nowrap rr-border-b rr-border-neutral-border-weak">
       <Picker
         label="Sort"
         chosen={SORT_LABELS[sort]}
@@ -56,7 +58,7 @@ export function Sorts({ subreddit, kind, sort, time, path = '', search = '', chi
           options={TIMES.map((span) => [spanPath(span), TIME_LABELS[span]])}
         />
       )}
-      {children}
+      <div class="rr-flex rr-items-center rr-gap-2 rr-ml-auto">{children}</div>
     </div>
   );
 }

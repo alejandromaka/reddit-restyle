@@ -72,10 +72,15 @@ function joined(state: PostState, join: boolean): PostState {
 // A "more", loaded: what came in its place (a "more" for any reddit didn't send among them)
 const loadedMore = (replies: Reply[]) => (): Reply[] => replies;
 
-function posted(state: PostState, parent: string, comment: Comment): PostState {
+// Your comment, in place: first under its parent, a level deeper; OP when the post is yours
+function posted(state: PostState, parent: string, made: Comment): PostState {
   const done = { ...state, sending: null, sendError: null, replyingTo: null, sent: state.sent + 1 };
-  if (parent === state.post?.id) return { ...done, comments: [comment, ...state.comments] };
-  return { ...done, comments: replace(state.comments, parent, (reply) => [reply.kind === 'comment' ? { ...reply, replies: [comment, ...reply.replies] } : reply]) };
+  const comment = { ...made, op: made.author === state.post?.author };
+  if (parent === state.post?.id) return { ...done, comments: [{ ...comment, depth: 0 }, ...state.comments] };
+  return {
+    ...done,
+    comments: replace(state.comments, parent, (reply) => [reply.kind === 'comment' ? { ...reply, replies: [{ ...comment, depth: reply.depth + 1 }, ...reply.replies] } : reply]),
+  };
 }
 
 // The comments as you left them, each one's score and your vote as reddit has them now (none added, gone or moved)
