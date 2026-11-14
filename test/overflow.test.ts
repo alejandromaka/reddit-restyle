@@ -71,7 +71,7 @@ describe('overflowReducer', () => {
     const comment = commentThing('t1_c', 'pics', 'someone');
     const reason = { kind: 'rule', text: 'Be civil' } as const;
     const opened = run({ type: 'report/opened', thing: comment });
-    expect(opened.report).toEqual({ thing: comment, trail: [], choice: null, notes: '', status: 'choosing', error: null, open: true });
+    expect(opened.report).toEqual({ thing: comment, trail: [], choice: null, notes: '', reviewing: false, status: 'choosing', error: null, open: true });
     expect(opened.rules).toEqual({ pics: { status: 'loading' } });
     expect(overflowReducer(opened, { type: 'report/requested', reason })).toBe(opened);  // nothing chosen yet
     expect(overflowReducer(opened, { type: 'report/next' })).toBe(opened);
@@ -84,7 +84,12 @@ describe('overflowReducer', () => {
     const noted = overflowReducer(chosen, { type: 'report/noted', notes: 'more' });
     expect(noted.report?.notes).toBe('more');
     expect(overflowReducer(noted, { type: 'report/chosen', choice: 0 }).report?.notes).toBe('');  // another choice: its own note
-    const sending = overflowReducer(chosen, { type: 'report/requested', reason });
+    expect(overflowReducer(chosen, { type: 'report/requested', reason })).toBe(chosen);  // not before the second step
+    const reviewing = overflowReducer(noted, { type: 'report/review' });
+    expect(reviewing.report).toMatchObject({ trail: [0], choice: 1, notes: 'more', reviewing: true });
+    expect(overflowReducer(reviewing, { type: 'report/chosen', choice: 0 })).toBe(reviewing);  // chosen: Back to change it
+    expect(overflowReducer(reviewing, { type: 'report/back' }).report).toMatchObject({ trail: [0], choice: 1, notes: 'more', reviewing: false });
+    const sending = overflowReducer(reviewing, { type: 'report/requested', reason });
     expect(sending.report).toMatchObject({ trail: [0], choice: 1, status: 'sending' });
     expect(overflowReducer(sending, { type: 'report/requested', reason })).toBe(sending);
     expect(overflowReducer(sending, { type: 'report/chosen', choice: 0 })).toBe(sending);

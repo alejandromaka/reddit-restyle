@@ -17,6 +17,7 @@ const filters = readFileSync(resolve(__dirname, 'fixtures/filters.json'), 'utf8'
 const answer = (url: string) => new Response(
   url === '/api/me.json?raw_json=1' ? '{"data":{"id":"y0u","name":"you","modhash":"MODHASH","snoovatar_img":"https://i.redd.it/snoovatar/you.png"}}'
     : url.startsWith('/api/filter/') && !url.includes('/r/') ? filters
+      : url === '/api/report' ? '{"json":{"errors":[]}}'
       : url.startsWith('/api/') || url === '/logout' ? '{}'
       : url.startsWith('/subreddits/') ? subscriptions : url.includes('/about.json') ? about : url.includes('/about/rules.json') ? rules
         : url.includes('after=') ? second : fixture,
@@ -263,7 +264,8 @@ describe('listing page', () => {
     const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
     await vi.waitFor(() => expect(choices().map((b) => b.textContent)).toEqual(['Breaks r/pics rules', 'Harassment', 'Spam', 'Copyright violation']));
     expect(report().querySelector('h2')!.textContent).toBe('Submit a report');
-    expect(button('Submit report')!.disabled).toBe(true);
+    expect(button('Next')!.disabled).toBe(true);  // nothing chosen
+    expect(button('Submit report')).toBeUndefined();  // not before the second step
     choices()[0]!.click();
     await vi.waitFor(() => expect(button('Next')).toBeDefined());
     button('Next')!.click();
@@ -276,16 +278,44 @@ describe('listing page', () => {
     button('Next')!.click();
     await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Which community rule does this violate?'));
     choices()[1]!.click();
-    await vi.waitFor(() => expect(button('Submit report')!.disabled).toBe(false));
+    await vi.waitFor(() => expect(button('Next')!.disabled).toBe(false));
+    button('Next')!.click();  // the second step: what you chose, Submit report
+    await vi.waitFor(() => expect(button('Submit report')).toBeDefined());
+    expect(report().textContent).toContain('Breaks r/pics rules › Be civil');
+    expect(posted(fetchMock, '/api/report')).toEqual([]);  // nothing sent yet
     button('Submit report')!.click();
     await vi.waitFor(() => expect(posted(fetchMock, '/api/report')).toEqual([
       { api_type: 'json', thing_id: 't3_1q2c001', reason: 'rule_reason_selected', rule_reason: 'Be civil', uh: 'MODHASH' },
     ]));
-    await vi.waitFor(() => expect(report().textContent).toContain('Thanks for your report'));
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit accepted the report'));
     const block = choices().find((b) => b.textContent!.startsWith('Block u/'))!;
     const author = block.querySelector('.rr-font-semibold')!.textContent!.replace('Block u/', '');
     block.click();
     await vi.waitFor(() => expect(posted(fetchMock, '/api/block_user')).toEqual([{ name: author, uh: 'MODHASH' }]));
+  });
+
+  it('a report reddit refuses (or answers with anything but a report’s answer): why, on the second step, Try again; never “accepted”', async () => {
+    let reply = '{"json":{"errors":[["RATELIMIT","you are doing that too much","ratelimit"]]}}';
+    fetchMock.mockImplementation(async (url: string) => (url === '/api/report' ? new Response(reply) : answer(url)));
+    await vi.waitFor(() => expect(titles()).toHaveLength(7));
+    more(0).click();
+    inMenu('Report').click();
+    const choices = () => [...report().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
+    const button = (label: string) => [...report().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label);
+    await vi.waitFor(() => expect(choices()).toHaveLength(4));
+    choices()[2]!.click();  // Spam: no question under it, still two steps
+    button('Next')!.click();
+    await vi.waitFor(() => expect(button('Submit report')).toBeDefined());
+    button('Submit report')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit didn’t accept the report: you are doing that too much'));
+    expect(report().textContent).not.toContain('accepted the report.');
+    reply = '{}';
+    button('Try again')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit’s answer wasn’t a report’s: {}'));
+    reply = '{"json":{"errors":[]}}';
+    button('Try again')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('reddit accepted the report'));
+    expect(posted(fetchMock, '/api/report')).toHaveLength(3);
   });
 
   it('reporting by reddit’s reasons: its question, a note where it asks, who it’s about; a form on reddit.com instead, where it says', async () => {
@@ -304,6 +334,8 @@ describe('listing page', () => {
     button('Next')!.click();
     await vi.waitFor(() => expect(report().querySelector('h2')!.textContent).toBe('Who is being harassed?'));
     choices()[0]!.click();  // You
+    await vi.waitFor(() => expect(button('Next')!.disabled).toBe(false));
+    button('Next')!.click();
     await vi.waitFor(() => expect(report().querySelector('textarea')).not.toBeNull());
     const note = report().querySelector('textarea')!;
     note.value = 'Again and again';

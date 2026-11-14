@@ -81,7 +81,7 @@ nothing that sends something is marked Works until it's been tried.
 | Vote | Untested live | `POST /api/vote` |
 | Comment, reply | Fixed in 0.3.4, untested live (reddit's answer has no body or author: they come from what you sent) | `POST /api/comment` |
 | Hide, unhide a post | Untested live | `POST /api/hide`, `/api/unhide` |
-| Report, as reddit.com's steps (the subreddit's rules, reddit's reasons and their questions; block them after) | Untested live | `/r/name/about/rules.json`, `POST /api/report` |
+| Report, as reddit.com's steps (what's happening, its questions, then a second step: what you chose, a note, Submit report; reddit's answer shown: accepted, or why not; block them after) | Untested live | `/r/name/about/rules.json`, `POST /api/report` |
 | Block, unblock someone | Untested live | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
 | Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |

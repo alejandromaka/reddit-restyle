@@ -75,8 +75,10 @@ export async function report(id: string, reason: ReportReason) {
     : { reason: 'site_reason_selected', site_reason: reason.text.slice(0, 100) };
   if (reason.kind === 'site' && reason.notes) why.custom_text = reason.notes.slice(0, 2000);
   if (reason.kind === 'site' && reason.usernames) why.usernames = reason.usernames;
-  const answer = await postJson<{ json?: { errors: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, ...why, uh: (await myData()).modhash });
-  if (answer.json?.errors?.length) throw new Error(wrong(answer.json.errors));
+  const answer = await postJson<{ json?: { errors?: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, ...why, uh: (await myData()).modhash });
+  // Accepted: reddit's answer to a report, {"json": {"errors": []}}; anything else isn't a yes
+  if (!answer || typeof answer !== 'object' || !answer.json) throw new Error(`reddit’s answer wasn’t a report’s: ${JSON.stringify(answer).slice(0, 200)}`);
+  if (answer.json.errors?.length) throw new Error(wrong(answer.json.errors));
 }
 
 // r/all's filter: the subreddits you keep out of it, A–Z (/api/filter/user/you/f/all: a multi of them)

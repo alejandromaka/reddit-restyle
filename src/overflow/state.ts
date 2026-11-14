@@ -42,6 +42,7 @@ export interface OverflowState {
     trail: number[];             // the steps gone through (Next), by place in each list
     choice: number | null;       // the one chosen on this step
     notes: string;               // more, in your words (where reddit asks)
+    reviewing: boolean;          // the second step, as reddit.com's: what you chose, a note, Submit report
     status: 'choosing' | 'sending' | 'sent' | 'failed';
     error: string | null;        // why it didn't go
     open: boolean;
@@ -81,6 +82,7 @@ export type OverflowAction =
   | { type: 'report/chosen'; choice: number }
   | { type: 'report/next' }                                  // into the choice's questions
   | { type: 'report/back' }
+  | { type: 'report/review' }                                // a reason chosen: on to Submit report
   | { type: 'report/noted'; notes: string }
   | { type: 'report/requested'; reason: ReportReason }
   | { type: 'report/sent' }
@@ -98,7 +100,7 @@ export type OverflowAction =
 
 const TYPES = new Set<string>([
   'menu/opened', 'menu/closed', 'hide/requested', 'hide/failed', 'report/opened', 'report/chosen',
-  'report/next', 'report/back', 'report/noted', 'report/requested', 'report/sent', 'report/failed', 'report/closed', 'rules/loaded', 'rules/failed',
+  'report/next', 'report/back', 'report/review', 'report/noted', 'report/requested', 'report/sent', 'report/failed', 'report/closed', 'rules/loaded', 'rules/failed',
   'block/opened', 'block/closed', 'block/requested', 'block/failed', 'domain/requested', 'domains/loaded',
   'words/loaded',
 ]);
@@ -131,26 +133,31 @@ export function overflowReducer<S extends OverflowState>(state: S, action: Overf
       return {
         ...state,
         menu: closed(state.menu),
-        report: { thing: action.thing, trail: [], choice: null, notes: '', status: 'choosing', error: null, open: true },
+        report: { thing: action.thing, trail: [], choice: null, notes: '', reviewing: false, status: 'choosing', error: null, open: true },
         rules: state.rules[subreddit] ? state.rules : { ...state.rules, [subreddit]: { status: 'loading' } },
       };
     }
     case 'report/chosen':
-      return choosing(state.report)
+      return choosing(state.report) && !state.report.reviewing
         ? { ...state, report: { ...state.report, choice: action.choice, notes: action.choice === state.report.choice ? state.report.notes : '', status: 'choosing', error: null } }
         : state;
     case 'report/next':
-      return choosing(state.report) && state.report.choice !== null
+      return choosing(state.report) && !state.report.reviewing && state.report.choice !== null
         ? { ...state, report: { ...state.report, trail: [...state.report.trail, state.report.choice], choice: null, notes: '', status: 'choosing', error: null } }
         : state;
+    case 'report/review':
+      return choosing(state.report) && state.report.choice !== null
+        ? { ...state, report: { ...state.report, reviewing: true, status: 'choosing', error: null } }
+        : state;
     case 'report/back':
+      if (choosing(state.report) && state.report.reviewing) return { ...state, report: { ...state.report, reviewing: false, status: 'choosing', error: null } };
       return choosing(state.report) && state.report.trail.length
         ? { ...state, report: { ...state.report, trail: state.report.trail.slice(0, -1), choice: state.report.trail.at(-1)!, notes: '', status: 'choosing', error: null } }
         : state;
     case 'report/noted':
       return choosing(state.report) ? { ...state, report: { ...state.report, notes: action.notes } } : state;
     case 'report/requested':
-      return choosing(state.report) && state.report.choice !== null
+      return choosing(state.report) && state.report.reviewing && state.report.choice !== null
         ? { ...state, report: { ...state.report, status: 'sending', error: null } }
         : state;
     case 'report/sent':
