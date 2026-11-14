@@ -34,6 +34,10 @@
   --color-tags-moderator-content: #016e0b;
   --color-tags-nsfw-background: #fcedf4;             /* NSFW */
   --color-tags-nsfw-content: #b2007f;
+  --color-tags-caution-background: #fff3d6;          /* ours: Bot 30–69% */
+  --color-tags-caution-content: #7a4f00;
+  --color-tags-danger-background: #fde7ea;           /* ours: Bot 70% and up */
+  --color-tags-danger-content: #bc0117;              /* --color-danger-content */
   --color-media-background: #00000099;               /* a pill on a picture */
   --color-media-onBackground: #fff;
   --color-lightbox: #000;                            /* behind a picture opened big */
@@ -102,6 +106,10 @@
   --color-tags-moderator-content: #00c61c;           /* --color-tags-success-media-content-weaker */
   --color-tags-nsfw-background: #3a0f2a;             /* ≈ */
   --color-tags-nsfw-content: #ff7eca;                /* --color-tags-nsfw-media-content-weaker */
+  --color-tags-caution-background: #3a2c08;          /* ours */
+  --color-tags-caution-content: #ffc94d;
+  --color-tags-danger-background: #3d1015;           /* ours */
+  --color-tags-danger-content: #ff6b6b;              /* --color-danger-content */
   --color-danger-content: #ff6b6b;                   /* ≈ */
   --loader-color: #fff;                              /* ≈ */
 }

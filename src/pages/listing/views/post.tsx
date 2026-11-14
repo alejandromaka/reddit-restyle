@@ -1,10 +1,11 @@
 /* A post in a listing: where (a mixed listing: its subreddit; one subreddit's:
-   who) and when, and its "…" (Hide, Report), its title, its media (it plays,
+   who) and when, how bot-like its author looks (Bot 12%), and its "…" (Hide, Report), its title, its media (it plays,
    it opens big) or the start of its text, its score, comments and Hide (or
    Unhide). Only its title and its comments open its page: a tap anywhere
    else (its media, its text) doesn't. */
 
 import type { Vote } from '../../../account/contract';
+import { BotBadge } from '../../../bots/badge';
 import { Avatar } from '../../../components/avatar';
 import { Icon } from '../../../components/icon';
 import { Tags } from '../../../components/tags';
@@ -51,6 +52,7 @@ export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCa
           </a>
         )}
         <span class="rr-flex-none">· {ago(post.created)}</span>
+        <BotBadge name={post.author} />
         <span class="rr-ml-auto -rr-my-2">
           <MoreButton onOpen={onMore} />
         </span>

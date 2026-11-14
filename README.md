@@ -85,6 +85,7 @@ nothing that sends something is marked Works until it's been tried.
 | Block, unblock someone | Untested live | `POST /api/block_user`, `/api/unfriend` |
 | Block a site (this device only) | Works | none: reddit keeps no such list |
 | Mute words: posts with one in their title or text don't show (this device only) | Works | none: on the page |
+| Bot-likeness on posts ("Bot 12%"; tap it for why): a guess from the author's account (age, post vs comment karma, verified email, avatar, bio, name; suspended or gone), asked only for posts you scroll near, two at a time, each author kept on this device for a day | New in 0.3.6, untested live | `/user/name/about.json` |
 | r/all filters: add (there, or a post's "…" on r/all), remove | Untested live | `/api/filter/user/you/f/all` (GET, PUT, DELETE) |
 | Profiles: Overview, Posts, Comments; yours also Saved, Hidden, Upvoted, Downvoted | Works | `/user/name/about.json`, `/user/name/[tab]/.json` |
 | Share | Fixed in 0.3.4, untested live: the phone's share sheet; if Safari won't open it, a sheet with the link and Copy link | none |
