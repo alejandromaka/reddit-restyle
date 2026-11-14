@@ -14,7 +14,7 @@ import { fetchRules } from '../../overflow/contract';
 import { settledOverflow, startOverflow } from '../../overflow/state';
 import type { Shell } from '../../shell/blocker';
 import { fetchAbout } from '../listing/contract';
-import { fetchMore, fetchThread, readPosted } from './contract';
+import { fetchMore, fetchThread, postedComment } from './contract';
 import { startEffects } from './effects';
 import { initialState, postReducer } from './reducer';
 import type { PostState } from './types';
@@ -41,7 +41,7 @@ export function setUpPost(shell: Shell) {
       vote,
       subscribe,
       more: fetchMore,
-      comment: async (parent, text) => readPosted(await comment(parent, text)),
+      comment: async (parent, text) => postedComment(await comment(parent, text), store.getState().post?.permalink ?? initial.path),
     });
     startOverflow(store, { hide, report, rules: fetchRules, block, sites, words });
     chrome(store);

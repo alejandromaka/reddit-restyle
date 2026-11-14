@@ -2,12 +2,12 @@
    subreddit's icon; Join, "…"), its title and tags, all of it (text, pictures,
    video, link), then its votes, comments and Share */
 
-import { useState } from 'preact/hooks';
 import type { Vote } from '../../../account/contract';
 import { Avatar } from '../../../components/avatar';
 import { Icon } from '../../../components/icon';
 import { JoinButton } from '../../../components/join';
 import { Markdown } from '../../../components/markdown';
+import { ShareButton } from '../../../components/share';
 import { Tags } from '../../../components/tags';
 import { ui } from '../../../components/ui';
 import { Votes } from '../../../components/votes';
@@ -102,35 +102,11 @@ export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps)
           <Icon name="comments" />
           {compact(post.comments)}
         </a>
-        <Share
+        <ShareButton
           title={post.title}
           url={`https://www.reddit.com${post.permalink}`}
         />
       </div>
     </article>
-  );
-}
-
-// Share: the phone's own share sheet (else the address, copied)
-function Share({ title, url }: { title: string; url: string }) {
-  const [copied, setCopied] = useState(false);
-  const share = () => {
-    if (navigator.share) {
-      navigator.share({ title, url }).catch((error: unknown) => {
-        if ((error as Error).name !== 'AbortError') console.error(error);  // AbortError: you closed the sheet
-      });
-    } else {
-      navigator.clipboard.writeText(url).then(() => setCopied(true), (error: unknown) => console.error(error));
-    }
-  };
-  return (
-    <button
-      type="button"
-      class={ui.action}
-      onClick={share}
-    >
-      <Icon name="share" />
-      {copied ? 'Copied' : 'Share'}
-    </button>
   );
 }

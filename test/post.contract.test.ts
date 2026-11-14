@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { clean, type Picture } from '../src/core/html';
 import { picturesOf } from '../src/pages/listing/contract';
-import { moreUrl, readMore, readThread, threadUrl, type Comment, type More } from '../src/pages/post/contract';
+import { moreUrl, postedComment, readMore, readThread, threadUrl, type Comment, type More } from '../src/pages/post/contract';
 
 const fixture = (name: string) => JSON.parse(readFileSync(resolve(__dirname, `fixtures/${name}.json`), 'utf8'));
 
@@ -178,5 +178,25 @@ describe('addresses', () => {
     const more: More = { kind: 'more', id: 'm1', parent: 't1_c1', count: 3, children: ['c5'], depth: 1, continueAt: null };
     expect(moreUrl(more, 'top', '/r/pics/comments/abc/title/')).toBe('/r/pics/comments/abc/title/c1/.json?sort=top&limit=500&raw_json=1&sr_detail=1');
     expect(moreUrl({ ...more, parent: 't3_abc' }, 'new', '/r/pics/comments/abc/title/')).toBe('/r/pics/comments/abc/title/.json?sort=new&limit=500&raw_json=1&sr_detail=1');
+  });
+});
+
+/* /api/comment's answer, as old reddit sends it to a signed-in browser (r2's
+   CommentJsonTemplate.get_rendered, through jquery.insert_things): no body,
+   author or score; contentText, contentHTML, link, parent. A t1's JSON was
+   assumed here once, and every comment failed after it was posted
+   ("markdown.replace"). */
+describe('a comment you made, from reddit’s answer', () => {
+  const posted = { id: 't1_new1', text: 'Nice **one**', html: '<div class="md"><p>Nice <strong>one</strong></p></div>', parent: 't1_c1', author: 'you' };
+
+  it('yours, upvoted, now; its HTML cleaned; its own thread under the post', () => {
+    const comment = postedComment(posted, '/r/pics/comments/abc/title/');
+    expect(comment).toMatchObject({ id: 't1_new1', author: 'you', score: 1, vote: 1, text: 'Nice one', permalink: '/r/pics/comments/abc/title/new1/' });
+    expect(comment.html).toContain('<strong');
+  });
+
+  it('HTML escaped (raw_json not honored) or missing: still drawn', () => {
+    expect(postedComment({ ...posted, html: '&lt;div class="md"&gt;&lt;p&gt;Nice&lt;/p&gt;&lt;/div&gt;' }, '/comments/abc/').html).toMatch(/<p[^>]*>Nice<\/p>/);
+    expect(postedComment({ ...posted, html: '', text: 'a <b>' }, '/comments/abc/').html).toContain('a &lt;b&gt;');
   });
 });

@@ -69,7 +69,8 @@ function readStep(redditStep: RedditStep): Step {
     ...step(redditStep.reasonTextToShow),
     question: next.length ? redditStep.nextStepHeader || null : null,
     next,
-    reason: !next.length && !redditStep.fileComplaint && reasonText ? { kind: 'site', text: reasonText, usernames: Boolean(redditStep.canSpecifyUsernames) } : null,
+    // a last step without reasonText still reports (by its name, as reddit.com would show it): else Submit could never be tapped
+    reason: !next.length && !redditStep.fileComplaint ? { kind: 'site', text: reasonText || redditStep.reasonTextToShow, usernames: Boolean(redditStep.canSpecifyUsernames) } : null,
     notes: redditStep.canWriteNotes ? { title: redditStep.notesInputTitle || 'Additional information (optional)', limit: redditStep.isAbuseOfReportButton ? 250 : 2000 } : null,
     complaint: redditStep.fileComplaint && complaintUrl
       ? { prompt: redditStep.complaintPrompt ?? '', url: complaintUrl, button: redditStep.complaintButtonText || 'Continue' }
