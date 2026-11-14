@@ -1,8 +1,9 @@
 /* The post, as reddit.com shows it on its page: where, when and who (its
-   subreddit's icon; Join, "…"), its title and tags, all of it (text, pictures,
+   subreddit's icon; how bot-like they look; Join, "…"), its title and tags, all of it (text, pictures,
    video, link), then its votes, comments and Share */
 
 import type { Vote } from '../../../account/contract';
+import { BotBadge } from '../../../bots/badge';
 import { Avatar } from '../../../components/avatar';
 import { Icon } from '../../../components/icon';
 import { JoinButton } from '../../../components/join';
@@ -45,7 +46,7 @@ export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps)
           />
         </a>
         <div class="rr-grid rr-min-w-0 rr-text-xs rr-text-neutral-content-weak">
-          <p class="rr-flex rr-gap-1">
+          <p class="rr-flex rr-items-center rr-gap-1">
             <a
               class="rr-truncate rr-font-semibold rr-text-neutral-content-strong"
               href={`/r/${post.subreddit}/`}
@@ -53,6 +54,7 @@ export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps)
               r/{post.subreddit}
             </a>
             <span class="rr-flex-none">· {ago(post.created)}</span>
+            <BotBadge name={post.author} />
           </p>
           <a
             class="rr-truncate"
