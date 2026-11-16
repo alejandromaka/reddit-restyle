@@ -66,16 +66,19 @@ export async function block(name: string, blocked: boolean) {
 // What reddit says went wrong, from an api_type=json answer's errors ([code, message, field])
 const wrong = (errors: string[][]) => errors.map((error) => error[1] ?? error[0]).join('; ');
 
-// Reporting a post or comment (t3_… or t1_…), as reddit.com does: by one of
-// its subreddit's rules, or one of reddit's reasons (a note, who it's about)
-export async function report(id: string, reason: ReportReason) {
+// Reporting a post or comment (t3_… or t1_…), as old reddit's own report
+// form does: by one of its subreddit's rules (its violation_reason), your
+// own words (Custom response), or one of reddit's reasons (a note, who it's about)
+export async function report(id: string, subreddit: string, reason: ReportReason) {
   // reddit refuses a reason over 100 characters, a note over 2000 (r2's VLength; RedReader cuts them the same)
   const why: Record<string, string> = reason.kind === 'rule'
     ? { reason: 'rule_reason_selected', rule_reason: reason.text.slice(0, 100) }
-    : { reason: 'site_reason_selected', site_reason: reason.text.slice(0, 100) };
+    : reason.kind === 'other'
+      ? { reason: 'other', other_reason: reason.text.slice(0, 100) }
+      : { reason: 'site_reason_selected', site_reason: reason.text.slice(0, 100) };
   if (reason.kind === 'site' && reason.notes) why.custom_text = reason.notes.slice(0, 2000);
   if (reason.kind === 'site' && reason.usernames) why.usernames = reason.usernames;
-  const answer = await postJson<{ json?: { errors?: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, ...why, uh: (await myData()).modhash });
+  const answer = await postJson<{ json?: { errors?: string[][] } }>('/api/report', { api_type: 'json', thing_id: id, sr_name: subreddit, ...why, uh: (await myData()).modhash });
   // Accepted: reddit's answer to a report, {"json": {"errors": []}}; anything else isn't a yes
   if (!answer || typeof answer !== 'object' || !answer.json) throw new Error(`reddit’s answer wasn’t a report’s: ${JSON.stringify(answer).slice(0, 200)}`);
   if (answer.json.errors?.length) throw new Error(wrong(answer.json.errors));

@@ -3,7 +3,7 @@
    bottom, wider a dropdown under the "…"): Hide or Unhide (a post), Report,
    Block u/name (or Unblock; not yours), Block site.com (a post linking off
    reddit; or Unblock), Filter r/name from r/all (on r/all, its filters in). Report: reddit.com's steps (its rules or reddit's
-   reasons, and their questions), Submit report, thanks (block them there too); Block u/name: are you sure? (each a sheet; wider, a dialog
+   reasons, and their questions), Submit, thanks (block them there too); Block u/name: are you sure? (each a sheet; wider, a dialog
    in the middle). A post you hid, or whose author or site you blocked here,
    in a listing: a line saying so, Undo. */
 
@@ -259,11 +259,42 @@ interface ReportFormProps {
   dispatch: (action: OverflowAction) => void;
 }
 
-// A report, as reddit.com's: "Submit a report", what's happening (a reason,
-// Next for its questions, Back), Submit report; thanks, and blocking its
-// author there. Taps in it choose, they don't close it (the sheet closes on a tap in it)
+const primary = 'rr-h-10 rr-px-4 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled';
+
+// reddit.com's report's top: Back (past the first step), "Submit a report" (or the thanks), ×
+function ReportHeader({ title, back, dispatch }: { title: string; back: boolean; dispatch: (action: OverflowAction) => void }) {
+  return (
+    <div class="rr-flex rr-items-center rr-gap-2">
+      {back && (
+        <button
+          type="button"
+          class={ui.icon}
+          aria-label="Back"
+          onClick={() => dispatch({ type: 'report/back' })}
+        >
+          <Icon name="back" large />
+        </button>
+      )}
+      <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">{title}</h2>
+      <button
+        type="button"
+        class={cx(ui.icon, 'rr-bg-secondary-background')}
+        aria-label="Close"
+        onClick={() => dispatch({ type: 'report/closed' })}
+      >
+        <Icon name="close" />
+      </button>
+    </div>
+  );
+}
+
+// A report, as reddit.com's: "Submit a report", what's happening (pills; the
+// chosen one's name and meaning, Next), then its question (a list: Submit,
+// or Next where there's another), a note where reddit asks, Back, ×; thanks,
+// and blocking its author there. Taps in it choose, they don't close it (the
+// sheet closes on a tap in it)
 function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormProps) {
-  const { thing, trail, choice, notes, reviewing, status, error } = report;
+  const { thing, trail, choice, notes, status, error } = report;
   const stop = (event: Event) => event.stopPropagation();
   if (status === 'sent') {
     return (
@@ -271,7 +302,7 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
         class="rr-grid rr-gap-4 rr-px-4"
         onClick={stop}
       >
-        <h2 class="rr-text-lg rr-font-bold">Thanks for your report</h2>
+        <ReportHeader title="Thanks for your report" back={false} dispatch={dispatch} />
         <p
           class="rr-flex rr-items-center rr-gap-2 rr-font-semibold rr-text-tags-moderator-content"
           role="status"
@@ -279,7 +310,7 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
           <Icon name="check" />
           reddit accepted the report
         </p>
-        <p class="rr-text-xs rr-text-neutral-content-weak">It answered your report with no errors. Thanks for looking out for yourself and your fellow redditors.</p>
+        <p class="rr-text-neutral-content-weak">Thanks for looking out for yourself and your fellow redditors.</p>
         {blockable && (
           <button
             type="button"
@@ -310,7 +341,7 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
         class="rr-grid rr-gap-4 rr-px-4"
         onClick={stop}
       >
-        <h2 class="rr-text-lg rr-font-bold">Submit a report</h2>
+        <ReportHeader title="Submit a report" back={false} dispatch={dispatch} />
         {rules.status === 'loading' ? <Loader /> : <p class="rr-text-xs rr-text-danger-content">{rules.error}</p>}
       </div>
     );
@@ -318,113 +349,116 @@ function ReportForm({ report, rules, blockable, blocked, dispatch }: ReportFormP
   const { steps, choices } = stepsAt(reportFlow(rules.data, thing), trail);
   const asking = steps.at(-1);  // the step whose question this is (none: the first)
   const chosen = choice === null ? null : choices[choice] ?? null;
-  const reason: ReportReason | null = chosen?.reason
-    ? chosen.reason.kind === 'rule'
+  const reason: ReportReason | null = !chosen?.reason
+    ? null
+    : chosen.reason.kind === 'rule'
       ? { kind: 'rule', text: chosen.reason.text }
-      : { kind: 'site', text: chosen.reason.text, notes: notes.trim(), usernames: chosen.reason.usernames && thing.author !== '[deleted]' ? thing.author : null }
-    : null;
-  const primary = 'rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground disabled:rr-bg-button-primary-background-disabled disabled:rr-text-button-primary-text-disabled';
-  const back = (
+      : chosen.reason.kind === 'other'
+        ? (notes.trim() ? { kind: 'other', text: notes.trim() } : null)  // Custom response: your words, or nothing to send
+        : { kind: 'site', text: chosen.reason.text, notes: notes.trim(), usernames: chosen.reason.usernames && thing.author !== '[deleted]' ? thing.author : null };
+  const sending = status === 'sending';
+  const more = Boolean(chosen?.next.length);  // Next: its question; else Submit sends it
+
+  // Next, Submit, or (not a report) reddit's form for it, in a new tab
+  const button = chosen?.complaint ? (
+    <a
+      class={cx(primary, 'rr-flex rr-items-center')}
+      href={complaintUrl(chosen.complaint.url, thing.id)}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {chosen.complaint.button}
+    </a>
+  ) : more || !chosen ? (
     <button
       type="button"
-      class={ui.icon}
-      aria-label="Back"
-      onClick={() => dispatch({ type: 'report/back' })}
+      class={primary}
+      disabled={!chosen}
+      onClick={() => dispatch({ type: 'report/next' })}
     >
-      <Icon name="back" large />
+      {more || !asking ? 'Next' : 'Submit'}
     </button>
+  ) : (
+    <BusyButton
+      busy={sending}
+      class={primary}
+      disabled={!reason}
+      onClick={() => reason && dispatch({ type: 'report/requested', reason })}
+    >
+      {error ? 'Try again' : 'Submit'}
+    </BusyButton>
   );
 
-  // The second step, as reddit.com's: what you're reporting and why, a note where reddit asks, Submit report
-  if (reviewing && chosen && reason) {
-    const sending = status === 'sending';
-    return (
-      <div
-        class="rr-grid rr-gap-4 rr-px-4"
-        onClick={stop}
-      >
-        <div class="rr-flex rr-items-center rr-gap-2">
-          {back}
-          <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">Submit a report</h2>
-        </div>
-        <div class="rr-grid rr-gap-1">
-          <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">Reporting this {thing.kind}{thing.author !== '[deleted]' && ` by u/${thing.author}`} for</span>
-          <span class="rr-font-semibold rr-break-words">{[...steps, chosen].map((step) => step.label).join(' › ')}</span>
-          {chosen.about && <span class="rr-text-xs rr-text-neutral-content-weak rr-break-words">{chosen.about}</span>}
-          {reason.kind === 'site' && reason.usernames && <span class="rr-text-xs rr-text-neutral-content-weak">About u/{reason.usernames}</span>}
-        </div>
-        {chosen.notes && (
-          <label class="rr-grid rr-gap-2">
-            <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{chosen.notes.title}</span>
-            <textarea
-              class="rr-block rr-w-full rr-min-h-24 rr-p-2 rr-text-base rr-rounded-media rr-border rr-border-neutral-border-medium rr-outline-none"
-              maxLength={chosen.notes.limit}
-              value={notes}
-              disabled={sending}
-              onInput={(event) => dispatch({ type: 'report/noted', notes: event.currentTarget.value })}
-            />
-          </label>
-        )}
-        {sending && <p class="rr-text-xs rr-text-neutral-content-weak" role="status">Sending to reddit…</p>}
-        {error && (
-          <p
-            class="rr-text-xs rr-text-danger-content"
-            role="alert"
-          >
-            reddit didn’t accept the report: {error.replace(/^Error: /, '')}
-          </p>
-        )}
-        <BusyButton
-          busy={sending}
-          class={primary}
-          onClick={() => dispatch({ type: 'report/requested', reason })}
-        >
-          {error ? 'Try again' : 'Submit report'}
-        </BusyButton>
-      </div>
-    );
-  }
-
-  // The first step (what's happening), and its questions: a choice, then Next
   return (
     <div
       class="rr-grid rr-gap-4 rr-px-4"
       onClick={stop}
     >
-      {asking ? (
-        <div class="rr-flex rr-items-center rr-gap-2">
-          {back}
-          <h2 class="rr-flex-1 rr-min-w-0 rr-text-lg rr-font-bold">{asking.question}</h2>
-        </div>
-      ) : (
-        <>
-          <h2 class="rr-text-lg rr-font-bold">Submit a report</h2>
-          <p class="rr-text-neutral-content-weak">Thanks for looking out for yourself and your fellow redditors by reporting things that break the rules. Let us know what’s happening, and we’ll look into it.</p>
-        </>
-      )}
+      <ReportHeader title="Submit a report" back={Boolean(asking)} dispatch={dispatch} />
+      {asking
+        ? asking.question && <h3 class="rr-text-lg rr-font-semibold">{asking.question}</h3>
+        : <p>Thanks for looking out for yourself and your fellow redditors by reporting things that break the rules. Let us know what’s happening, and we’ll look into it.</p>}
       {asking
         ? <Choices choices={choices} chosen={choice} dispatch={dispatch} />
         : <Pills choices={choices} chosen={choice} dispatch={dispatch} />}
-      {chosen?.complaint && chosen.complaint.prompt && <p class="rr-text-neutral-content-weak">{chosen.complaint.prompt}</p>}
-      {chosen?.complaint ? (
-        // Not a report: reddit.com's form for it, in a new tab
-        <a
-          class="rr-grid rr-place-items-center rr-h-10 rr-rounded-full rr-font-semibold rr-bg-primary-background rr-text-primary-onBackground"
-          href={complaintUrl(chosen.complaint.url, thing.id)}
-          target="_blank"
-          rel="noopener noreferrer"
+      {!asking && (
+        <p class="rr-flex rr-items-start rr-gap-3 rr-p-4 rr-rounded-media rr-bg-neutral-background-weak rr-text-neutral-content-weak">
+          <Icon name="info" large />
+          <span>
+            Not sure if something is breaking the rules? Review the{' '}
+            <a
+              class="rr-font-semibold rr-text-neutral-content-strong"
+              href="https://redditinc.com/policies/reddit-rules"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Reddit Rules
+            </a>
+            {' & '}
+            <a
+              class="rr-text-a-default"
+              href={`https://www.reddit.com/r/${thing.subreddit}/about/rules`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              r/{thing.subreddit} rules
+            </a>
+          </span>
+        </p>
+      )}
+      {chosen?.notes && (
+        <label class="rr-grid rr-gap-2">
+          <span class="rr-text-xs rr-font-semibold rr-text-neutral-content-weak">{chosen.notes.title}</span>
+          <textarea
+            class="rr-block rr-w-full rr-min-h-24 rr-p-2 rr-text-base rr-rounded-media rr-border rr-border-neutral-border-medium rr-outline-none"
+            maxLength={chosen.notes.limit}
+            value={notes}
+            disabled={sending}
+            onInput={(event) => dispatch({ type: 'report/noted', notes: event.currentTarget.value })}
+          />
+        </label>
+      )}
+      {chosen?.complaint?.prompt && <p class="rr-text-neutral-content-weak">{chosen.complaint.prompt}</p>}
+      {sending && <p class="rr-text-xs rr-text-neutral-content-weak" role="status">Sending to reddit…</p>}
+      {error && (
+        <p
+          class="rr-text-xs rr-text-danger-content"
+          role="alert"
         >
-          {chosen.complaint.button}
-        </a>
+          reddit didn’t accept the report: {error.replace(/^Error: /, '')}
+        </p>
+      )}
+      {!asking && chosen ? (
+        // The first step, as reddit.com's: the chosen one's name and meaning, Next beside it
+        <div class="rr-flex rr-items-center rr-gap-4">
+          <div class="rr-grid rr-gap-1 rr-flex-1 rr-min-w-0">
+            <span class="rr-text-lg rr-font-bold rr-break-words">{chosen.label}</span>
+            {chosen.about && <span class="rr-break-words">{chosen.about}</span>}
+          </div>
+          {button}
+        </div>
       ) : (
-        <button
-          type="button"
-          class={primary}
-          disabled={!chosen || (!chosen.next.length && !reason)}
-          onClick={() => dispatch({ type: chosen?.next.length ? 'report/next' : 'report/review' })}
-        >
-          Next
-        </button>
+        <div class="rr-flex rr-justify-end">{button}</div>
       )}
     </div>
   );
@@ -444,7 +478,7 @@ function Pills({ choices, chosen, dispatch }: ChoicesProps) {
         <button
           key={choice.label}
           type="button"
-          class={cx(ui.plain, at === chosen ? 'rr-bg-primary-background rr-text-primary-onBackground' : 'rr-bg-secondary-background')}
+          class={cx(ui.plain, 'rr-h-10 rr-px-4 rr-text-base', at === chosen ? 'rr-bg-secondary-background-selected' : 'rr-bg-secondary-background')}
           aria-pressed={at === chosen}
           onClick={() => dispatch({ type: 'report/chosen', choice: at })}
         >
@@ -455,7 +489,7 @@ function Pills({ choices, chosen, dispatch }: ChoicesProps) {
   );
 }
 
-// A question's choices: a list, one picked (a rule: what it means, under it)
+// A question's choices, as reddit.com's: a list of radio buttons, one picked
 function Choices({ choices, chosen, dispatch }: ChoicesProps) {
   return (
     <div class="rr-grid">
@@ -463,15 +497,15 @@ function Choices({ choices, chosen, dispatch }: ChoicesProps) {
         <button
           key={choice.label}
           type="button"
-          class="rr-flex rr-items-start rr-gap-3 rr-w-full rr-py-3 rr-text-left rr-border-b rr-border-neutral-border-weak"
-          aria-pressed={at === chosen}
+          class="rr-flex rr-items-start rr-gap-3 rr-w-full rr-py-2 rr-text-left"
+          role="radio"
+          aria-checked={at === chosen}
           onClick={() => dispatch({ type: 'report/chosen', choice: at })}
         >
-          <span class={cx('rr-flex-none rr-w-5 rr-h-5 rr-rounded-full rr-border rr-border-neutral-border-medium', at === chosen && 'rr-bg-primary-background')} />
-          <span class="rr-grid rr-gap-1 rr-flex-1 rr-min-w-0">
-            <span class="rr-font-semibold rr-break-words">{choice.label}</span>
-            {at === chosen && choice.about && <span class="rr-text-xs rr-text-neutral-content-weak rr-break-words">{choice.about}</span>}
+          <span class="rr-grid rr-place-items-center rr-flex-none rr-w-5 rr-h-5 rr-rounded-full rr-border-2 rr-border-neutral-content-weak">
+            {at === chosen && <span class="rr-w-2 rr-h-2 rr-rounded-full rr-bg-neutral-content-strong" />}
           </span>
+          <span class="rr-flex-1 rr-min-w-0 rr-break-words">{choice.label}</span>
         </button>
       ))}
     </div>

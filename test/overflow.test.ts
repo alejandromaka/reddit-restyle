@@ -17,8 +17,8 @@ describe('readRules', () => {
   it('the subreddit’s, each for posts, comments or both, and reddit’s report steps (questions, notes, forms on reddit.com)', () => {
     const rules = readRules(answer);
     expect(rules.subreddit).toEqual([
-      { label: 'No screenshots', about: 'Screenshots go in r/screenshots.', on: 'post' },
-      { label: 'Be civil', about: 'No insults.', on: 'all' },
+      { label: 'Screenshot', about: 'Screenshots go in r/screenshots.', on: 'post' },  // as reddit.com lists them: by the reason each reports
+      { label: 'Incivility', about: 'No insults.', on: 'all' },
       { label: 'No spoilers in comments', about: '', on: 'comment' },
     ]);
     const [harassment, spam, copyright] = rules.reddit;
@@ -39,14 +39,15 @@ describe('readRules', () => {
     ]);
   });
 
-  it('the report’s first step: "Breaks r/name rules" (the rules for it, behind it), then reddit’s; a step’s choices by the trail', () => {
+  it('the report’s first step: "Breaks r/name rules" (the rules for it, behind it, no question; Custom response last), then reddit’s; a step’s choices by the trail', () => {
     const rules = readRules(answer);
     const flow = reportFlow(rules, { kind: 'comment', subreddit: 'pics' });
     expect(flow.map((step) => step.label)).toEqual(['Breaks r/pics rules', 'Harassment', 'Spam', 'Copyright violation']);
-    expect(flow[0]!.question).toBe('Which community rule does this violate?');
-    expect(flow[0]!.next.map((step) => [step.label, step.reason])).toEqual([
-      ['Be civil', { kind: 'rule', text: 'Be civil', usernames: false }],
-      ['No spoilers in comments', { kind: 'rule', text: 'No spoilers in comments', usernames: false }],
+    expect(flow[0]!.question).toBeNull();
+    expect(flow[0]!.next.map((step) => [step.label, step.reason, step.notes])).toEqual([
+      ['Incivility', { kind: 'rule', text: 'Incivility', usernames: false }, null],
+      ['No spoilers in comments', { kind: 'rule', text: 'No spoilers in comments', usernames: false }, null],
+      ['Custom response', { kind: 'other', text: '', usernames: false }, { title: 'Custom response', limit: 100 }],
     ]);
     expect(stepsAt(flow, [1]).steps.map((step) => step.label)).toEqual(['Harassment']);
     expect(stepsAt(flow, [1]).choices.map((step) => step.label)).toEqual(['You', 'Someone else']);
@@ -67,11 +68,11 @@ describe('overflowReducer', () => {
     expect(overflowReducer(hid, { type: 'hide/failed', id: 't3_a', hidden: false }).hidden).toEqual({ t3_a: false });
   });
 
-  it('a report: its subreddit’s rules asked for once; a choice, Next, Back; a note; sent once; thanks', () => {
+  it('a report: its subreddit’s rules asked for once; a choice, Next, Back; a note; sent once (from any step, as reddit.com’s Submit); thanks', () => {
     const comment = commentThing('t1_c', 'pics', 'someone');
-    const reason = { kind: 'rule', text: 'Be civil' } as const;
+    const reason = { kind: 'rule', text: 'Incivility' } as const;
     const opened = run({ type: 'report/opened', thing: comment });
-    expect(opened.report).toEqual({ thing: comment, trail: [], choice: null, notes: '', reviewing: false, status: 'choosing', error: null, open: true });
+    expect(opened.report).toEqual({ thing: comment, trail: [], choice: null, notes: '', status: 'choosing', error: null, open: true });
     expect(opened.rules).toEqual({ pics: { status: 'loading' } });
     expect(overflowReducer(opened, { type: 'report/requested', reason })).toBe(opened);  // nothing chosen yet
     expect(overflowReducer(opened, { type: 'report/next' })).toBe(opened);
@@ -84,13 +85,8 @@ describe('overflowReducer', () => {
     const noted = overflowReducer(chosen, { type: 'report/noted', notes: 'more' });
     expect(noted.report?.notes).toBe('more');
     expect(overflowReducer(noted, { type: 'report/chosen', choice: 0 }).report?.notes).toBe('');  // another choice: its own note
-    expect(overflowReducer(chosen, { type: 'report/requested', reason })).toBe(chosen);  // not before the second step
-    const reviewing = overflowReducer(noted, { type: 'report/review' });
-    expect(reviewing.report).toMatchObject({ trail: [0], choice: 1, notes: 'more', reviewing: true });
-    expect(overflowReducer(reviewing, { type: 'report/chosen', choice: 0 })).toBe(reviewing);  // chosen: Back to change it
-    expect(overflowReducer(reviewing, { type: 'report/back' }).report).toMatchObject({ trail: [0], choice: 1, notes: 'more', reviewing: false });
-    const sending = overflowReducer(reviewing, { type: 'report/requested', reason });
-    expect(sending.report).toMatchObject({ trail: [0], choice: 1, status: 'sending' });
+    const sending = overflowReducer(noted, { type: 'report/requested', reason });
+    expect(sending.report).toMatchObject({ trail: [0], choice: 1, notes: 'more', status: 'sending' });
     expect(overflowReducer(sending, { type: 'report/requested', reason })).toBe(sending);
     expect(overflowReducer(sending, { type: 'report/chosen', choice: 0 })).toBe(sending);
     expect(overflowReducer(sending, { type: 'report/back' })).toBe(sending);
