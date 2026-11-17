@@ -116,12 +116,12 @@ export function scoreOf(name: string, found: Found, now = Date.now() / 1000): Sc
     else if (!lopsided && days > 365) add(-0.5, `${age(days)} old`);
   }
 
-  if (postKarma >= 10000 && commentKarma < postKarma / 50) add(2.2, `Huge post karma (${postKarma}), almost none from comments (${commentKarma})`);
+  if (postKarma >= 10000 && commentKarma < postKarma / 50) add(3.5, `Huge post karma (${postKarma}), almost none from comments (${commentKarma})`);
   else if (lopsided) add(1.2, `Lots of post karma (${postKarma}), little from comments (${commentKarma})`);
   else if (commentKarma >= 1000 && commentKarma >= postKarma) add(-0.6, `Mostly comment karma (${commentKarma})`);
 
   // Post karma piling up fast for months: a reposting machine (a new account's age line says enough)
-  if (days !== null && days >= 30 && postKarma / days >= 100) add(1.2, `About ${Math.round(postKarma / days)} post karma a day for ${age(days)}`);
+  if (days !== null && days >= 30 && postKarma / days >= 100) add(3, `About ${Math.round(postKarma / days)} post karma a day for ${age(days)}`);
 
   if (found.verified === false) add(0.5, 'No verified email');
   else if (found.verified) add(-0.3, 'Verified email');

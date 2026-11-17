@@ -39,7 +39,7 @@ describe('scoreOf', () => {
   it('an older, verified karma farm with its own avatar: still high', () => {
     const aged: Account = { ...farm, created: NOW - 400 * DAY, postKarma: 111189, commentKarma: 1129, verified: true, avatar: 'custom' };
     const { percent, reasons } = scoreOf('EfficientChance7352', aged, NOW);
-    expect(percent).toBeGreaterThanOrEqual(75);
+    expect(percent).toBe(99);
     expect(reasons.map((reason) => reason.text)).toEqual([
       'Huge post karma (111189), almost none from comments (1129)',
       'About 278 post karma a day for 13 months',
