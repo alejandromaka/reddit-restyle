@@ -70,8 +70,8 @@ export function readAccount({ data }: RedditAccount): Account {
 export const KNOWN_BOTS = new Set(['automoderator']);
 export const isKnownBot = (name: string) => KNOWN_BOTS.has(name.toLowerCase());
 
-// The names reddit picks for you when you don't (Adjective_Noun_1234, Word-Word-1234)
-export const isGeneratedName = (name: string) => /^[A-Z][a-z]+[-_][A-Z][a-z]+[-_]\d{1,5}$/.test(name);
+// The names reddit picks for you when you don't (Adjective_Noun_1234, Word-Word-1234, and the newer WordWord1234)
+export const isGeneratedName = (name: string) => /^[A-Z][a-z]+([-_]?)[A-Z][a-z]+\1\d{1,5}$/.test(name);
 
 // A name that says it's a bot: some_bot, RemindMeBot, LINKBOT
 export const isBotName = (name: string) => /[-_]bot$/i.test(name) || /[a-z0-9]Bot$/.test(name) || /BOT$/.test(name);
@@ -103,18 +103,25 @@ export function scoreOf(name: string, found: Found, now = Date.now() / 1000): Sc
   if (isBotName(name)) add(2.5, 'Its name says it’s a bot');
   if (found.employee) add(-3, 'A reddit employee');
 
-  if (found.created !== null) {
-    const days = (now - found.created) / DAY;
+  const { postKarma, commentKarma } = found;
+  const lopsided = postKarma >= 200 && commentKarma < postKarma / 10;
+  const days = found.created === null ? null : (now - found.created) / DAY;
+
+  if (days !== null) {
     if (days < 7) add(2, `Made ${age(days)} ago`);
     else if (days < 30) add(1.2, `Made ${age(days)} ago`);
     else if (days < 180) add(0.4, `Made ${age(days)} ago`);
-    else if (days > 3 * 365) add(-1, `${age(days)} old`);
-    else if (days > 365) add(-0.5, `${age(days)} old`);
+    // Age speaks for a person only when they talk: karma farms are bought old on purpose
+    else if (!lopsided && days > 3 * 365) add(-1, `${age(days)} old`);
+    else if (!lopsided && days > 365) add(-0.5, `${age(days)} old`);
   }
 
-  const { postKarma, commentKarma } = found;
-  if (postKarma >= 200 && commentKarma < postKarma / 10) add(1.2, `Lots of post karma (${postKarma}), little from comments (${commentKarma})`);
+  if (postKarma >= 10000 && commentKarma < postKarma / 50) add(3.5, `Huge post karma (${postKarma}), almost none from comments (${commentKarma})`);
+  else if (lopsided) add(1.2, `Lots of post karma (${postKarma}), little from comments (${commentKarma})`);
   else if (commentKarma >= 1000 && commentKarma >= postKarma) add(-0.6, `Mostly comment karma (${commentKarma})`);
+
+  // Post karma piling up fast for months: a reposting machine (a new account's age line says enough)
+  if (days !== null && days >= 30 && postKarma / days >= 100) add(3, `About ${Math.round(postKarma / days)} post karma a day for ${age(days)}`);
 
   if (found.verified === false) add(0.5, 'No verified email');
   else if (found.verified) add(-0.3, 'Verified email');

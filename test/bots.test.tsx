@@ -36,6 +36,24 @@ describe('scoreOf', () => {
     ]);
   });
 
+  it('an older, verified karma farm with its own avatar: still high', () => {
+    const aged: Account = { ...farm, created: NOW - 400 * DAY, postKarma: 111189, commentKarma: 1129, verified: true, avatar: 'custom' };
+    const { percent, reasons } = scoreOf('EfficientChance7352', aged, NOW);
+    expect(percent).toBe(99);
+    expect(reasons.map((reason) => reason.text)).toEqual([
+      'Huge post karma (111189), almost none from comments (1129)',
+      'About 278 post karma a day for 13 months',
+      'Verified email',
+      'Its own avatar',
+      'The name reddit made up for it',
+    ]);
+  });
+
+  it('a heavy poster who also talks: not a farm', () => {
+    const poster: Account = { ...person, postKarma: 50000, commentKarma: 3000 };
+    expect(scoreOf('photo_person', poster, NOW).percent).toBeLessThan(30);
+  });
+
   it('suspended, gone, and reddit’s own bot', () => {
     expect(scoreOf('x', { ...person, suspended: true }, NOW).percent).toBe(90);
     expect(scoreOf('x', 'gone', NOW).percent).toBe(80);
@@ -50,6 +68,8 @@ describe('scoreOf', () => {
   it('names', () => {
     expect(isGeneratedName('Late_Ad_4521')).toBe(true);
     expect(isGeneratedName('Ok-Description-1234')).toBe(true);
+    expect(isGeneratedName('EfficientChance7352')).toBe(true);
+    expect(isGeneratedName('Late-Ad_4521')).toBe(false);
     expect(isGeneratedName('someone')).toBe(false);
     expect(isBotName('RemindMeBot')).toBe(true);
     expect(isBotName('save_bot')).toBe(true);
