@@ -133,10 +133,13 @@ Once:
 2. In Xcode → Settings → Accounts, add your Apple ID.
 3. `npm ci`, then `npm run safari`. It builds the extension and opens an
    Xcode project in `safari/` (not in git: Xcode writes your team into it).
-4. In Xcode, pick the iOS app target → Signing & Capabilities → Team: your
-   Apple ID. Do the same for the extension target.
-5. On the iPhone: Settings → Privacy & Security → Developer Mode on (it
-   restarts). Plug it into the Mac and pick it as the run destination.
+4. On the iPhone: Settings → Privacy & Security → Developer Mode on (it
+   restarts). Plug it into the Mac, tap Trust, and wait until it shows in
+   Xcode → Window → Devices and Simulators. Pick it as the run destination.
+   (A free Apple ID can only sign for a device Xcode has seen: sign before
+   this and you get "Your team has no devices".)
+5. In Xcode, pick each iOS target → Signing & Capabilities → Team: your
+   Apple ID.
 6. Run (⌘R). The first time, on the iPhone: Settings → General → VPN &
    Device Management → trust your Apple ID.
 7. Settings → Safari → Extensions → Reddit Restyle: on, and allow
