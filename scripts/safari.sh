@@ -31,5 +31,10 @@ xcrun "$TOOL" dist/safari-extension \
 # The iPhone runs iOS 16: Xcode otherwise targets the newest iOS, and the app won't install
 find safari -name project.pbxproj -exec sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/' {} +
 
+# The app's iPhone screen: Apple's template says "You can turn on … in
+# Settings" whether or not it's on (it can't tell on iOS). Say what's true.
+find safari -path '*Shared (App)/Resources/Main.html' -exec sed -i '' \
+  's|You can turn on .* extension in Settings\.|Reddit Restyle is installed. If old.reddit.com isn\&rsquo;t restyled: Settings → Apps → Safari → Extensions → Reddit Restyle, on, and allow old.reddit.com.|' {} +
+
 echo "safari: project in safari/ (bundle id $ID). Opening Xcode."
 open safari/*/*.xcodeproj 2>/dev/null || open safari/*.xcodeproj
