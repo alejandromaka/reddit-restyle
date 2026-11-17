@@ -2,8 +2,8 @@
    its own (each for posts, comments or both) and reddit's: site_rules_flow,
    the steps reddit.com's report asks you through (else site_rules, a plain
    list). reportFlow lays them out as reddit.com does: "Breaks r/name rules"
-   first (which rule?), then reddit's, each a reason or a question with
-   more under it. */
+   first (its rules, by the reason each reports, and Custom response), then
+   reddit's, each a reason or a question with more under it. */
 
 import { fetchJson } from '../core/http';
 
@@ -30,7 +30,7 @@ interface RedditRules {
 }
 
 export interface Rule {
-  label: string;                      // its name (what a report says)
+  label: string;                      // what a report by it says (its violation_reason, else its name), as reddit.com lists it
   about: string;                      // what it means, in the moderators' words
   on: 'post' | 'comment' | 'all';     // what it's for
 }
@@ -40,10 +40,11 @@ export interface Rules {
   reddit: Step[];                     // reddit's report steps
 }
 
-// What a report says: one of the subreddit's rules, or one of reddit's
-// reasons (and a note, and who it's about, where reddit asks)
+// What a report says: one of the subreddit's rules, your own words (Custom
+// response), or one of reddit's reasons (and a note, and who it's about, where reddit asks)
 export type ReportReason =
   | { kind: 'rule'; text: string }
+  | { kind: 'other'; text: string }
   | { kind: 'site'; text: string; notes: string; usernames: string | null };
 
 // A choice in the report: a reason it sends, a question with more choices
@@ -53,7 +54,7 @@ export interface Step {
   about: string;                                  // a rule's meaning ('' none)
   question: string | null;                        // more to choose (next)
   next: Step[];
-  reason: { kind: 'rule' | 'site'; text: string; usernames: boolean } | null;  // what it sends
+  reason: { kind: 'rule' | 'site' | 'other'; text: string; usernames: boolean } | null;  // what it sends (other: your words, typed in)
   notes: { title: string; limit: number } | null;  // a box for more, in your words
   complaint: { prompt: string; url: string; button: string } | null;
 }
@@ -79,20 +80,24 @@ function readStep(redditStep: RedditStep): Step {
 }
 
 export const readRules = (answer: RedditRules): Rules => ({
-  subreddit: answer.rules.map((rule) => ({ label: rule.short_name, about: rule.description ?? '', on: ON[rule.kind] })),
+  subreddit: answer.rules.map((rule) => ({ label: rule.violation_reason || rule.short_name, about: rule.description ?? '', on: ON[rule.kind] })),
   reddit: answer.site_rules_flow?.length
     ? answer.site_rules_flow.map(readStep)
     : answer.site_rules.map((rule) => ({ ...step(rule), reason: { kind: 'site', text: rule, usernames: false } })),
 });
 
+// The longest reason reddit takes (r2's VLength): Custom response's limit too
+export const REASON_LIMIT = 100;
+
 // The report's first choices, as reddit.com's: the subreddit's rules for it
-// (behind "Breaks r/name rules"), then reddit's
+// (behind "Breaks r/name rules", a list with no question over it, Custom
+// response last), then reddit's
 export function reportFlow(rules: Rules, thing: { kind: 'post' | 'comment'; subreddit: string }): Step[] {
   const own = rules.subreddit.filter(({ on }) => on === 'all' || on === thing.kind);
+  const custom: Step = { ...step('Custom response'), reason: { kind: 'other', text: '', usernames: false }, notes: { title: 'Custom response', limit: REASON_LIMIT } };
   const breaks: Step = {
     ...step(`Breaks r/${thing.subreddit} rules`),
-    question: 'Which community rule does this violate?',
-    next: own.map((rule) => ({ ...step(rule.label), about: rule.about, reason: { kind: 'rule', text: rule.label, usernames: false } })),
+    next: [...own.map((rule) => ({ ...step(rule.label), about: rule.about, reason: { kind: 'rule' as const, text: rule.label, usernames: false } })), custom],
   };
   return own.length ? [breaks, ...rules.reddit] : rules.reddit;
 }

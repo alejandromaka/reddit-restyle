@@ -13,6 +13,7 @@
   --color-neutral-border-weak: #00000019;            /* between posts, under the bar */
   --color-neutral-border-medium: #0000007f;          /* an outlined button: Joined */
   --color-secondary-background: #e5ebee;             /* buttons: votes, comments, More posts; a missing icon's stand-in */
+  --color-secondary-background-selected: #c9d6de;    /* a report's chosen pill */
   --color-neutral-background-selected: #e5ebee;      /* the menu: where you are */
   --color-scrim: #00000099;                          /* behind the menu */
   --color-a-default: #115bca;                        /* a link post's site; OP */
@@ -93,6 +94,7 @@
   --color-neutral-border-weak: #ffffff19;            /* ≈ (--color-inverted-neutral-border is #ffffff33) */
   --color-neutral-border-medium: #ffffff7f;          /* ≈ */
   --color-secondary-background: #2a3236;             /* --color-global-darkblue */
+  --color-secondary-background-selected: #3e4a51;    /* ≈ */
   --color-neutral-background-selected: #2a3236;      /* ≈ */
   --color-a-default: #648efc;                        /* ≈ */
   --color-op-background: #0f294f;                    /* ours: light's blue, 32% over the page */

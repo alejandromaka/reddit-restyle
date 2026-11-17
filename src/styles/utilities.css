@@ -188,6 +188,7 @@
   .rr-bg-neutral-background { background-color: var(--color-neutral-background); }
   .rr-bg-neutral-background-weak { background-color: var(--color-neutral-background-weak); }
   .rr-bg-secondary-background { background-color: var(--color-secondary-background); }
+  .rr-bg-secondary-background-selected { background-color: var(--color-secondary-background-selected); }  /* a report's chosen pill */
   .rr-bg-op-background { background-color: var(--color-op-background); }  /* OP's avatar */
   .rr-bg-neutral-background-selected { background-color: var(--color-neutral-background-selected); }
   .rr-bg-scrim { background-color: var(--color-scrim); }
@@ -205,6 +206,7 @@
 
   /* --- Borders and corners --- */
   .rr-border { border: 1px solid; }
+  .rr-border-2 { border: 2px solid; }  /* a report's radio buttons */
   .rr-border-t { border-top: 1px solid; }
   .rr-border-b { border-bottom: 1px solid; }
   .rr-border-l { border-left: 1px solid; }
@@ -213,6 +215,7 @@
   .rr-border-4 { border: 4px solid; }          /* someone's avatar's ring */
   .rr-border-neutral-border-weak { border-color: var(--color-neutral-border-weak); }
   .rr-border-neutral-border-medium { border-color: var(--color-neutral-border-medium); }
+  .rr-border-neutral-content-weak { border-color: var(--color-neutral-content-weak); }  /* a report's radio buttons */
   .rr-border-neutral-background { border-color: var(--color-neutral-background); }  /* a ring the page's color */
   .rr-border-\(--line\) { border-color: var(--line); }  /* a thread's line, its replies' curves */
   .rr-\[--line\:var\(--color-neutral-border-weak\)\] { --line: var(--color-neutral-border-weak); }  /* a comment: its line's color */
