@@ -117,6 +117,38 @@ Nothing updates on its own. When you open the Userscripts popup, it checks
 whether a newer version is published and offers it. It installs only when
 you tap **Update**.
 
+## As a Safari extension (trial)
+
+The same restyle can also be built as a Safari Web Extension: one install,
+no Userscripts app, and Safari starts it before old reddit's own code
+loads. Its network rules are the same ones as Reddit Blocker's
+(src/blocker.json). It needs a Mac with Xcode, and an Apple ID. A free
+Apple ID works, but the app it installs stops after 7 days until you run it
+from Xcode again. A paid developer account ($99 a year) makes installs last
+a year.
+
+Once:
+
+1. Install Xcode from the Mac App Store and open it once.
+2. In Xcode → Settings → Accounts, add your Apple ID.
+3. `npm ci`, then `npm run safari`. It builds the extension and opens an
+   Xcode project in `safari/` (not in git: Xcode writes your team into it).
+4. Plug the iPhone into the Mac and tap Trust on it. Then on the iPhone:
+   Settings → Privacy & Security → Developer Mode on (the switch only shows
+   up once Xcode has seen the phone; it restarts). Wait until it shows in
+   Xcode → Window → Devices and Simulators, and pick it as the run destination.
+   (A free Apple ID can only sign for a device Xcode has seen: sign before
+   this and you get "Your team has no devices".)
+5. In Xcode, pick each iOS target → Signing & Capabilities → Team: your
+   Apple ID.
+6. Run (⌘R). The first time, on the iPhone: Settings → General → VPN &
+   Device Management → trust your Apple ID.
+7. Settings → Safari → Extensions → Reddit Restyle: on, and allow
+   old.reddit.com. Turn the two userscripts off in Userscripts.
+
+After a change: `npm run extension`, then Run in Xcode with the iPhone
+plugged in. With a free Apple ID, do that at least once a week.
+
 ## Privacy
 
 There are no analytics, no API key and no server of ours. The script talks

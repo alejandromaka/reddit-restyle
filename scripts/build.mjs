@@ -11,6 +11,12 @@
 // (this repository's GitHub Pages) and a version that goes up every run, and
 // an index.html linking them, in dist/. The Userscripts app checks that URL
 // when its popup opens, and updates only when you tap Update.
+//
+// --extension: the same restyle as a Safari Web Extension, in
+// dist/safari-extension/: manifest.json, the bundle as a content script that
+// Safari runs at document start, and src/blocker.json as its network rules
+// (one install, no Userscripts app). scripts/safari.sh wraps it in an Xcode
+// project on a Mac.
 import { context, build } from 'esbuild';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -20,6 +26,7 @@ const ICLOUD = `${homedir()}/Library/Mobile Documents/com~apple~CloudDocs/Develo
 const OUT = process.env.REDDIT_RESTYLE_OUT ?? (existsSync(ICLOUD) ? ICLOUD : null);
 const NAME = 'Reddit Restyle';
 const PUBLISH = process.argv.includes('--publish');
+const EXTENSION = process.argv.includes('--extension');
 
 // Published: the workflow's run number on the end, so each publish is newer
 const { version: PACKAGE_VERSION } = JSON.parse(await readFile('package.json', 'utf8'));
@@ -29,6 +36,7 @@ const version = PUBLISH ? `${PACKAGE_VERSION}.${process.env.GITHUB_RUN_NUMBER ??
 const REPOSITORY = process.env.GITHUB_REPOSITORY ?? 'alejandromaka/reddit-restyle';
 const [OWNER, REPO] = REPOSITORY.split('/');
 const SITE = process.env.REDDIT_RESTYLE_SITE ?? `https://${OWNER.toLowerCase()}.github.io/${REPO}`;
+const ICON_SIZES = [48, 96, 128, 256, 512];
 const PUBLISHED = { js: 'reddit-restyle.user.js', blocker: 'reddit-blocker.user.js' };
 
 // A published script's: where the app looks for a newer version, and gets it
@@ -133,6 +141,36 @@ await write('Reddit Blocker.user.js', blocker);
 
 options.define = await defines();
 
+// The Safari Web Extension: Manifest V3, nothing but a content script and
+// network rules (no background page, no popup, nothing stored but what the
+// page keeps in old.reddit.com's localStorage, as the userscript does)
+async function writeExtension(js) {
+  const dir = 'dist/safari-extension';
+  await mkdir(`${dir}/icons`, { recursive: true });
+  const manifest = {
+    manifest_version: 3,
+    name: NAME,
+    version: PACKAGE_VERSION,
+    description: 'old.reddit.com rebuilt for the iPhone mini.',
+    icons: Object.fromEntries(ICON_SIZES.map((size) => [size, `icons/${size}.png`])),
+    content_scripts: [{
+      matches: ['*://old.reddit.com/*'],
+      js: ['content.js'],
+      run_at: 'document_start',
+      all_frames: false,
+    }],
+    permissions: ['declarativeNetRequest'],
+    declarative_net_request: { rule_resources: [{ id: 'blocker', enabled: true, path: 'rules.json' }] },
+  };
+  // Userscripts numbers the rules itself; an extension's need an id each
+  const numbered = rules.map((rule, i) => ({ id: i + 1, priority: 1, ...rule }));
+  await writeFile(`${dir}/manifest.json`, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(`${dir}/rules.json`, `${JSON.stringify(numbered, null, 2)}\n`);
+  await writeFile(`${dir}/content.js`, js);
+  for (const size of ICON_SIZES) await writeFile(`${dir}/icons/${size}.png`, await readFile(`src/extension/icon-${size}.png`));
+  console.log(`built extension ${PACKAGE_VERSION} → ${dir}`);
+}
+
 if (process.argv.includes('--watch')) {
   const out = { name: 'out', setup: (b) => b.onEnd(writeJs) };
   let js = await context({ ...options, plugins: [out] });
@@ -150,6 +188,9 @@ if (process.argv.includes('--watch')) {
       await js.watch();
     });
   });
+} else if (EXTENSION) {
+  const result = await build(options);
+  if (!result.errors.length) await writeExtension(result.outputFiles[0].text);
 } else {
   const result = await build(options);
   await writeJs(result);

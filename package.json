@@ -8,6 +8,8 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "bundle": "node scripts/build.mjs --publish",
+    "extension": "node scripts/build.mjs --extension",
+    "safari": "sh scripts/safari.sh",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "test": "vitest run",
     "mock": "node scripts/mock.mjs",
