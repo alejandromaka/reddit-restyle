@@ -1,6 +1,8 @@
 /* A post's media, in the feed and on its page, as reddit.com's: a video
    (reddit's own, or a gif) plays where it is; pictures (one, or a gallery to
-   swipe through; with a mouse, ‹ › too) open big when tapped; a link's card
+   swipe through; with a mouse, ‹ › too) open big when tapped or pinched (a
+   pinch zooms them there, not the page: Safari zooming a page with a gallery
+   on it runs out of memory and reloads the tab); a link's card
    opens the link (an outside video: ▶). Nothing of a video loads until it's
    played, and it plays muted if you muted the last one (core/sound). */
 
@@ -88,17 +90,35 @@ function Picture({ picture }: { picture: Image }) {
 // A gallery's ‹ ›, as reddit.com's: over its edge, halfway down; only with a mouse (a phone swipes)
 const STEP = 'rr-absolute rr-inset-y-0 rr-my-auto rr-hidden pointer-fine:rr-grid rr-place-items-center rr-w-8 rr-h-8 rr-rounded-full rr-bg-media-background rr-text-media-onBackground';
 
-// One picture, or a gallery swiped through (which one: its badge); a tap opens them big
+// One picture, or a gallery swiped through (which one: its badge); a tap or a pinch opens them big
 function Pictures({ pictures, big }: { pictures: Image[]; big: Image[] }) {
   const [open, setOpen] = useState<number | null>(null);
   const [at, setAt] = useState(0);
   const strip = useRef<HTMLDivElement>(null);
+  const here = useRef(at);
+  here.current = at;
+  // Safari's pinch (it zooms the page): the pictures opened big instead, to zoom there
+  useEffect(() => {
+    const element = strip.current;
+    if (!element) return undefined;
+    const pinch = (event: Event) => {
+      event.preventDefault();
+      setOpen(here.current);
+    };
+    const stop = (event: Event) => event.preventDefault();
+    element.addEventListener('gesturestart', pinch);
+    element.addEventListener('gesturechange', stop);
+    return () => {
+      element.removeEventListener('gesturestart', pinch);
+      element.removeEventListener('gesturechange', stop);
+    };
+  }, []);
   const go = (to: number) => strip.current?.scrollTo({ left: to * strip.current.clientWidth, behavior: 'smooth' });
   return (
     <div class="rr-relative">
       <div
         ref={strip}
-        class="rr-flex rr-items-center rr-overflow-x-auto rr-snap-x rr-rounded-media"
+        class="rr-flex rr-items-center rr-overflow-x-auto rr-snap-x rr-rounded-media rr-touch-pan"
         onScroll={(event) => setAt(Math.round(event.currentTarget.scrollLeft / event.currentTarget.clientWidth))}
       >
         {pictures.map((picture, index) => (

@@ -228,18 +228,21 @@
   .rr-rounded-t-media { border-radius: var(--radius-media) var(--radius-media) 0 0; }  /* a sheet from the bottom */
   .rr-object-cover { object-fit: cover; }
   .rr-object-contain { object-fit: contain; }  /* a picture opened big: all of it; one in a comment */
+  .rr-origin-top-left { transform-origin: 0 0; }  /* a picture opened big: zoomed from its corner */
   .rr-object-left { object-position: left; }   /* a picture in a comment, kept from growing taller: at the left of its room */
 
   /* --- Scroll, interaction and motion --- */
   .rr-overflow-hidden { overflow: hidden; }
   .rr-overflow-x-clip { overflow-x: clip; }  /* the frame: never sideways (clip keeps sticky things sticking) */
   .rr-overflow-x-auto { overflow-x: auto; }  /* the strip, a gallery, code: swipe for more */
+  .rr-overflow-y-hidden { overflow-y: hidden; }  /* a picture opened big, zoomed: never scrolled down */
   .rr-snap-x { scroll-snap-type: x mandatory; }  /* a gallery: one picture at a time */
   .rr-snap-center { scroll-snap-align: center; }
   .rr-overflow-y-auto { overflow-y: auto; }
   .rr-overscroll-contain { overscroll-behavior: contain; }  /* the menu's scroll stops at its ends */
   .rr-touch-none { touch-action: none; }                    /* the scrim: no scrolling the page behind */
-  .rr-touch-pan-x { touch-action: pan-x pinch-zoom; }       /* pictures opened big: swiped through, zoomed; the page behind stays */
+  .rr-touch-pan { touch-action: pan-x pan-y; }              /* a post's pictures: swiped and scrolled past, not pinched (they open big for that) */
+  .rr-touch-pan-x { touch-action: pan-x; }                  /* pictures opened big: swiped through (zoomed by us, not Safari); the page behind stays */
   .rr-outline-none { outline: none; }                       /* a sheet's panel (focused for screen readers); a field inside its own rounded border */
   .rr-pointer-events-none { pointer-events: none; }
   .rr-cursor-pointer { cursor: pointer; }  /* a comment's row: a tap folds it */
