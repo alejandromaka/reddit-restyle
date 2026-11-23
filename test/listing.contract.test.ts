@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pageOf, pageUrl } from '../src/core/paging';
-import { aboutUrl, listingUrl, readAbout, readListing } from '../src/pages/listing/contract';
+import { aboutUrl, listingUrl, readAbout, readListing, redgifsOf } from '../src/pages/listing/contract';
 
 const answer = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/listing.json'), 'utf8'));
 
@@ -62,6 +62,26 @@ describe('readListing', () => {
       variants: { mp4: { source: { url: 'https://preview.redd.it/g.gif?format=mp4&s=m', width: 400, height: 300 }, resolutions: [] } },
     }] } } }] } }).posts[0];
     expect(gif!.media).toMatchObject({ kind: 'video', url: 'https://preview.redd.it/g.gif?format=mp4&s=m', loop: true });
+  });
+
+  // A RedGifs post, as reddit sends one (made up: no live answer to copy)
+  const redgifs = (extra: object) => readListing({ kind: 'Listing', data: { after: null, before: null, children: [{ kind: 't3', data: {
+    ...answer.data.children[2].data, domain: 'redgifs.com', url: 'https://www.redgifs.com/watch/SomeLongName', post_hint: 'rich:video', ...extra,
+  } }] } }).posts[0]!;
+
+  it('RedGifs: reddit’s copy on v.redd.it when it made one (HLS, its MP4 to fall back on), looped as a gif', () => {
+    expect(redgifs({ preview: { ...answer.data.children[2].data.preview, reddit_video_preview: {
+      hls_url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', fallback_url: 'https://v.redd.it/rg/DASH_480.mp4', is_gif: true,
+    } } }).media).toMatchObject({ kind: 'video', url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', loop: true, stream: { fallback: 'https://v.redd.it/rg/DASH_480.mp4' } });
+  });
+
+  it('RedGifs without reddit’s copy: RedGifs’ own player, by its id in lower case', () => {
+    expect(redgifs({}).media).toMatchObject({ kind: 'embed', url: 'https://www.redgifs.com/ifr/somelongname', link: 'https://www.redgifs.com/watch/SomeLongName' });
+  });
+
+  it('RedGifs’ every address: watch, ifr, v3., i.redgifs.com’s picture', () => {
+    expect(['https://redgifs.com/ifr/abc', 'https://v3.redgifs.com/watch/AbcDef', 'https://i.redgifs.com/i/abcdef.jpg', 'https://www.redgifs.com/watch/abc#rel=x', 'https://example.com/watch/abc']
+      .map(redgifsOf)).toEqual(['abc', 'abcdef', 'abcdef', 'abc', null]);
   });
 
   it('a gallery: its pictures in its own order, swiped through (failed ones left out), each big to open', () => {
