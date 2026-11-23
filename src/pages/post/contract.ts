@@ -173,7 +173,7 @@ export function readThread([posts, comments]: RedditThread): Thread {
   return {
     post: {
       ...post,
-      html: !post.spoiler && shared.selftext_html ? clean(shared.selftext_html) : null,
+      html: shared.selftext_html ? clean(shared.selftext_html) : null,
       locked: Boolean(raw.locked),
       archived: Boolean(raw.archived),
     },

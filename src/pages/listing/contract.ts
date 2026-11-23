@@ -82,7 +82,7 @@ export interface Post {
   permalink: string;       // /r/…/comments/…
   domain: string;
   link: string | null;     // where a link post goes, off reddit; null for text and reddit's own media
-  // Its preview (a crosspost's from the post it shares; none for spoilers):
+  // Its preview (a crosspost's from the post it shares; a spoiler's too, drawn hidden):
   media: Media | null;     // wide enough for a phone
   text: string | null;     // with no media: a text post's opening, plain
   body: string;            // all its text, plain ('' when none): what muted words are looked for in
@@ -175,7 +175,7 @@ const TEXT_LENGTH = 300;
 // wide: its pictures at least this wide (the post page's are bigger)
 export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
   const shared = post.crosspost_parent_list?.[0] ?? post;
-  const media = post.spoiler ? null : mediaOf(shared, wide);
+  const media = mediaOf(shared, wide);
   return {
     id: post.name,
     title: post.title,
@@ -190,7 +190,7 @@ export function readPost(post: RedditPost, wide = IMAGE_WIDTH): Post {
     domain: shared.domain,
     link: offReddit(shared) ? shared.url : null,
     media,
-    text: post.spoiler || media ? null : plain(shared.selftext).slice(0, TEXT_LENGTH) || null,
+    text: media ? null : plain(shared.selftext).slice(0, TEXT_LENGTH) || null,
     body: plain(shared.selftext),
     nsfw: post.over_18,
     spoiler: post.spoiler,

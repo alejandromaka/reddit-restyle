@@ -230,6 +230,11 @@
   .rr-object-contain { object-fit: contain; }  /* a picture opened big: all of it; one in a comment */
   .rr-object-left { object-position: left; }   /* a picture in a comment, kept from growing taller: at the left of its room */
 
+  /* --- Effects: a spoiler post, hidden (its text; its media, grown so the blur's soft edge falls outside) --- */
+  .rr-blur { filter: blur(8px); }
+  .rr-blur-2xl { filter: blur(40px); }
+  .rr-scale-110 { transform: scale(1.1); }
+
   /* --- Scroll, interaction and motion --- */
   .rr-overflow-hidden { overflow: hidden; }
   .rr-overflow-x-clip { overflow-x: clip; }  /* the frame: never sideways (clip keeps sticky things sticking) */
@@ -242,6 +247,7 @@
   .rr-touch-pan-x { touch-action: pan-x pinch-zoom; }       /* pictures opened big: swiped through, zoomed; the page behind stays */
   .rr-outline-none { outline: none; }                       /* a sheet's panel (focused for screen readers); a field inside its own rounded border */
   .rr-pointer-events-none { pointer-events: none; }
+  .rr-select-none { user-select: none; -webkit-user-select: none; }  /* a spoiler, hidden: nothing to copy */
   .rr-cursor-pointer { cursor: pointer; }  /* a comment's row: a tap folds it */
   .rr-transition-transform { transition: transform var(--duration) var(--ease-out); }
   .rr-transition-opacity { transition: opacity var(--duration) var(--ease-out); }
