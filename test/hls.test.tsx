@@ -30,7 +30,7 @@ describe('a reddit video on Brave', () => {
 
   it('plays through hls.js: fetched pinned and hashed, the stream loaded only once played', async () => {
     HTMLMediaElement.prototype.canPlayType = () => '';
-    const hls = { loadSource: vi.fn(), attachMedia: vi.fn(), startLoad: vi.fn(), destroy: vi.fn() };
+    const hls = { loadSource: vi.fn(), attachMedia: vi.fn(), startLoad: vi.fn(), destroy: vi.fn(), on: vi.fn() };
     const Hls = Object.assign(vi.fn(function () { return hls; }), { isSupported: () => true });
     render(<MediaView media={video} />, document.body);
     const script = await findScript();
@@ -64,6 +64,44 @@ describe('a reddit video on Brave', () => {
     } finally {
       delete (navigator as { userAgentData?: unknown }).userAgentData;
     }
+  });
+
+  it('the stream refused (a 403): its MP4 in its place, playing on', async () => {
+    HTMLMediaElement.prototype.canPlayType = () => '';
+    const listeners: Record<string, (event: string, data: { fatal: boolean }) => void> = {};
+    const hls = { loadSource: vi.fn(), attachMedia: vi.fn(), startLoad: vi.fn(), destroy: vi.fn(), on: vi.fn((name: string, listener: never) => { listeners[name] = listener; }) };
+    (window as { Hls?: unknown }).Hls = Object.assign(vi.fn(function () { return hls; }), { isSupported: () => true });
+    const play = vi.fn(() => Promise.resolve());
+    HTMLMediaElement.prototype.play = play;
+    render(<MediaView media={video} />, document.body);
+    (await findScript()).onload!(new Event('load'));
+    await vi.waitFor(() => expect(listeners.hlsError).toBeTruthy());
+    listeners.hlsError!('hlsError', { fatal: false });  // hls.js gets over it itself
+    expect(document.querySelector('video')!.hasAttribute('src')).toBe(false);
+    listeners.hlsError!('hlsError', { fatal: true });
+    await vi.waitFor(() => expect(document.querySelector('video')!.getAttribute('src')).toBe('https://v.redd.it/v/DASH_720.mp4'));
+    expect(hls.destroy).toHaveBeenCalled();
+    expect(play).toHaveBeenCalled();
+  });
+
+  it('Safari: the stream refused, its MP4; that refused too, says so', async () => {
+    HTMLMediaElement.prototype.canPlayType = () => 'maybe';
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    render(<MediaView media={video} />, document.body);
+    const element = () => document.querySelector('video')!;
+    element().dispatchEvent(new Event('error'));
+    await vi.waitFor(() => expect(element().getAttribute('src')).toBe('https://v.redd.it/v/DASH_720.mp4'));
+    expect(document.body.textContent).not.toContain('can’t be played');
+    element().dispatchEvent(new Event('error'));
+    await vi.waitFor(() => expect(document.body.textContent).toContain('can’t be played'));
+  });
+
+  it('RedGifs’ player: only its card until tapped, then the player', async () => {
+    render(<MediaView media={{ kind: 'embed', card: { url: 'https://i.redgifs.com/i/abc.jpg', width: 360, height: 640 }, url: 'https://www.redgifs.com/ifr/abc', link: 'https://www.redgifs.com/watch/abc' }} />, document.body);
+    expect(document.querySelector('iframe')).toBeNull();
+    document.querySelector('button')!.click();
+    await vi.waitFor(() => expect(document.querySelector('iframe')?.getAttribute('src')).toBe('https://www.redgifs.com/ifr/abc'));
+    expect(document.querySelector('iframe')!.style.aspectRatio).toBe('360 / 640');
   });
 
   it('Safari plays the stream itself: no hls.js', async () => {

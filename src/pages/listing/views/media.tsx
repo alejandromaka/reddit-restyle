@@ -1,7 +1,8 @@
 /* A post's media, in the feed and on its page, as reddit.com's: a video
    (reddit's own, or a gif) plays where it is; pictures (one, or a gallery to
    swipe through; with a mouse, ‹ › too) open big when tapped; a link's card
-   opens the link (an outside video: ▶). Nothing of a video loads until it's
+   opens the link (an outside video: ▶; RedGifs' plays here, in its own
+   player, once tapped). Nothing of a video loads until it's
    played, and it plays muted if you muted the last one (core/sound). */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -13,7 +14,9 @@ import { cx, ui } from '../../../components/ui';
 import type { Image, Media } from '../contract';
 
 export function MediaView({ media }: { media: Media }) {
-  if (media.kind === 'video') return <Video video={media} />;
+  // key: another post's in its place starts over (its own fallback, not yet tapped)
+  if (media.kind === 'video') return <Video key={media.url} video={media} />;
+  if (media.kind === 'embed') return <Embed key={media.url} embed={media} />;
   if (media.kind === 'link') {
     return (
       <a
@@ -41,33 +44,92 @@ export function MediaView({ media }: { media: Media }) {
 type VideoMedia = Extract<Media, { kind: 'video' }>;
 
 // A video: plays where it is. An HLS stream where the browser can't play
-// HLS (Chrome, Brave): through hls.js (core/hls), or else its MP4
+// HLS (Chrome, Brave): through hls.js (core/hls). If the stream can't be had
+// (reddit answers some with 403), its MP4 instead, playing on from the tap;
+// if that can't either, says so rather than spinning
 function Video({ video }: { video: VideoMedia }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const viaHlsJs = Boolean(video.stream) && !playsHls();
-  const [src, setSrc] = useState(viaHlsJs ? undefined : video.url);
+  const fallback = video.stream?.fallback;
+  const [onFallback, setOnFallback] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const viaHlsJs = Boolean(video.stream) && !onFallback && !playsHls();
+  const src = onFallback ? fallback! : viaHlsJs ? undefined : video.url;
+  const retry = () => {
+    if (fallback && !onFallback && fallback !== video.url) setOnFallback(true);
+    else setFailed(true);
+  };
   useEffect(() => {
     const element = ref.current;
     if (!viaHlsJs || !element) return;
-    return attachHls(element, video.url, () => setSrc(video.stream?.fallback ?? video.url));
+    return attachHls(element, video.url, retry);
   }, [video.url, viaHlsJs]);
+  // The MP4 in its place: plays on, as the stream was asked to
+  useEffect(() => {
+    if (onFallback) Promise.resolve(ref.current?.play()).catch(() => undefined);
+  }, [onFallback]);
   return (
-    <video
-      ref={ref}
-      class="rr-block rr-w-full rr-h-auto rr-max-h-[75vh] rr-rounded-media rr-bg-media-background"
-      src={src}
-      poster={video.poster?.url}
-      width={video.poster?.width}
-      height={video.poster?.height}
-      controls
-      playsInline
-      preload="none"
-      loop={video.loop}
-      muted={video.loop || isMuted()}  // a gif: no sound to begin with
-      // As the last video was left, even one drawn before that changed; and remember this one's
-      onPlay={video.loop ? undefined : (event) => { event.currentTarget.muted = isMuted(); }}
-      onVolumeChange={video.loop ? undefined : (event) => rememberSound(event.currentTarget)}
-    />
+    <div>
+      <video
+        ref={ref}
+        class="rr-block rr-w-full rr-h-auto rr-max-h-[75vh] rr-rounded-media rr-bg-media-background"
+        src={src}
+        poster={video.poster?.url}
+        width={video.poster?.width}
+        height={video.poster?.height}
+        controls={!failed}
+        playsInline
+        preload="none"
+        loop={video.loop}
+        muted={video.loop || isMuted()}  // a gif: no sound to begin with
+        // As the last video was left, even one drawn before that changed; and remember this one's
+        onPlay={video.loop ? undefined : (event) => { event.currentTarget.muted = isMuted(); }}
+        onVolumeChange={video.loop ? undefined : (event) => rememberSound(event.currentTarget)}
+        onError={retry}
+      />
+      {failed && (
+        <p class="rr-py-2 rr-text-center rr-text-neutral-content-weak">
+          This video can’t be played: reddit refused it (it may have been removed)
+        </p>
+      )}
+    </div>
+  );
+}
+
+type EmbedMedia = Extract<Media, { kind: 'embed' }>;
+
+// An outside player (RedGifs'): its card until tapped, then the player in its
+// place, at the card's shape. Nothing of it loads before the tap
+function Embed({ embed }: { embed: EmbedMedia }) {
+  const [open, setOpen] = useState(false);
+  const shape = embed.card ? `${embed.card.width} / ${embed.card.height}` : '9 / 16';
+  if (open) {
+    return (
+      <iframe
+        class="rr-block rr-w-full rr-max-h-[75vh] rr-rounded-media rr-bg-media-background rr-border-0"
+        style={{ aspectRatio: shape }}
+        src={embed.url}
+        title="Video"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        referrerpolicy="strict-origin-when-cross-origin"
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      class="rr-relative rr-block rr-w-full active:rr-opacity-100"
+      aria-label="Play the video"
+      onClick={() => setOpen(true)}
+    >
+      {embed.card
+        ? <Picture picture={embed.card} />
+        : <span class="rr-block rr-w-full rr-max-h-[75vh] rr-rounded-media rr-bg-media-background" style={{ aspectRatio: shape }} />}
+      <span class={ui.badge}>
+        <Icon name="play" />
+        <span class="rr-sr-only">Video</span>
+      </span>
+    </button>
   );
 }
 

@@ -16,6 +16,7 @@ interface Hls {
   attachMedia(video: HTMLVideoElement): void;
   startLoad(): void;
   destroy(): void;
+  on(event: 'hlsError', listener: (event: string, data: { fatal: boolean }) => void): void;
 }
 interface HlsClass {
   new (config: { autoStartLoad: boolean }): Hls;
@@ -51,7 +52,7 @@ function loadHlsJs(): Promise<HlsClass> {
 
 /* Plays the stream at url in video, through hls.js. Nothing of the video
    loads until it's played (as preload="none"). Calls fallback if hls.js
-   can't play here. Returns the clean-up. */
+   can't play here, or the stream can't be had (a 403). Returns the clean-up. */
 export function attachHls(video: HTMLVideoElement, url: string, fallback: () => void): () => void {
   let hls: Hls | null = null;
   let gone = false;
@@ -60,6 +61,12 @@ export function attachHls(video: HTMLVideoElement, url: string, fallback: () => 
     (Hls) => {
       if (gone) return;
       hls = new Hls({ autoStartLoad: false });
+      hls.on('hlsError', (_, data) => {
+        if (!data.fatal || gone) return;
+        gone = true;
+        hls?.destroy();
+        fallback();
+      });
       hls.loadSource(url);
       hls.attachMedia(video);
       video.addEventListener('play', start);
