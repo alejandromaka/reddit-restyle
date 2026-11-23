@@ -257,7 +257,7 @@ docs/
   (all of reddit, or the subreddit only, the other a tap away), by
   Relevance, Hot, Top, New or Comments, with a span. More posts loads
   the next page in place. Each post: its subreddit with its icon (a listing
-  of several) or its author (one subreddit's), and its media, as
+  of several) and its author, and its media, as
   reddit.com's feed: a video (reddit's own, or a gif) plays where it is
   (nothing of it loads until played; reddit's own are HLS, which Safari
   plays itself, and Chrome or Brave through hls.js, fetched then from

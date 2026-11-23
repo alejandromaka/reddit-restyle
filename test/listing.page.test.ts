@@ -482,7 +482,7 @@ describe('the front page', () => {
     setUpListing(shell);
   });
 
-  it('no header (as reddit.com), and each post’s subreddit with its icon (no about to ask for)', async () => {
+  it('no header (as reddit.com), and each post’s subreddit with its icon, then its author (no about to ask for)', async () => {
     await vi.waitFor(() => expect(titles()).toHaveLength(7));
     expect(document.querySelector('main header')).toBeNull();
     expect(document.querySelector('h1')!.textContent).toBe('Home');  // for screen readers only
@@ -492,6 +492,8 @@ describe('the front page', () => {
     const where = document.querySelectorAll('article')[1]!.querySelector('p > a')!;
     expect(where.getAttribute('href')).toBe('/r/pics/');
     expect(where.querySelector('img')!.getAttribute('src')).toBe('https://styles.redditmedia.com/t5_2qh0u/styles/communityIcon_pics.png?width=256&s=d');
+    const who = document.querySelectorAll('article')[1]!.querySelectorAll('p > a')[1]!;
+    expect([who.textContent, who.getAttribute('href')]).toEqual(['u/early_riser', '/user/early_riser/']);
     expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('about.json'))).toBe(false);
   });
 });

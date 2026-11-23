@@ -1,5 +1,4 @@
-/* A post in a listing: where (a mixed listing: its subreddit; one subreddit's:
-   who) and when, how bot-like its author looks (Bot 12%), and its "…" (Hide, Report), its title, its media (it plays,
+/* A post in a listing: where (a mixed listing: its subreddit), who and when, how bot-like its author looks (Bot 12%), and its "…" (Hide, Report), its title, its media (it plays,
    it opens big) or the start of its text, its score, comments and Hide (or
    Unhide). Only its title and its comments open its page: a tap anywhere
    else (its media, its text) doesn't. */
@@ -32,9 +31,9 @@ export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCa
       data-place={post.id}
       class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak">
       <p class="rr-flex rr-items-center rr-gap-1 rr-text-xs rr-text-neutral-content-weak">
-        {mixed ? (
+        {mixed && (
           <a
-            class="rr-flex rr-items-center rr-gap-2 rr-min-w-0 rr-font-semibold rr-text-neutral-content-strong"
+            class="rr-flex rr-flex-none rr-items-center rr-gap-2 rr-max-w-[50%] rr-font-semibold rr-text-neutral-content-strong"
             href={`/r/${post.subreddit}/`}
           >
             <Avatar
@@ -43,14 +42,14 @@ export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCa
             />
             <span class="rr-truncate">r/{post.subreddit}</span>
           </a>
-        ) : (
-          <a
-            class="rr-min-w-0 rr-truncate rr-font-semibold rr-text-neutral-content-strong"
-            href={`/user/${post.author}/`}
-          >
-            u/{post.author}
-          </a>
         )}
+        {mixed && <span class="rr-flex-none">·</span>}
+        <a
+          class={`rr-min-w-0 rr-truncate ${mixed ? '' : 'rr-font-semibold rr-text-neutral-content-strong'}`}
+          href={`/user/${post.author}/`}
+        >
+          u/{post.author}
+        </a>
         <span class="rr-flex-none">· {ago(post.created)}</span>
         <BotBadge name={post.author} />
         <span class="rr-ml-auto -rr-my-2">
