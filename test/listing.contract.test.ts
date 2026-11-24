@@ -69,10 +69,26 @@ describe('readListing', () => {
     ...answer.data.children[2].data, domain: 'redgifs.com', url: 'https://www.redgifs.com/watch/SomeLongName', post_hint: 'rich:video', ...extra,
   } }] } }).posts[0]!;
 
-  it('RedGifs: reddit’s copy on v.redd.it when it made one (HLS, its MP4 to fall back on), looped as a gif', () => {
-    expect(redgifs({ preview: { ...answer.data.children[2].data.preview, reddit_video_preview: {
-      hls_url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', fallback_url: 'https://v.redd.it/rg/DASH_480.mp4', is_gif: true,
-    } } }).media).toMatchObject({ kind: 'video', url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', loop: true, stream: { fallback: 'https://v.redd.it/rg/DASH_480.mp4' } });
+  const copy = (is_gif: boolean) => ({ preview: { ...answer.data.children[2].data.preview, reddit_video_preview: {
+    hls_url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', fallback_url: 'https://v.redd.it/rg/DASH_480.mp4', is_gif,
+  } } });
+
+  it('RedGifs, silent: reddit’s copy as its MP4 (starts at once, no stream to load), looped', () => {
+    expect(redgifs(copy(true)).media).toEqual(expect.objectContaining({ kind: 'video', url: 'https://v.redd.it/rg/DASH_480.mp4', loop: true }));
+    expect(redgifs(copy(true)).media).not.toHaveProperty('stream');
+  });
+
+  it('RedGifs with sound: reddit’s copy as its stream (HLS, with sound), its MP4 to fall back on', () => {
+    expect(redgifs(copy(false)).media).toMatchObject({ kind: 'video', url: 'https://v.redd.it/rg/HLSPlaylist.m3u8?a=2', loop: false, stream: { fallback: 'https://v.redd.it/rg/DASH_480.mp4' } });
+  });
+
+  it('a gif with reddit’s copy too: its own MP4 still, not the slower stream', () => {
+    const both = readListing({ kind: 'Listing', data: { after: null, before: null, children: [{ kind: 't3', data: { ...answer.data.children[1].data, preview: { images: [{
+      source: { url: 'https://preview.redd.it/g.gif?s=src', width: 400, height: 300 },
+      resolutions: [],
+      variants: { mp4: { source: { url: 'https://preview.redd.it/g.gif?format=mp4&s=m', width: 400, height: 300 }, resolutions: [] } },
+    }], reddit_video_preview: { hls_url: 'https://v.redd.it/g/HLSPlaylist.m3u8', fallback_url: 'https://v.redd.it/g/DASH_480.mp4', is_gif: true } } } }] } }).posts[0];
+    expect(both!.media).toMatchObject({ kind: 'video', url: 'https://preview.redd.it/g.gif?format=mp4&s=m', loop: true });
   });
 
   it('RedGifs without reddit’s copy: RedGifs’ own player, by its id in lower case', () => {
