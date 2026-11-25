@@ -143,6 +143,7 @@
   .rr-pl-6 { padding-left: var(--s6); }   /* a list's markers */
   .rr-pl-8 { padding-left: var(--s8); }   /* a comment, past its avatar; a profile's comment, under its post */
   .rr-pb-8 { padding-bottom: var(--s8); }
+  .rr-pb-safe { padding-bottom: calc(var(--s16) + env(safe-area-inset-bottom)); }  /* the pages at the bottom: above where a tap opens Safari's toolbar */
 
   /* --- Type (a size brings its line height, as in Tailwind) --- */
   .rr-text-xs { font-size: var(--text-xs); line-height: var(--leading-xs); }
