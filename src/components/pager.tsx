@@ -31,7 +31,7 @@ export function Pager({ path, search, page, after, before, beyond = null, top = 
   return (
     <nav
       aria-label={top ? 'Pages, at the top' : 'Pages'}
-      class={top ? 'rr-flex rr-flex-none rr-items-center' : 'rr-flex rr-items-center rr-justify-center rr-gap-1 rr-p-4'}
+      class={top ? 'rr-flex rr-flex-none rr-items-center' : 'rr-flex rr-items-center rr-justify-center rr-gap-1 rr-p-4 rr-pb-safe'}
     >
       {prev && !top && (
         <a
