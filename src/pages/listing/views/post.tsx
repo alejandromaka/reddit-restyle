@@ -30,7 +30,7 @@ export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCa
     <article
       data-place={post.id}
       class="rr-grid rr-gap-2 rr-px-4 rr-py-3 rr-border-b rr-border-neutral-border-weak">
-      <p class="rr-flex rr-items-center rr-gap-1 rr-text-xs rr-text-neutral-content-weak">
+      <p class="rr-flex rr-min-w-0 rr-items-center rr-gap-1 rr-text-xs rr-text-neutral-content-weak">
         {mixed && (
           <a
             class="rr-flex rr-flex-none rr-items-center rr-gap-2 rr-max-w-[50%] rr-font-semibold rr-text-neutral-content-strong"
