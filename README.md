@@ -79,6 +79,8 @@ nothing that sends something is marked Works until it's been tried.
 | Search posts: all of reddit, or in a subreddit; by Relevance, Hot, Top, New, Comments, with a span | Untested live | `/search.json`, `/r/name/search.json?restrict_sr=on` |
 | Search comments (the ones loaded) | Works | none: on the page |
 | Pictures and gifs in comments | Works | from the comment's links |
+| RedGifs in the feed: reddit's copy, else RedGifs' own player once tapped | Untested live | the listing's `preview.reddit_video_preview`; `redgifs.com/ifr/id` |
+| A reddit video refused (403): its MP4 instead, else "can't be played" | Untested live | the listing's `fallback_url` |
 | Vote | Untested live | `POST /api/vote` |
 | Comment, reply | Fixed in 0.3.4, untested live (reddit's answer has no body or author: they come from what you sent) | `POST /api/comment` |
 | Hide, unhide a post | Untested live | `POST /api/hide`, `/api/unhide` |
@@ -255,13 +257,16 @@ docs/
   (all of reddit, or the subreddit only, the other a tap away), by
   Relevance, Hot, Top, New or Comments, with a span. More posts loads
   the next page in place. Each post: its subreddit with its icon (a listing
-  of several) or its author (one subreddit's), and its media, as
+  of several) and its author, and its media, as
   reddit.com's feed: a video (reddit's own, or a gif) plays where it is
   (nothing of it loads until played; reddit's own are HLS, which Safari
   plays itself, and Chrome or Brave through hls.js, fetched then from
   jsDelivr, pinned and checked by its hash: core/hls.ts); pictures (one, or a gallery to swipe
   through) open big when tapped (components/lightbox.tsx); a link's card
-  opens the link (an outside video: ▶). Else its text's opening. NSFW too;
+  opens the link (an outside video: ▶; RedGifs plays here: reddit's copy
+  of it, else RedGifs' own player, loaded only once tapped). A stream reddit
+  refuses (403) gives way to its MP4 (no sound), else says it can't be
+  played. Else its text's opening. NSFW too;
   none for spoilers. Only its title and its comments open its page: a tap
   anywhere else on it (its media, its text) doesn't.
 

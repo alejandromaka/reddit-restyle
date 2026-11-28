@@ -16,6 +16,7 @@ import { iconOf } from '../../nav/contract';
 interface RedditImage { url: string; width: number; height: number }
 interface RedditSizes { source: RedditImage; resolutions: RedditImage[] }
 interface RedditSize { u: string; x: number; y: number }
+interface RedditVideo { hls_url?: string; fallback_url?: string; is_gif?: boolean }
 export interface RedditMedia {  // a gallery's picture (or a comment's): p, its sizes (smallest first; a gif's: stills); s, the original (a gif: no u; gif, mp4)
   status: string;  // 'valid' once processed
   p?: RedditSize[];
@@ -43,12 +44,15 @@ export interface RedditPost {
   hidden: boolean;                 // you hid it from your listings
   link_flair_text: string | null;
   likes: boolean | null;  // your vote: up, down, none
-  preview?: { images?: { source: RedditImage; resolutions: RedditImage[]; variants?: { mp4?: RedditSizes } }[] };  // mp4: a gif, as video
+  preview?: {
+    images?: { source: RedditImage; resolutions: RedditImage[]; variants?: { mp4?: RedditSizes } }[];  // mp4: a gif, as video
+    reddit_video_preview?: RedditVideo;  // an outside video (RedGifs, Imgur's gifv…), copied by reddit to v.redd.it
+  };
   gallery_data?: { items: { media_id: string }[] };
   media_metadata?: Record<string, RedditMedia>;
   crosspost_parent_list?: RedditPost[];  // a crosspost: the post it shares
   sr_detail?: { community_icon?: string; icon_img?: string };
-  secure_media?: { reddit_video?: { hls_url: string; fallback_url?: string } } | null;  // a video reddit hosts: HLS (Safari plays it, with sound)
+  secure_media?: { reddit_video?: RedditVideo } | null;  // a video reddit hosts: HLS (Safari plays it, with sound)
   selftext_html?: string | null;  // its text, rendered
   locked?: boolean;
   archived?: boolean;
@@ -67,7 +71,9 @@ export type Media =
   // stream: url is HLS (reddit's own video); fallback: its MP4, without sound
   | { kind: 'video'; url: string; poster: Image | null; loop: boolean; stream?: { fallback: string | null } }
   | { kind: 'pictures'; pictures: Image[]; big: Image[] }
-  | { kind: 'link'; card: Image; url: string; playable: boolean };
+  | { kind: 'link'; card: Image; url: string; playable: boolean }
+  // An outside player (RedGifs'), loaded only once its card is tapped
+  | { kind: 'embed'; card: Image | null; url: string; link: string };
 
 export interface Post {
   id: string;              // t3_…
@@ -153,12 +159,27 @@ function imageOf(post: RedditPost, wide: number): Image | null {
   return image ? pick([...image.resolutions, image.source], wide) : null;
 }
 
+/* A RedGifs post's id, from any of its addresses: redgifs.com/watch/id,
+   /ifr/id, v3.redgifs.com/watch/id, i.redgifs.com/i/id.jpg. RedGifs' own
+   player for it (redgifs.com/ifr/id) needs no account: its API's video links
+   are tied to whoever asked, and refuse other sites (403 "Hotlinking") */
+export function redgifsOf(url: string): string | null {
+  const match = /^https?:\/\/(?:[\w-]+\.)*redgifs\.com\/(?:watch\/|ifr\/|i\/)?(\w+)/i.exec(url);
+  return match?.[1]?.toLowerCase() ?? null;
+}
+
 const offReddit = (post: RedditPost) => !post.is_self && !/(^|\.)(redd\.it|reddit\.com)$/.test(post.domain);
 
 function mediaOf(post: RedditPost, wide: number): Media | null {
   const poster = imageOf(post, wide);
   const video = post.secure_media?.reddit_video;
   if (video?.hls_url) return { kind: 'video', url: video.hls_url, poster, loop: false, stream: { fallback: video.fallback_url ?? null } };
+  // RedGifs (and the like): reddit's copy, if it made one; else RedGifs' own player
+  const copy = post.preview?.reddit_video_preview;
+  if (copy?.hls_url) return { kind: 'video', url: copy.hls_url, poster, loop: copy.is_gif ?? true, stream: { fallback: copy.fallback_url ?? null } };
+  if (copy?.fallback_url) return { kind: 'video', url: copy.fallback_url, poster, loop: copy.is_gif ?? true };
+  const redgifs = offReddit(post) ? redgifsOf(post.url) : null;
+  if (redgifs) return { kind: 'embed', card: poster, url: `https://www.redgifs.com/ifr/${redgifs}`, link: post.url };
   const gif = post.preview?.images?.[0]?.variants?.mp4;
   const clip = gif && pick([...gif.resolutions, gif.source], wide);
   if (clip) return { kind: 'video', url: clip.url, poster, loop: true };
