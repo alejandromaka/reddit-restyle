@@ -79,11 +79,35 @@ function readStep(redditStep: RedditStep): Step {
   };
 }
 
+// The questions reddit.com asks that rules.json doesn't carry (yet): what type
+// of spam, as reddit.com's report asks it (a screenshot, 2026-11-28). Each
+// option is what the report says.
+const SPAM_TYPES = [
+  'Unsolicited chat or private messaging',
+  'Excessive posting or commenting in a community',
+  'Excessive reposting to farm karma or manipulate conversations',
+  'Sharing harmful links such as malware or phishing attempts',
+  'Disruptive use of bots or AI',
+  'Other',
+];
+
+const MORE: Record<string, { question: string; options: string[] }> = {
+  spam: { question: 'What type of spam is this?', options: SPAM_TYPES },
+};
+
+// A last step reddit.com asks more under: its question, each option a reason
+function withMore(reddit: Step): Step {
+  const more = MORE[reddit.label.toLowerCase()];
+  if (!more || reddit.next.length || reddit.complaint) return reddit;
+  const next = more.options.map((text): Step => ({ ...step(text), reason: { kind: 'site', text, usernames: false } }));
+  return { ...reddit, question: more.question, next, reason: null, notes: null };
+}
+
 export const readRules = (answer: RedditRules): Rules => ({
   subreddit: answer.rules.map((rule) => ({ label: rule.violation_reason || rule.short_name, about: rule.description ?? '', on: ON[rule.kind] })),
-  reddit: answer.site_rules_flow?.length
+  reddit: (answer.site_rules_flow?.length
     ? answer.site_rules_flow.map(readStep)
-    : answer.site_rules.map((rule) => ({ ...step(rule), reason: { kind: 'site', text: rule, usernames: false } })),
+    : answer.site_rules.map((rule): Step => ({ ...step(rule), reason: { kind: 'site', text: rule, usernames: false } }))).map(withMore),
 });
 
 // The longest reason reddit takes (r2's VLength): Custom response's limit too

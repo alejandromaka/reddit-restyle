@@ -328,9 +328,15 @@ describe('listing page', () => {
     more(0).click();
     inMenu('Report').click();
     await vi.waitFor(() => expect(pills()).toHaveLength(4));
-    pills()[2]!.click();  // Spam: no question under it, so Submit beside it
-    await vi.waitFor(() => expect(reportButton('Submit')).toBeDefined());
-    expect(reportButton('Next')).toBeUndefined();
+    pills()[2]!.click();  // Spam: Next, to what type of spam (as reddit.com asks)
+    await vi.waitFor(() => expect(reportButton('Next')).toBeDefined());
+    expect(reportButton('Submit')).toBeUndefined();
+    reportButton('Next')!.click();
+    await vi.waitFor(() => expect(report().textContent).toContain('What type of spam is this?'));
+    expect(radios()).toHaveLength(6);
+    expect(reportButton('Submit')!.disabled).toBe(true);
+    radios()[4]!.click();  // Disruptive use of bots or AI
+    await vi.waitFor(() => expect(reportButton('Submit')!.disabled).toBe(false));
     reportButton('Submit')!.click();
     await vi.waitFor(() => expect(report().textContent).toContain('reddit didn’t accept the report: you are doing that too much'));
     expect(report().textContent).not.toContain('accepted the report.');
@@ -341,6 +347,7 @@ describe('listing page', () => {
     reportButton('Try again')!.click();
     await vi.waitFor(() => expect(report().textContent).toContain('reddit accepted the report'));
     expect(posted(fetchMock, '/api/report')).toHaveLength(3);
+    expect(posted(fetchMock, '/api/report')[0]).toMatchObject({ reason: 'site_reason_selected', site_reason: 'Disruptive use of bots or AI' });
   });
 
   it('reporting by reddit’s reasons: its question, a note where it asks, who it’s about; a form on reddit.com instead, where it says', async () => {
