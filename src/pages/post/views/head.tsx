@@ -1,6 +1,6 @@
 /* The post, as reddit.com shows it on its page: where, when and who (its
    subreddit's icon; how bot-like they look; Join, "…"), its title and tags, all of it (text, pictures,
-   video, link), then its votes, comments and Share */
+   video, link; a spoiler's blurred until tapped), then its votes, comments and Share */
 
 import type { Vote } from '../../../account/contract';
 import { BotBadge } from '../../../bots/badge';
@@ -9,6 +9,7 @@ import { Icon } from '../../../components/icon';
 import { JoinButton } from '../../../components/join';
 import { Markdown } from '../../../components/markdown';
 import { ShareButton } from '../../../components/share';
+import { Spoiler } from '../../../components/spoiler';
 import { Tags } from '../../../components/tags';
 import { ui } from '../../../components/ui';
 import { Votes } from '../../../components/votes';
@@ -80,8 +81,17 @@ export function PostHead({ post, about, onVote, onJoin, onMore }: PostHeadProps)
         spoiler={post.spoiler}
         flair={post.flair}
       />
-      {post.media && <MediaView media={post.media} />}
-      {post.html && <Markdown html={post.html} />}
+      {(post.media || post.html) && (
+        <Spoiler
+          hidden={post.spoiler}
+          kind={post.media ? 'media' : 'text'}
+        >
+          <div class="rr-grid rr-gap-3">
+            {post.media && <MediaView media={post.media} />}
+            {post.html && <Markdown html={post.html} />}
+          </div>
+        </Spoiler>
+      )}
       {post.link && (
         <a
           class="rr-text-a-default rr-truncate"

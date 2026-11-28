@@ -1,5 +1,5 @@
 /* A post in a listing: where (a mixed listing: its subreddit), who and when, how bot-like its author looks (Bot 12%), and its "…" (Hide, Report), its title, its media (it plays,
-   it opens big) or the start of its text, its score, comments and Hide (or
+   it opens big) or the start of its text (a spoiler's blurred until tapped), its score, comments and Hide (or
    Unhide). Only its title and its comments open its page: a tap anywhere
    else (its media, its text) doesn't. */
 
@@ -7,6 +7,7 @@ import type { Vote } from '../../../account/contract';
 import { BotBadge } from '../../../bots/badge';
 import { Avatar } from '../../../components/avatar';
 import { Icon } from '../../../components/icon';
+import { Spoiler } from '../../../components/spoiler';
 import { Tags } from '../../../components/tags';
 import { ui } from '../../../components/ui';
 import { Votes } from '../../../components/votes';
@@ -68,8 +69,15 @@ export function PostCard({ post, mixed, hidden, onVote, onHide, onMore }: PostCa
         spoiler={post.spoiler}
         flair={post.flair}
       />
-      {post.media ? <MediaView media={post.media} /> : post.text && (
-        <p class="rr-line-clamp-3 rr-text-neutral-content">{post.text}</p>
+      {(post.media || post.text) && (
+        <Spoiler
+          hidden={post.spoiler}
+          kind={post.media ? 'media' : 'text'}
+        >
+          {post.media ? <MediaView media={post.media} /> : (
+            <p class="rr-line-clamp-3 rr-text-neutral-content">{post.text}</p>
+          )}
+        </Spoiler>
       )}
       {post.link && (
         <a
