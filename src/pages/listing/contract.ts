@@ -174,15 +174,18 @@ function mediaOf(post: RedditPost, wide: number): Media | null {
   const poster = imageOf(post, wide);
   const video = post.secure_media?.reddit_video;
   if (video?.hls_url) return { kind: 'video', url: video.hls_url, poster, loop: false, stream: { fallback: video.fallback_url ?? null } };
-  // RedGifs (and the like): reddit's copy, if it made one; else RedGifs' own player
-  const copy = post.preview?.reddit_video_preview;
-  if (copy?.hls_url) return { kind: 'video', url: copy.hls_url, poster, loop: copy.is_gif ?? true, stream: { fallback: copy.fallback_url ?? null } };
-  if (copy?.fallback_url) return { kind: 'video', url: copy.fallback_url, poster, loop: copy.is_gif ?? true };
-  const redgifs = offReddit(post) ? redgifsOf(post.url) : null;
-  if (redgifs) return { kind: 'embed', card: poster, url: `https://www.redgifs.com/ifr/${redgifs}`, link: post.url };
+  // A gif: its MP4, one plain file that starts at once (reddit's copy on
+  // v.redd.it is a stream: playlists, then segments, seconds before it plays)
   const gif = post.preview?.images?.[0]?.variants?.mp4;
   const clip = gif && pick([...gif.resolutions, gif.source], wide);
   if (clip) return { kind: 'video', url: clip.url, poster, loop: true };
+  // RedGifs (and the like): reddit's copy, if it made one (silent: its MP4;
+  // with sound: the stream, its MP4 to fall back on); else RedGifs' own player
+  const copy = post.preview?.reddit_video_preview;
+  if (copy?.fallback_url && (copy.is_gif || !copy.hls_url)) return { kind: 'video', url: copy.fallback_url, poster, loop: true };
+  if (copy?.hls_url) return { kind: 'video', url: copy.hls_url, poster, loop: false, stream: { fallback: copy.fallback_url ?? null } };
+  const redgifs = offReddit(post) ? redgifsOf(post.url) : null;
+  if (redgifs) return { kind: 'embed', card: poster, url: `https://www.redgifs.com/ifr/${redgifs}`, link: post.url };
   const gallery = galleryOf(post, wide);
   if (gallery.length) return { kind: 'pictures', pictures: gallery, big: galleryOf(post, BIG_WIDTH) };
   if (!poster) return null;
