@@ -27,15 +27,24 @@ describe('readRules', () => {
       ['You', { kind: 'site', text: "It's targeted harassment at me", usernames: true }, { title: 'Additional information (optional)', limit: 2000 }],
       ['Someone else', { kind: 'site', text: "It's targeted harassment at someone else", usernames: true }, null],
     ]);
-    expect(spam).toMatchObject({ label: 'Spam', question: null, next: [], reason: { kind: 'site', text: 'This is spam', usernames: false } });
+    // rules.json ends Spam there; reddit.com asks what type of spam, each type the reason sent
+    expect(spam).toMatchObject({ label: 'Spam', question: 'What type of spam is this?', reason: null, notes: null });
+    expect(spam!.next.map((step) => [step.label, step.reason])).toEqual([
+      'Unsolicited chat or private messaging',
+      'Excessive posting or commenting in a community',
+      'Excessive reposting to farm karma or manipulate conversations',
+      'Sharing harmful links such as malware or phishing attempts',
+      'Disruptive use of bots or AI',
+      'Other',
+    ].map((text) => [text, { kind: 'site', text, usernames: false }]));
     expect(copyright).toMatchObject({ reason: null, complaint: { prompt: 'Copyright reports go through a form on reddit.com.', button: 'Go to the form' } });
     expect(complaintUrl(copyright!.complaint!.url, 't3_a')).toBe('https://www.reddithelp.com/hc/en-us/requests/new?ticket_form_id=73933&thing=t3_a');
     expect(rulesUrl('pics')).toBe('/r/pics/about/rules.json?raw_json=1');
   });
 
   it('no steps from reddit: its plain list, each a reason', () => {
-    expect(readRules({ ...answer, site_rules_flow: [] }).reddit.map((step) => [step.label, step.reason?.text])).toEqual([
-      ['Spam', 'Spam'], ['Personal and confidential information', 'Personal and confidential information'], ['Threatening, harassing, or inciting violence', 'Threatening, harassing, or inciting violence'],
+    expect(readRules({ ...answer, site_rules_flow: [] }).reddit.map((step) => [step.label, step.reason?.text ?? step.question])).toEqual([
+      ['Spam', 'What type of spam is this?'], ['Personal and confidential information', 'Personal and confidential information'], ['Threatening, harassing, or inciting violence', 'Threatening, harassing, or inciting violence'],
     ]);
   });
 
